@@ -1,0 +1,684 @@
+/* 参考页视觉层：保留本页字段、筛选项与审核流程，只统一布局与密度。 */
+:root {
+  --reference-bg: #f8fafc;
+  --reference-border: #e1e8f1;
+  --reference-text: #34445f;
+  --reference-muted: #8a99ad;
+  --reference-purple: #5149e9;
+}
+
+body {
+  background: var(--reference-bg);
+  color: var(--reference-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+}
+
+.platform-sidebar {
+  width: 216px;
+  background: #fff;
+  border-right: 1px solid #e8edf3;
+  box-shadow: 2px 0 12px rgba(59, 77, 108, .025);
+}
+
+.platform-brand {
+  height: 66px;
+  padding: 0 20px;
+}
+
+.platform-nav {
+  padding: 18px 10px;
+}
+
+.platform-nav-item {
+  height: 40px;
+  margin: 2px 0;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: #6d7d95;
+  font-size: 13px;
+}
+
+.platform-nav-item.active {
+  background: #f0f0ff;
+  color: var(--reference-purple);
+}
+
+.platform-nav-item.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 3px;
+  height: 20px;
+  border-radius: 0 4px 4px 0;
+  background: var(--reference-purple);
+}
+
+.platform-page {
+  min-height: 100vh;
+  margin-left: 216px;
+  background: var(--reference-bg);
+}
+
+.platform-page .topbar {
+  display: none;
+}
+
+.app-shell {
+  width: 100%;
+  max-width: none;
+  padding: 0 22px 20px;
+}
+
+.page-heading {
+  align-items: center;
+  padding: 26px 0 20px;
+}
+
+.page-heading h1 {
+  margin-bottom: 7px;
+  color: #2f405d;
+  font-size: 25px;
+  letter-spacing: -.035em;
+}
+
+.page-heading p {
+  max-width: 720px;
+  color: var(--reference-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.heading-meta {
+  min-width: 220px;
+  padding: 4px 0 4px 14px;
+  border-left: 2px solid #d7d9ff;
+}
+
+.heading-meta strong {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.status-tabs {
+  width: max-content;
+  gap: 2px;
+  margin: 0 0 14px;
+  padding: 6px;
+  border-radius: 12px;
+  background: #edf2f8;
+}
+
+.status-tab {
+  padding: 10px 20px;
+  border-radius: 10px;
+  color: #6d7d95;
+  font-size: 15px;
+}
+
+.status-tab.active {
+  background: #fff;
+  color: #2f405e;
+  box-shadow: 0 3px 10px rgba(65, 82, 114, .09);
+}
+
+.table-toolbar {
+  min-height: 58px;
+  margin: 0;
+  padding: 12px 18px;
+  border: 1px solid var(--reference-border);
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  background: #fff;
+}
+
+.toolbar-note {
+  font-size: 13px;
+}
+
+.toolbar-note strong {
+  font-size: 18px;
+}
+
+.toolbar-actions {
+  gap: 8px;
+}
+
+.search {
+  width: 280px;
+  height: 40px;
+  border-radius: 9px;
+}
+
+select,
+.ghost-button,
+.primary-button {
+  height: 40px;
+  border-radius: 9px;
+  font-size: 13px;
+}
+
+.search input {
+  height: 38px;
+  font-size: 13px;
+}
+
+.mapping-table {
+  margin: 0;
+  overflow-x: auto;
+  border: 1px solid var(--reference-border);
+  border-radius: 0;
+  background: #fff;
+  box-shadow: none;
+}
+
+.table-head,
+.row-content {
+  grid-template-columns: minmax(190px, 1.05fr) minmax(190px, 1.12fr) 145px 82px 130px minmax(220px, 1.35fr) 120px 150px;
+  column-gap: 20px;
+  min-width: 1280px;
+}
+
+.table-head {
+  min-height: 54px;
+  padding: 0 20px;
+  background: #fbfcfe;
+  color: #70809a;
+  font-size: 13px;
+}
+
+.row-content {
+  min-height: 92px;
+  padding: 15px 20px;
+}
+
+.source-name,
+.target-name {
+  color: #34445f;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.source-meta,
+.target-meta {
+  margin-top: 3px;
+  color: #9eacc0;
+  font-size: 12px;
+}
+
+.relation-select {
+  height: 39px;
+  border: 1px solid #dfe5ef;
+  border-radius: 9px;
+  font-size: 14px;
+}
+
+.level-select {
+  height: 35px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.confidence-meter {
+  width: 84px;
+  height: 7px;
+}
+
+.confidence strong {
+  font-size: 14px;
+}
+
+.ai-evidence {
+  color: #718198;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.origin {
+  color: #7a8aa1;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.source-chip {
+  margin-top: 4px;
+  padding: 3px 7px;
+  border-radius: 7px;
+  font-size: 10px;
+}
+
+.confirm-button,
+.reject-button {
+  padding: 9px 12px;
+  border-radius: 7px;
+  font-size: 13px;
+}
+
+.pagination-bar {
+  min-height: 58px;
+  margin: 0;
+  padding: 0 18px;
+  border-color: var(--reference-border);
+  border-radius: 0 0 10px 10px;
+  background: #fff;
+  font-size: 12px;
+}
+
+.footnote {
+  padding-top: 10px;
+  font-size: 11px;
+}
+
+@media (max-width: 1100px) {
+  .app-shell {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .page-heading {
+    display: block;
+  }
+
+  .heading-meta {
+    max-width: 300px;
+    margin-top: 14px;
+  }
+
+  .table-toolbar {
+    display: block;
+  }
+
+  .toolbar-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 760px) {
+  .platform-sidebar {
+    width: 64px;
+  }
+
+  .platform-page {
+    margin-left: 64px;
+  }
+
+  .platform-brand {
+    padding: 0;
+    justify-content: center;
+  }
+
+  .platform-brand > div,
+  .nav-section-title,
+  .platform-nav-item > span:not(.nav-icon),
+  .platform-nav-item em,
+  .nav-soon,
+  .platform-sidebar-footer > span:not(.platform-avatar) {
+    display: none;
+  }
+
+  .platform-nav {
+    padding: 14px 8px;
+  }
+
+  .platform-nav-item {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .app-shell {
+    padding: 0 10px 18px;
+  }
+
+  .page-heading {
+    padding: 20px 4px 14px;
+  }
+
+  .page-heading h1 {
+    font-size: 22px;
+  }
+
+  .status-tabs {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .status-tab {
+    white-space: nowrap;
+    padding: 9px 14px;
+    font-size: 13px;
+  }
+
+  .search {
+    width: 100%;
+  }
+
+  .pagination-bar {
+    display: block;
+    padding: 10px 12px;
+  }
+
+  .pagination-controls {
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+}
+
+/* 截图对齐：桌面视口采用参考页的紧凑比例，避免表格横向溢出。 */
+@media (min-width: 761px) {
+  body {
+    font-size: 12px;
+  }
+
+  .platform-sidebar {
+    width: 176px;
+  }
+
+  .platform-brand {
+    height: 48px;
+    padding: 0 14px;
+  }
+
+  .platform-brand-mark {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    font-size: 12px;
+  }
+
+  .platform-brand strong {
+    font-size: 11px;
+  }
+
+  .platform-brand small {
+    margin-top: 1px;
+    font-size: 9px;
+  }
+
+  .platform-nav {
+    padding: 14px 8px;
+  }
+
+  .nav-section-title {
+    padding: 0 10px 7px;
+    font-size: 9px;
+  }
+
+  .platform-nav-item {
+    height: 32px;
+    margin: 2px 0;
+    padding: 0 9px;
+    gap: 7px;
+    border-radius: 7px;
+    font-size: 11px;
+  }
+
+  .nav-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    font-size: 9px;
+  }
+
+  .platform-sidebar-footer {
+    padding: 10px 12px;
+    gap: 6px;
+    font-size: 10px;
+  }
+
+  .platform-avatar {
+    width: 22px;
+    height: 22px;
+  }
+
+  .platform-page {
+    margin-left: 176px;
+  }
+
+  .platform-page .topbar {
+    display: flex;
+    height: 48px;
+    padding: 0 16px;
+    background: #fff;
+    border-bottom: 1px solid var(--reference-border);
+  }
+
+  .platform-page .brand,
+  .platform-page .batch {
+    display: flex;
+  }
+
+  .platform-page .brand {
+    gap: 7px;
+  }
+
+  .platform-page .brand-mark {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    font-size: 12px;
+  }
+
+  .platform-page .brand strong {
+    font-size: 11px;
+  }
+
+  .platform-page .brand small,
+  .platform-page .batch,
+  .platform-page .back-link {
+    font-size: 9px;
+  }
+
+  .app-shell {
+    padding: 0 16px 12px;
+  }
+
+  .page-heading {
+    padding: 16px 0 12px;
+  }
+
+  .eyebrow {
+    margin-bottom: 4px;
+    font-size: 8px;
+  }
+
+  .page-heading h1 {
+    margin-bottom: 4px;
+    font-size: 19px;
+  }
+
+  .page-heading p {
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
+  .heading-meta {
+    min-width: 170px;
+    padding: 3px 0 3px 10px;
+  }
+
+  .heading-meta strong {
+    margin: 3px 0;
+    font-size: 11px;
+  }
+
+  .heading-meta small,
+  .heading-meta span {
+    font-size: 8px;
+  }
+
+  .status-tabs {
+    gap: 1px;
+    margin-bottom: 9px;
+    padding: 4px;
+    border-radius: 8px;
+  }
+
+  .status-tab {
+    padding: 7px 12px;
+    border-radius: 7px;
+    font-size: 11px;
+  }
+
+  .status-tab b {
+    padding: 2px 5px;
+    margin-left: 4px;
+    font-size: 9px;
+  }
+
+  .table-toolbar {
+    min-height: 42px;
+    padding: 7px 12px;
+    border-radius: 7px 7px 0 0;
+  }
+
+  .toolbar-note {
+    font-size: 10px;
+  }
+
+  .toolbar-note strong {
+    font-size: 15px;
+  }
+
+  .toolbar-actions {
+    gap: 5px;
+  }
+
+  .search {
+    width: 210px;
+    height: 29px;
+    border-radius: 7px;
+  }
+
+  .search input {
+    height: 27px;
+    font-size: 10px;
+  }
+
+  select,
+  .ghost-button,
+  .primary-button {
+    height: 29px;
+    padding: 0 8px;
+    border-radius: 7px;
+    font-size: 10px;
+  }
+
+  .mapping-table {
+    border-radius: 0;
+  }
+
+  .table-head,
+  .row-content {
+    grid-template-columns: minmax(130px, 1.15fr) minmax(145px, 1.25fr) 112px 62px 88px minmax(180px, 1.65fr) 88px 108px;
+    column-gap: 10px;
+    min-width: 0;
+  }
+
+  .table-head {
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 10px;
+  }
+
+  .row-content {
+    min-height: 62px;
+    padding: 9px 12px;
+  }
+
+  .selected-check {
+    top: 11px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+  }
+
+  .source-name,
+  .target-name {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .source-meta,
+  .target-meta {
+    margin-top: 2px;
+    font-size: 9px;
+  }
+
+  .relation-select {
+    height: 28px;
+    padding: 0 7px;
+    border-radius: 7px;
+    font-size: 11px;
+  }
+
+  .level-select {
+    height: 26px;
+    font-size: 10px;
+  }
+
+  .confidence {
+    gap: 5px;
+  }
+
+  .confidence-meter {
+    width: 58px;
+    height: 5px;
+  }
+
+  .confidence strong {
+    font-size: 11px;
+  }
+
+  .ai-evidence {
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .origin {
+    font-size: 9px;
+    line-height: 1.35;
+  }
+
+  .source-chip {
+    margin-top: 2px;
+    padding: 2px 4px;
+    font-size: 8px;
+  }
+
+  .row-actions {
+    gap: 4px;
+  }
+
+  .confirm-button,
+  .reject-button {
+    padding: 6px 7px;
+    border-radius: 6px;
+    font-size: 10px;
+  }
+
+  .pagination-bar {
+    min-height: 38px;
+    padding: 0 12px;
+    border-radius: 0 0 7px 7px;
+    font-size: 9px;
+  }
+
+  .pagination-controls {
+    gap: 5px;
+  }
+
+  .pagination-controls select,
+  .page-button,
+  .page-number {
+    height: 24px;
+    min-width: 24px;
+    font-size: 9px;
+  }
+
+  .footnote {
+    padding-top: 6px;
+    font-size: 8px;
+  }
+}

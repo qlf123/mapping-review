@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>图谱映射审核台｜旅游业示例</title>
+    <link rel="stylesheet" href="mapping-review.css" />
+    <link rel="stylesheet" href="mapping-pagination.css" />
+    <link rel="stylesheet" href="mapping-polish.css" />
+    <link rel="stylesheet" href="mapping-compact.css" />
+    <link rel="stylesheet" href="mapping-reference.css" />
+    <link rel="stylesheet" href="mapping-approved.css" />
+    <link rel="stylesheet" href="mapping-task.css" />
+    <link rel="stylesheet" href="mapping-task-override.css" />
+  </head>
+  <body>
+    <aside class="platform-sidebar" aria-label="图谱平台导航">
+      <div class="platform-brand">
+        <span class="platform-brand-mark">图</span>
+        <div><strong>专业图谱平台</strong><small>知识与能力管理</small></div>
+      </div>
+      <nav class="platform-nav">
+        <div class="nav-section-title">图谱建设</div>
+        <a href="#" class="platform-nav-item"><span class="nav-icon">知</span><span>知识体系</span></a>
+        <a href="#" class="platform-nav-item"><span class="nav-icon">能</span><span>能力图谱</span></a>
+        <a href="#" class="platform-nav-item active" aria-current="page"><span class="nav-icon">映</span><span>图谱映射审核台</span><em>6</em></a>
+        <div class="nav-section-title nav-section-spaced">应用管理</div>
+        <a href="#" class="platform-nav-item"><span class="nav-icon">课</span><span>课程任务</span></a>
+        <a href="#" class="platform-nav-item"><span class="nav-icon">评</span><span>学习成果</span><span class="nav-soon">规划中</span></a>
+      </nav>
+      <div class="platform-sidebar-footer"><span class="platform-avatar">秦</span><span>平台管理员</span><span class="sidebar-more">···</span></div>
+    </aside>
+    <div class="platform-page">
+    <main class="app-shell">
+      <section class="page-heading">
+        <div><h1>图谱映射审核台</h1></div><button class="task-button" id="createTaskButton" type="button">＋ 新建映射任务</button>
+      </section>
+
+      <section class="status-tabs" role="tablist">
+        <button class="status-tab active" data-status="pending">待审核 <b id="pendingCount">0</b></button>
+        <button class="status-tab" data-status="approved">已确认 <b id="approvedCount">0</b></button>
+        <button class="status-tab" data-status="rejected">已驳回 <b id="rejectedCount">0</b></button>
+      </section>
+
+      <section class="table-toolbar">
+        <div class="toolbar-note"><strong id="visibleCount">6</strong> 条待审核候选 <span>·</span> 置信度与锚定依据由算法生成</div>
+        <div class="toolbar-actions"><label class="search"><span>⌕</span><input id="searchInput" placeholder="搜索知识点、能力项或课程" /></label><select id="typeFilter"><option value="all">全部映射类型</option><option value="direct_support">直接支撑</option><option value="partial_support">部分支撑</option><option value="foundation_support">基础支撑</option><option value="assessment_basis">提供达标判据</option><option value="scenario_support">情境案例</option><option value="related">相关但不构成覆盖</option></select><button class="ghost-button" id="selectAll">全选当前</button><button class="primary-button" id="batchApprove">批量确认</button></div>
+      </section>
+
+      <section class="mapping-table" aria-label="映射审核表格">
+        <div class="table-head"><span class="head-source"><input id="pageSelectAll" type="checkbox" aria-label="选择本页全部候选" />知识点</span><span>能力项</span><span>映射类型</span><span>服务等级</span><span>置信度</span><span>AI 判定依据</span><span>来源 / 审核人</span><span>操作</span></div>
+        <div id="tableBody"></div>
+      </section>
+      <section class="pagination-bar" aria-label="列表分页">
+        <div class="pagination-summary">共 <strong id="totalCount">0</strong> 条候选</div>
+        <div class="pagination-controls">
+          <span>每页</span>
+          <select id="pageSize" aria-label="每页显示条数">
+            <option value="10">10 条</option>
+            <option value="20">20 条</option>
+            <option value="50">50 条</option>
+          </select>
+          <button class="page-button" id="prevPage" type="button" aria-label="上一页">‹</button>
+          <span id="pageNumbers" class="page-numbers"></span>
+          <button class="page-button" id="nextPage" type="button" aria-label="下一页">›</button>
+        </div>
+      </section>
+      <p class="footnote">当前页面仅审核通用教学内容与行业能力之间的候选映射，不代表学生已经掌握对应能力。</p>
+    </main>
+    <div class="task-modal" id="taskModal" aria-hidden="true">
+      <div class="task-dialog" role="dialog" aria-modal="true" aria-labelledby="taskDialogTitle">
+        <div class="task-dialog-head"><div><h2 id="taskDialogTitle">新建映射任务</h2><p>选择一组稳定版本的行业能力图谱和专业知识体系，生成候选映射。</p></div><button class="task-close" id="closeTaskButton" type="button" aria-label="关闭">×</button></div>
+        <div class="task-form">
+          <label>行业能力图谱<select id="industryGraph"><option value="tourism-v1">旅游行业能力图谱 V1.0</option><option value="ecommerce-v1">电商行业能力图谱 V1.0</option></select></label>
+          <div class="task-field"><span>专业知识体系</span><div class="knowledge-options" id="knowledgeGraph"><label><input type="checkbox" value="tourism-major-v1" data-count="2186" checked />旅游管理专业知识体系 V1.0</label><label><input type="checkbox" value="hotel-major-v1" data-count="1640" />酒店管理专业知识体系 V1.0</label><label><input type="checkbox" value="scenic-major-v1" data-count="1280" />景区开发与管理专业知识体系 V1.0</label></div><small>可多选，系统将按所选专业分别创建映射任务</small></div>
+          <div class="task-summary"><div><span>能力项</span><strong id="abilityCount">28 项</strong></div><div><span>可映射教学节点</span><strong id="knowledgeCount">2,186 个</strong></div><div><span>任务范围</span><strong>全部可映射节点</strong></div></div>
+          <label class="task-check"><input id="includeReviewed" type="checkbox" />包含历史已审核关系，仅补充新增候选</label>
+        </div>
+        <div class="task-dialog-actions"><button class="ghost-button" id="cancelTaskButton" type="button">取消</button><button class="primary-button" id="submitTaskButton" type="button">创建并生成候选</button></div>
+      </div>
+    </div>
+    <div id="toast" class="toast" role="status"></div>
+    <script src="mapping-review.js"></script>
+    </div>
+  </body>
+</html>
