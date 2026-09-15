@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>知识图谱｜专业图谱平台</title>
+    <link rel="stylesheet" href="mapping-review.css" />
+    <link rel="stylesheet" href="mapping-polish.css" />
+    <link rel="stylesheet" href="mapping-compact.css" />
+    <link rel="stylesheet" href="mapping-reference.css" />
+    <link rel="stylesheet" href="mapping-task.css" />
+    <link rel="stylesheet" href="mapping-task-override.css" />
+  </head>
+  <body>
+    <aside class="platform-sidebar" aria-label="图谱平台导航">
+      <div class="platform-brand">
+        <span class="platform-brand-mark">图</span>
+        <div><strong>专业图谱平台</strong><small>知识与能力管理</small></div>
+      </div>
+      <nav class="platform-nav">
+        <div class="nav-section-title">图谱建设</div>
+        <a href="knowledge-graph.html" class="platform-nav-item active" aria-current="page"><span class="nav-icon">图</span><span>知识图谱</span></a>
+        <a href="ability-graph.html" class="platform-nav-item"><span class="nav-icon">能</span><span>能力图谱</span></a>
+        <a href="mapping-review.html" class="platform-nav-item"><span class="nav-icon">映</span><span>图谱映射审核台</span></a>
+      </nav>
+      <div class="platform-sidebar-footer"><span class="platform-avatar">秦</span><span>平台管理员</span><span class="sidebar-more">···</span></div>
+    </aside>
+    <div class="platform-page">
+    <main class="app-shell">
+      <section class="page-heading">
+        <div><h1>知识图谱</h1></div>
+        <button class="task-button" id="createTaskButton" type="button">＋ 新建映射任务</button>
+      </section>
+      <div class="task-modal" id="taskModal" aria-hidden="true">
+        <div class="task-dialog" role="dialog" aria-modal="true" aria-labelledby="taskDialogTitle">
+          <div class="task-dialog-head"><div><h2 id="taskDialogTitle">新建映射任务</h2></div><button class="task-close" id="closeTaskButton" type="button" aria-label="关闭">×</button></div>
+          <div class="task-form">
+            <label>行业能力图谱<select id="industryGraph"><option value="tourism-v1">旅游行业能力图谱 V1.0</option><option value="ecommerce-v1">电商行业能力图谱 V1.0</option></select></label>
+            <div class="task-field"><span>专业知识体系</span><div class="knowledge-options" id="knowledgeGraph"><label><input type="checkbox" value="tourism-major-v1" data-count="2186" checked />旅游管理专业知识体系 V1.0</label><label><input type="checkbox" value="hotel-major-v1" data-count="1640" />酒店管理专业知识体系 V1.0</label><label><input type="checkbox" value="scenic-major-v1" data-count="1280" />景区开发与管理专业知识体系 V1.0</label></div></div>
+          </div>
+          <div class="task-dialog-actions"><button class="ghost-button" id="cancelTaskButton" type="button">取消</button><button class="primary-button" id="submitTaskButton" type="button">创建任务</button></div>
+        </div>
+      </div>
+      <div id="toast" class="toast" role="status"></div>
+      <p class="footnote">知识图谱用于管理专业知识体系与行业能力图谱之间的映射关系。</p>
+    </main>
+    </div>
+    <script>
+      function toast(text){var t=document.getElementById('toast');t.textContent=text;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(function(){t.classList.remove('show')},2200)}
+      var taskModal=document.getElementById('taskModal');
+      function closeTaskModal(){taskModal.classList.remove('open');taskModal.setAttribute('aria-hidden','true')}
+      document.getElementById('createTaskButton').onclick=function(){taskModal.classList.add('open');taskModal.setAttribute('aria-hidden','false')};
+      document.getElementById('closeTaskButton').onclick=closeTaskModal;
+      document.getElementById('cancelTaskButton').onclick=closeTaskModal;
+      taskModal.onclick=function(e){if(e.target===taskModal)closeTaskModal()};
+      var knowledgeInputs=document.querySelectorAll('#knowledgeGraph input');
+      function updateKnowledgeCount(){var total=0;knowledgeInputs.forEach(function(input){if(input.checked)total+=Number(input.dataset.count||0)});document.getElementById('knowledgeCount').textContent=total.toLocaleString('zh-CN')+' 个'}
+      knowledgeInputs.forEach(function(input){input.onchange=updateKnowledgeCount});
+      document.getElementById('submitTaskButton').onclick=function(){
+        var industry=document.getElementById('industryGraph').selectedOptions[0].textContent;
+        var majors=[];knowledgeInputs.forEach(function(input){if(input.checked)majors.push(input.parentElement.textContent.trim())});
+        if(!majors.length)return toast('请至少选择一个专业知识体系');
+        closeTaskModal();toast(industry+' × '+majors.length+' 个专业已创建映射任务，正在生成候选映射');
+      };
+    </script>
+  </body>
+</html>

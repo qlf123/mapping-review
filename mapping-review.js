@@ -1,3 +1,57 @@
+// 可选的知识体系节点列表
+const sourceNodeOptions = [
+  {value:'KNP-19|投诉四要素与记录表填写规范|知识点', label:'KNP-19 投诉四要素与记录表填写规范', type:'知识点'},
+  {value:'KNP-39|讲解时长与行程节点的匹配规则|知识点', label:'KNP-39 讲解时长与行程节点的匹配规则', type:'知识点'},
+  {value:'SKS-09|投诉要素倾听与记录|技能规范', label:'SKS-09 投诉要素倾听与记录', type:'技能规范'},
+  {value:'SKS-10|情绪安抚与复述确认|技能规范', label:'SKS-10 情绪安抚与复述确认', type:'技能规范'},
+  {value:'SKS-12|补偿方案设计与书面确认|技能规范', label:'SKS-12 补偿方案设计与书面确认', type:'技能规范'},
+  {value:'SKS-14|应急上报与事件记录|技能规范', label:'SKS-14 应急上报与事件记录', type:'技能规范'},
+  {value:'SKS-16|讲解词结构编排|技能规范', label:'SKS-16 讲解词结构编排', type:'技能规范'},
+  {value:'CAS-05|五分钟内完成情绪安抚的成功处置|案例', label:'CAS-05 五分钟内完成情绪安抚的成功处置', type:'案例'},
+];
+
+// 可选的能力项列表
+const targetAbilityOptions = [
+  {value:'ABL-07|客诉情绪安抚与共情表达', label:'ABL-07 客诉情绪安抚与共情表达'},
+  {value:'ABL-08|补偿方案设计与权限判断', label:'ABL-08 补偿方案设计与权限判断'},
+  {value:'ABL-11|突发事件现场处置与上报', label:'ABL-11 突发事件现场处置与上报'},
+  {value:'ABL-04|现场讲解与节奏控制', label:'ABL-04 现场讲解与节奏控制'},
+  {value:'ABL-03|导游讲解词编创', label:'ABL-03 导游讲解词编创'},
+];
+
+// 初始化模糊搜索下拉框
+function initSearchSelect(inputId, dropdownId, hiddenId, options) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  const hidden = document.getElementById(hiddenId);
+  if(!input || !dropdown) return;
+
+  function renderDropdown(query) {
+    const q = query.trim().toLowerCase();
+    const filtered = q ? options.filter(o => o.label.toLowerCase().includes(q)) : options;
+    if(!filtered.length) {
+      dropdown.innerHTML = '<div class="search-select-empty">无匹配结果</div>';
+      dropdown.style.display = 'block';
+      return;
+    }
+    dropdown.innerHTML = filtered.map(o => '<div class="search-select-option" data-value="'+o.value+'" data-label="'+o.label+'">'+o.label+'<span class="search-select-type">'+(o.type||'')+'</span></div>').join('');
+    dropdown.style.display = 'block';
+    dropdown.querySelectorAll('.search-select-option').forEach(el => {
+      el.onmousedown = function(e) {
+        e.preventDefault();
+        input.value = el.dataset.label;
+        hidden.value = el.dataset.value;
+        dropdown.style.display = 'none';
+      };
+    });
+  }
+
+  input.onfocus = () => renderDropdown(input.value);
+  input.oninput = () => { hidden.value=''; renderDropdown(input.value); };
+  input.onblur = () => { setTimeout(() => { dropdown.style.display='none'; }, 200); };
+}
+
+
 const records = [
   {id:'MAP-ABL07-KNP19',sourceType:'知识点',sourceId:'KNP-19',sourceName:'投诉四要素与记录表填写规范',sourceText:'记录表需完整填写投诉时间、地点、事由、诉求四项要素。',targetId:'ABL-07',targetName:'客诉情绪安抚与共情表达',course:'CRS-02 导游实务',relation:'partial_support',relationLabel:'部分支撑',level:'L1',confidence:.95,evidence:'对应 L1 观察点“记录表四项要素填写完整”，但不覆盖情绪安抚行为。',status:'pending'},
   {id:'MAP-ABL07-SKS09',sourceType:'技能规范',sourceId:'SKS-09',sourceName:'投诉要素倾听与记录',sourceText:'能在投诉场景中耐心倾听游客陈述，完整记录时间、地点、事由、诉求四项投诉要素。',targetId:'ABL-07',targetName:'客诉情绪安抚与共情表达',course:'CRS-02 导游实务',relation:'direct_support',relationLabel:'直接支撑',level:'L1',confidence:.95,evidence:'与 L1“全程不打断游客陈述，并按表单记录四项要素”直接对应。',status:'pending'},
@@ -14,22 +68,44 @@ const statusText={pending:'待审',expert_required:'转专家标注',approved:'�
 const relationText={direct_support:'直接支撑',partial_support:'部分支撑',foundation_support:'基础支撑',assessment_basis:'提供达标判据',scenario_support:'情境案例',related:'相关但不构成覆盖'};
 function visible(){return records.filter(r=>((state.status==='pending'?['pending','expert_required','revision_requested'].includes(r.status):r.status===state.status))&&(!state.query||[r.sourceId,r.sourceName,r.sourceText,r.targetId,r.targetName,r.course,r.evidence].join(' ').toLowerCase().includes(state.query))&&(state.type==='all'||r.relation===state.type));}
 function pageItems(list){const totalPages=Math.max(1,Math.ceil(list.length/state.pageSize));if(state.page>totalPages)state.page=totalPages;const start=(state.page-1)*state.pageSize;return list.slice(start,start+state.pageSize)}
-function row(r){const high=r.confidence>=.9;const reject=r.id===state.openReject;const isReadonly=r.status==='approved'||r.status==='rejected';return `<div class="mapping-row ${r.status==='rejected'?'rejected':''}"><div class="row-content"><input class="selected-check" type="checkbox" data-check="${r.id}" ${r.checked?'checked':''}><div><div class="source-name">${r.sourceName}</div><span class="source-meta">${r.sourceId} · ${r.sourceType}</span></div><div><div class="target-name">${r.targetName}</div><span class="target-meta">${r.targetId} · ${r.course}</span></div><select class="relation-select" data-relation="${r.id}" ${isReadonly?'disabled':''}><option value="direct_support" ${r.relation==='direct_support'?'selected':''}>直接支撑</option><option value="partial_support" ${r.relation==='partial_support'?'selected':''}>部分支撑</option><option value="foundation_support" ${r.relation==='foundation_support'?'selected':''}>基础支撑</option><option value="assessment_basis" ${r.relation==='assessment_basis'?'selected':''}>提供达标判据</option><option value="scenario_support" ${r.relation==='scenario_support'?'selected':''}>情境案例</option><option value="related" ${r.relation==='related'?'selected':''}>相关但不构成覆盖</option></select><select class="level-select" data-level="${r.id}" ${isReadonly?'disabled':''}><option ${r.level==='L1'?'selected':''}>L1</option><option ${r.level==='L2'?'selected':''}>L2</option><option ${r.level==='L3'?'selected':''}>L3</option></select><div class="confidence ${high?'high':''}"><span class="confidence-meter"><i style="width:${r.confidence*100}%"></i></span><strong>${r.confidence.toFixed(2)}</strong></div><div class="ai-evidence">${r.evidence}</div><div class="origin"><strong>AI 候选</strong>${r.sourceId} / ${r.targetId}</div><div class="row-actions"><button class="confirm-button" data-confirm="${r.id}">✓ 确认</button><button class="reject-button" data-reject="${r.id}">× 驳回</button></div></div>${reject?`<div class="reject-box"><h3>驳回必须填写理由 · 该条将进入负样本集</h3><div class="reject-form"><select data-reason="${r.id}"><option>语义相关但不构成教学支撑关系</option><option>映射目标能力不准确</option><option>证据不足，需补充原始资料</option><option>能力等级判断不准确</option></select><textarea data-comment="${r.id}" placeholder="补充说明（可选）：写清专家判定的依据，便于下一轮提示词与规则优化">${r.comment||''}</textarea><div class="reject-actions"><button class="confirm-reject" data-confirm-reject="${r.id}">确认驳回</button><button class="cancel-reject" data-cancel-reject="${r.id}">取消</button></div></div></div>`:''}</div>`;}
-function updateSelectionColumnVisibility(){const hide=state.status==='approved'||state.status==='rejected';document.body.classList.toggle('hide-selection-column',hide)}function render(){updateSelectionColumnVisibility();const list=visible();const items=pageItems(list);$('#tableBody').innerHTML=list.length?items.map(row).join(''):'<div class="empty">当前状态下没有匹配的候选映射。</div>';document.querySelectorAll('.mapping-row').forEach((element,index)=>element.classList.toggle('approved',items[index]?.status==='approved'));$('#visibleCount').textContent=list.length;$('#totalCount').textContent=list.length;bind();counts();renderPagination(list,items);}
+function row(r){const high=r.confidence>=.9;const reject=r.id===state.openReject;const isReadonly=r.status==='approved'||r.status==='rejected';return `<div class="mapping-row ${r.status==='rejected'?'rejected':''}"><div class="row-content"><input class="selected-check" type="checkbox" data-check="${r.id}" ${r.checked?'checked':''} ${isReadonly?'style="display:none"':''}><div><div class="source-name">${r.sourceName}</div><span class="source-meta">${r.sourceId} · ${r.sourceType}</span></div><div><div class="target-name">${r.targetName}</div><span class="target-meta">${r.targetId} · ${r.course}</span></div><select class="relation-select" data-relation="${r.id}" ${isReadonly?'disabled':''}><option value="direct_support" ${r.relation==='direct_support'?'selected':''}>直接支撑</option><option value="partial_support" ${r.relation==='partial_support'?'selected':''}>部分支撑</option><option value="foundation_support" ${r.relation==='foundation_support'?'selected':''}>基础支撑</option><option value="assessment_basis" ${r.relation==='assessment_basis'?'selected':''}>提供达标判据</option><option value="scenario_support" ${r.relation==='scenario_support'?'selected':''}>情境案例</option><option value="related" ${r.relation==='related'?'selected':''}>相关但不构成覆盖</option></select><select class="level-select" data-level="${r.id}" ${isReadonly?'disabled':''}><option ${r.level==='L1'?'selected':''}>L1</option><option ${r.level==='L2'?'selected':''}>L2</option><option ${r.level==='L3'?'selected':''}>L3</option></select><div class="confidence ${high?'high':''}"><span class="confidence-meter"><i style="width:${r.confidence*100}%"></i></span><strong>${r.confidence.toFixed(2)}</strong></div><div class="ai-evidence">${r.evidence}</div><div class="origin"><strong>AI 候选</strong>${r.sourceId} / ${r.targetId}</div>${(r.status==='approved'||r.status==='rejected')?'<div class="reviewer-cell">'+(r.status==='approved'?'管理员':'—')+'</div>':''}<div class="row-actions">${r.status==='approved'?'<span class="approved-label">已确认</span>':'<button class="confirm-button" data-confirm="'+r.id+'">✓ 确认</button><button class="reject-button" data-reject="'+r.id+'">× 驳回</button>'}</div></div>${reject?`<div class="reject-box"><h3>驳回必须填写理由 · 该条将进入负样本集</h3><div class="reject-form"><select data-reason="${r.id}"><option>语义相关但不构成教学支撑关系</option><option>映射目标能力不准确</option><option>证据不足，需补充原始资料</option><option>能力等级判断不准确</option></select><textarea data-comment="${r.id}" placeholder="补充说明（可选）：写清专家判定的依据，便于下一轮提示词与规则优化">${r.comment||''}</textarea><div class="reject-actions"><button class="confirm-reject" data-confirm-reject="${r.id}">确认驳回</button><button class="cancel-reject" data-cancel-reject="${r.id}">取消</button></div></div></div>`:''}</div>`;}
+function updateSelectionColumnVisibility(){const hide=state.status==='approved'||state.status==='rejected';document.body.classList.toggle('hide-selection-column',hide)}function render(){updateSelectionColumnVisibility();document.body.classList.toggle('has-reviewer-col',state.status==='approved'||state.status==='rejected');const list=visible();const items=pageItems(list);$('#tableBody').innerHTML=list.length?items.map(row).join(''):'<div class="empty">当前状态下没有匹配的候选映射。</div>';document.querySelectorAll('.mapping-row').forEach((element,index)=>element.classList.toggle('approved',items[index]?.status==='approved'));$('#visibleCount').textContent=list.length;$('#totalCount').textContent=list.length;bind();counts();renderPagination(list,items);}
 function counts(){$('#pendingCount').textContent=records.filter(r=>['pending','expert_required','revision_requested'].includes(r.status)).length;$('#approvedCount').textContent=records.filter(r=>r.status==='approved').length;$('#rejectedCount').textContent=records.filter(r=>r.status==='rejected').length;}
 function renderPagination(list,items){const totalPages=Math.max(1,Math.ceil(list.length/state.pageSize));$('#pageNumbers').innerHTML=Array.from({length:totalPages},(_,index)=>{const page=index+1;return `<button type="button" class="page-number ${page===state.page?'active':''}" data-page="${page}">${page}</button>`}).join('');$('#prevPage').disabled=state.page===1;$('#nextPage').disabled=state.page===totalPages;const selected=items.length>0&&items.every(r=>r.checked);const pageSelectAll=$('#pageSelectAll');pageSelectAll.checked=selected;pageSelectAll.indeterminate=!selected&&items.some(r=>r.checked);document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{state.page=Number(b.dataset.page);render()});}
-function bind(){document.querySelectorAll('[data-confirm]').forEach(b=>b.onclick=()=>change(b.dataset.confirm,'approved'));document.querySelectorAll('[data-reject]').forEach(b=>b.onclick=()=>{state.openReject=state.openReject===b.dataset.reject?null:b.dataset.reject;render()});document.querySelectorAll('[data-cancel-reject]').forEach(b=>b.onclick=()=>{state.openReject=null;render()});document.querySelectorAll('[data-confirm-reject]').forEach(b=>b.onclick=()=>{const r=records.find(x=>x.id===b.dataset.confirmReject);r.comment=document.querySelector(`[data-comment="${r.id}"]`).value;r.rejectReason=document.querySelector(`[data-reason="${r.id}"]`).value;r.status='rejected';state.openReject=null;toast(`${r.sourceId} 已驳回并记录原因`);render()});document.querySelectorAll('[data-check]').forEach(i=>i.onchange=()=>{records.find(r=>r.id===i.dataset.check).checked=i.checked;renderPagination(visible(),pageItems(visible()))});document.querySelectorAll('[data-relation]').forEach(s=>s.onchange=()=>{const r=records.find(x=>x.id===s.dataset.relation);r.relation=s.value;r.relationLabel=relationText[s.value]||'相关但不构成覆盖';toast('已调整候选映射类型')});document.querySelectorAll('[data-level]').forEach(s=>s.onchange=()=>{const r=records.find(x=>x.id===s.dataset.level);r.level=s.value;toast('已调整服务等级')});}
+function bind(){document.querySelectorAll('[data-confirm]').forEach(b=>b.onclick=()=>change(b.dataset.confirm,'approved'));document.querySelectorAll('[data-reject]').forEach(b=>b.onclick=()=>{state.openReject=state.openReject===b.dataset.reject?null:b.dataset.reject;render()});document.querySelectorAll('[data-cancel-reject]').forEach(b=>b.onclick=()=>{state.openReject=null;render()});document.querySelectorAll('[data-confirm-reject]').forEach(b=>b.onclick=()=>{const r=records.find(x=>x.id===b.dataset.confirmReject);r.comment=document.querySelector(`[data-comment="${r.id}"]`).value;r.rejectReason=document.querySelector(`[data-reason="${r.id}"]`).value;r.status='rejected';state.openReject=null;toast(`${r.sourceId} 已驳回并记录原因`);render()});document.querySelectorAll('[data-check]').forEach(i=>i.onchange=()=>{records.find(r=>r.id===i.dataset.check).checked=i.checked;renderPagination(visible(),pageItems(visible()))});document.querySelectorAll('[data-relation]').forEach(s=>s.onchange=()=>{const r=records.find(x=>x.id===s.dataset.relation);r.relation=s.value;r.relationLabel=relationText[s.value]||'相关但不构成覆盖';toast('已调整候选映射类型')});document.querySelectorAll('[data-level]').forEach(s=>s.onchange=()=>{const r=records.find(x=>x.id===s.dataset.level);r.level=s.value;toast('已调整服务等级')});document.querySelectorAll('[data-add-resource]').forEach(b=>b.onclick=()=>{toast('打开实训资源添加面板')});}
 function change(id,status){const r=records.find(x=>x.id===id);r.status=status;r.checked=false;state.openReject=null;toast(`${r.sourceId} → ${r.targetId} 已${statusText[status]}`);render();}
 function toast(text){const t=$('#toast');t.textContent=text;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.classList.remove('show'),2200)}
-document.querySelectorAll('.status-tab').forEach(t=>t.onclick=()=>{state.status=t.dataset.status;state.page=1;state.openReject=null;document.querySelectorAll('.status-tab').forEach(x=>x.classList.toggle('active',x===t));render()});$('#searchInput').oninput=e=>{state.query=e.target.value.trim().toLowerCase();state.page=1;render()};$('#typeFilter').onchange=e=>{state.type=e.target.value;state.page=1;render()};$('#selectAll').onclick=()=>{pageItems(visible()).forEach(r=>r.checked=true);render();toast('已选中本页全部候选')};$('#pageSelectAll').onchange=e=>{pageItems(visible()).forEach(r=>r.checked=e.target.checked);render()};$('#pageSize').onchange=e=>{state.pageSize=Number(e.target.value);state.page=1;render()};$('#prevPage').onclick=()=>{if(state.page>1){state.page-=1;render()}};$('#nextPage').onclick=()=>{if(state.page<Math.ceil(visible().length/state.pageSize)){state.page+=1;render()}};$('#batchApprove').onclick=()=>{const selected=visible().filter(r=>r.checked);if(!selected.length)return toast('请先选择当前筛选结果中的候选映射');selected.forEach(r=>{r.status='approved';r.checked=false});toast(`已确认 ${selected.length} 条候选映射`);render()};
-const taskModal=$('#taskModal');
-function closeTaskModal(){taskModal.classList.remove('open');taskModal.setAttribute('aria-hidden','true')}
-$('#createTaskButton').onclick=()=>{taskModal.classList.add('open');taskModal.setAttribute('aria-hidden','false')};
-$('#closeTaskButton').onclick=closeTaskModal;
-$('#cancelTaskButton').onclick=closeTaskModal;
-taskModal.onclick=e=>{if(e.target===taskModal)closeTaskModal()};
-function selectedKnowledgeGraphs(){return [...document.querySelectorAll('#knowledgeGraph input:checked')]}
-function updateKnowledgeCount(){const total=selectedKnowledgeGraphs().reduce((sum,input)=>sum+Number(input.dataset.count||0),0);$('#knowledgeCount').textContent=total.toLocaleString('zh-CN')+' 个'}
-document.querySelectorAll('#knowledgeGraph input').forEach(input=>input.onchange=updateKnowledgeCount);
-$('#submitTaskButton').onclick=()=>{const industry=$('#industryGraph').selectedOptions[0].textContent;const majors=selectedKnowledgeGraphs().map(input=>input.parentElement.textContent.trim());if(!majors.length)return toast('请至少选择一个专业知识体系');closeTaskModal();toast(`${industry} × ${majors.length} 个专业已创建映射任务，正在生成候选映射`)};
+document.querySelectorAll('.status-tab').forEach(t=>t.onclick=()=>{state.status=t.dataset.status;state.page=1;state.openReject=null;document.querySelectorAll('.status-tab').forEach(x=>x.classList.toggle('active',x===t));render()});$('#searchInput').oninput=e=>{state.query=e.target.value.trim().toLowerCase();state.page=1;render()};$('#typeFilter').onchange=e=>{state.type=e.target.value;state.page=1;render()};$('#pageSelectAll').onchange=e=>{pageItems(visible()).forEach(r=>r.checked=e.target.checked);render()};$('#pageSize').onchange=e=>{state.pageSize=Number(e.target.value);state.page=1;render()};$('#prevPage').onclick=()=>{if(state.page>1){state.page-=1;render()}};$('#nextPage').onclick=()=>{if(state.page<Math.ceil(visible().length/state.pageSize)){state.page+=1;render()}};$('#batchApprove').onclick=()=>{const selected=visible().filter(r=>r.checked);if(!selected.length)return toast('请先选择当前筛选结果中的候选映射');selected.forEach(r=>{r.status='approved';r.checked=false});toast(`已确认 ${selected.length} 条候选映射`);render()};
+
+const addMappingModal=$('#addMappingModal');
+function closeAddMappingModal(){addMappingModal.classList.remove('open');addMappingModal.setAttribute('aria-hidden','true')}
+$('#addMappingButton').onclick=()=>{addMappingModal.classList.add('open');addMappingModal.setAttribute('aria-hidden','false');initSearchSelect('newSourceNodeInput','sourceNodeDropdown','newSourceNode',sourceNodeOptions);initSearchSelect('newTargetAbilityInput','targetAbilityDropdown','newTargetAbility',targetAbilityOptions)};
+$('#closeAddMapping').onclick=closeAddMappingModal;
+$('#cancelAddMapping').onclick=closeAddMappingModal;
+addMappingModal.onclick=e=>{if(e.target===addMappingModal)closeAddMappingModal()};
+$('#submitAddMapping').onclick=()=>{
+  const ksVal=$('#newKnowledgeSystem').value;
+  const igVal=$('#newIndustryGraph').value;
+  if(!ksVal)return toast('请选择知识体系');
+  if(!igVal)return toast('请选择行业能力图谱');
+  const sourceVal=$('#newSourceNode').value;
+  const targetVal=$('#newTargetAbility').value;
+  if(!sourceVal)return toast('请选择知识体系节点');
+  if(!targetVal)return toast('请选择能力项');
+  const[sid,sname,stype]=sourceVal.split('|');
+  const[tid,tname]=targetVal.split('|');
+  const newId='MAP-'+sid+'-'+tid;
+  if(records.some(r=>r.id===newId))return toast('该映射关系已存在');
+  const relationVal=$('#newRelation').value;
+  const levelVal=$('#newLevel').value;
+  const evidenceVal=$('#newEvidence').value;
+  const relationLabels={direct_support:'直接支撑',partial_support:'部分支撑',foundation_support:'基础支撑',assessment_basis:'提供达标判据',scenario_support:'情境案例',related:'相关但不构成覆盖'};
+  records.unshift({id:newId,sourceType:stype||'知识点',sourceId:sid,sourceName:sname,sourceText:'',targetId:tid,targetName:tname,course:'自定义映射',relation:relationVal,relationLabel:relationLabels[relationVal]||'',level:levelVal,confidence:1,evidence:evidenceVal||'人工新增映射关系',status:'pending'});
+  closeAddMappingModal();
+  $('#newSourceNode').value='';$('#newTargetAbility').value='';$('#newSourceNodeInput').value='';$('#newTargetAbilityInput').value='';$('#newEvidence').value='';$('#newKnowledgeSystem').value='';$('#newIndustryGraph').value='';
+  state.status='pending';state.page=1;
+  document.querySelectorAll('.status-tab').forEach(x=>x.classList.toggle('active',x.dataset.status==='pending'));
+  toast('已新增映射关系：'+sname+' → '+tname);
+  render();
+};
 render();

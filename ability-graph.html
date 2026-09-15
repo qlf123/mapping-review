@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>能力图谱｜专业图谱平台</title>
+<link rel="stylesheet" href="ability-graph.css" />
+</head>
+<body>
+<aside class="platform-sidebar" aria-label="图谱平台导航">
+  <div class="platform-brand">
+    <span class="platform-brand-mark">图</span>
+    <div><strong>专业图谱平台</strong><small>知识与能力管理</small></div>
+  </div>
+  <nav class="platform-nav">
+    <div class="nav-section-title">图谱建设</div>
+    <a href="knowledge-graph.html" class="platform-nav-item"><span class="nav-icon">图</span><span>知识图谱</span></a>
+    <a href="ability-graph.html" class="platform-nav-item active" aria-current="page"><span class="nav-icon">能</span><span>能力图谱</span></a>
+    <a href="mapping-review.html" class="platform-nav-item"><span class="nav-icon">映</span><span>图谱映射审核台</span></a>
+  </nav>
+  <div class="platform-sidebar-footer"><span class="platform-avatar">秦</span><span>平台管理员</span><span class="sidebar-more">···</span></div>
+</aside>
+<div class="platform-page">
+<main class="app-shell" id="listView">
+  <section class="page-heading">
+    <div><h1>能力图谱</h1></div>
+    <button class="task-button" id="createGraphButton" type="button">＋ 新增能力图谱</button>
+  </section>
+  <section class="graph-list" id="graphList"></section>
+</main>
+
+<div class="task-modal" id="createGraphModal" aria-hidden="true">
+  <div class="task-dialog" role="dialog" aria-modal="true">
+    <div class="task-dialog-head">
+      <div><h2>新增能力图谱</h2><p>填写行业名称与描述，AI 将自动构建能力图谱。</p></div>
+      <button class="task-close" id="closeCreateGraph" type="button" aria-label="关闭">×</button>
+    </div>
+    <div class="task-form">
+      <label>行业名称<input id="newGraphName" type="text" placeholder="如：旅游业、电商行业" /></label>
+      <label>行业描述<textarea id="newGraphDesc" rows="4" placeholder="描述行业边界、核心岗位群与排除范围"></textarea></label>
+    </div>
+    <div class="task-dialog-actions">
+      <button class="ghost-button" id="cancelCreateGraph" type="button">取消</button>
+      <button class="ghost-button" id="manualCreateGraph" type="button" style="border-color:#5149e9;color:#5149e9;">手动创建</button>
+      <button class="primary-button" id="submitCreateGraph" type="button">确定 · AI自动构建</button>
+    </div>
+  </div>
+</div>
+
+<div class="task-modal" id="editGraphModal" aria-hidden="true">
+  <div class="task-dialog" role="dialog" aria-modal="true">
+    <div class="task-dialog-head">
+      <div><h2>编辑能力图谱</h2></div>
+      <button class="task-close" id="closeEditGraph" type="button" aria-label="关闭">×</button>
+    </div>
+    <div class="task-form">
+      <label>行业名称<input id="editGraphName" type="text" placeholder="如：旅游业、电商行业" /></label>
+      <label>行业描述<textarea id="editGraphDesc" rows="4" placeholder="描述行业边界、核心岗位群与排除范围"></textarea></label>
+    </div>
+    <div class="task-dialog-actions">
+      <button class="ghost-button" id="cancelEditGraph" type="button">取消</button>
+      <button class="primary-button" id="submitEditGraph" type="button">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="task-modal" id="graphSettingsModal" aria-hidden="true">
+  <div class="task-dialog" role="dialog" aria-modal="true">
+    <div class="task-dialog-head">
+      <div><h2>图谱设置</h2></div>
+      <button class="task-close" id="closeGraphSettings" type="button" aria-label="关闭">×</button>
+    </div>
+    <div class="task-form" id="settingsForm"></div>
+    <div class="task-dialog-actions">
+      <button class="ghost-button" id="cancelGraphSettings" type="button">取消</button>
+      <button class="primary-button" id="submitGraphSettings" type="button">保存</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status"></div>
+</div>
+<script src="ability-graph.js"></script>
+</body>
+</html>
