@@ -118,7 +118,7 @@ function renderList(){
         <div><span>岗位</span><strong>${g.stats.positions}</strong></div>
         <div><span>能力项</span><strong>${g.stats.abilities}</strong></div>`;
     } else {
-      statusBadge = '<span class="graph-card-status built">已构建</span>';
+      statusBadge = '<span class="graph-card-status built">构建完成</span>';
       stats = `
         <div><span>子行业</span><strong>${g.stats.subIndustries}</strong></div>
         <div><span>岗位</span><strong>${g.stats.positions}</strong></div>
@@ -188,14 +188,14 @@ function openGraphSettings(graphId){
   const g = graphs.find(x=>x.id===graphId);
   if(!g) return;
   // 显示当前状态
-  const statusText = g.status==='building'?'构建中':(g.status==='confirmed'||g.confirmed?'已确认':'已构建');
+  const statusText = g.status==='building'?'构建中':(g.status==='confirmed'||g.confirmed?'已确认':'构建完成');
   let settingsHtml = `<label>图谱名称<input type="text" value="${esc(g.name)}" disabled /></label>`;
   settingsHtml += `<label>当前状态<span class="settings-status">${statusText}</span></label>`;
   settingsHtml += `<label>创建时间<span class="settings-status">${g.createdAt||'-'}</span></label>`;
   settingsHtml += `<label>统计<span class="settings-status">子行业 ${g.stats.subIndustries} · 岗位 ${g.stats.positions} · 能力项 ${g.stats.abilities}</span></label>`;
   // 状态切换
   if(g.status === 'confirmed' || g.confirmed){
-    settingsHtml += `<label>撤回确认<div class="settings-tip">撤回后图谱回到"已构建"状态，可继续编辑节点</div><button class="task-button" id="revokeConfirmBtn" type="button" style="width:100%">撤回确认状态</button></label>`;
+    settingsHtml += `<label>撤回确认<div class="settings-tip">撤回后图谱回到"构建完成"状态，可继续编辑节点</div><button class="task-button" id="revokeConfirmBtn" type="button" style="width:100%">撤回确认状态</button></label>`;
   } else if(g.status === 'built'){
     settingsHtml += `<label>确认图谱<div class="settings-tip">确认后图谱不可再编辑节点，进入只读状态</div><button class="task-button" id="quickConfirmBtn" type="button" style="width:100%;background:#5149e9;color:#fff;border-color:#5149e9;">确认图谱</button></label>`;
   }
@@ -258,7 +258,7 @@ function initTreePage(){
     badge.textContent = '已确认';
     badge.className = 'tree-status-badge confirmed';
   } else {
-    badge.textContent = '已构建';
+    badge.textContent = '构建完成';
     badge.className = 'tree-status-badge built';
   }
   const confirmBtn = $('#confirmGraphBtn');
