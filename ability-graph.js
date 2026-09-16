@@ -882,7 +882,7 @@ function updateNodeParentOptions(){
         </div>`;
       }).join('');
     } else {
-      $('#newNodeChildren').innerHTML = children.map(c=>`<label><input type="checkbox" value="${c.id}"> ${c.name}</label>`).join('');
+      $('#newNodeChildren').innerHTML = children.map(c=>`<label><input type="checkbox" class="child-check" value="${c.id}"> ${c.name}</label>`).join('');
     }
   } else {
     $('#newNodeChildren').innerHTML = '<span style="font-size:12px;color:var(--text3)">暂无可选下层节点</span>';
@@ -940,7 +940,7 @@ $('#submitAddNode')?.addEventListener('click', ()=>{
     newNode.describe = ($('#newNodeDesc')?.value || '').trim();
     newNode.positions = [];
     // 找到选中的下层节点（岗位），移动到这个新子行业下
-    const selectedChildIds = [...$('#newNodeChildren').querySelectorAll('input:checked')].map(c=>c.value);
+    const selectedChildIds = [...$('#newNodeChildren').querySelectorAll('.child-check:checked')].map(c=>c.value);
     newNode.positions = selectedChildIds.map(cid => {
       let found = null;
       (tree.subIndustries||[]).forEach(s=>{
@@ -1041,8 +1041,8 @@ function openAddChild(parentId, level){
     const posHtml = positions.length
       ? positions.map(p=>`<label><input type="checkbox" class="child-check" value="${p.id}"> ${p.name}</label>`).join('')
       : '<span style="font-size:12px;color:#999;">暂无可选岗位</span>';
-    fields += `<label>下层节点（岗位 · 可多选）<div class="checkbox-group">${posHtml}</div></label>`;
-    fields += `<label>描述<textarea id="addChildDesc" rows="3" placeholder="描述（可选）"></textarea></label>`;
+    fields += `<label>下层节点（可多选）<div class="checkbox-group">${posHtml}</div></label>`;
+    fields += `<label>描述<textarea id="addChildDesc" rows="2" placeholder="描述（可选）"></textarea></label>`;
   }
 
   if(level === 1){
@@ -1068,8 +1068,8 @@ function openAddChild(parentId, level){
           </div>`;
         }).join('')
       : '<span style="font-size:12px;color:#999;">暂无可选能力项</span>';
-    fields += `<label>能力项（可多选）<div id="addChildAbilities">${abiHtml}</div></label>`;
-    fields += `<label>描述<textarea id="addChildDesc" rows="3" placeholder="描述（可选）"></textarea></label>`;
+    fields += `<label>能力项（可多选）<div id="addChildAbilities" class="checkbox-group">${abiHtml}</div></label>`;
+    fields += `<label>描述<textarea id="addChildDesc" rows="2" placeholder="描述（可选）"></textarea></label>`;
   }
 
   if(level === 2){
@@ -1100,7 +1100,7 @@ function openAddChild(parentId, level){
     (g?.tree?.subIndustries||[]).forEach(sub=>(sub.positions||[]).forEach(pos=>(pos.abilities||[]).forEach(ab=>allAbilities.push({id:ab.id,name:ab.name}))));
     const prereqOptions = allAbilities.map(a=>`<label><input type="checkbox" value="${a.id}"> ${a.name}</label>`).join('');
     fields += `<div style="margin-bottom:15px;"><span style="display:block;color:var(--text2);font-size:12px;font-weight:600;">前置能力项（选填，可多选）</span><div id="addChildPrereq" class="checkbox-group" style="margin-top:7px;">${prereqOptions || '<span style="font-size:12px;color:#999;">暂无可选能力项</span>'}</div></div>`;
-    fields += `<label>行为描述<textarea id="addChildBehavior" rows="3" placeholder="描述该能力项的可观察行为（可选）"></textarea></label>`;
+    fields += `<label>行为描述<textarea id="addChildBehavior" rows="2" placeholder="描述该能力项的可观察行为（可选）"></textarea></label>`;
   }
   $('#addChildForm').innerHTML = fields;
   openModal('#addChildModal');
