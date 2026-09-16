@@ -1,6 +1,33 @@
 const $ = s => document.querySelector(s);
 const uid = () => 'id-' + Math.random().toString(36).slice(2, 9);
 
+// 勾选能力项时自动选中等级 L2
+function autoSelectL2(cb){
+  if(cb.checked){
+    const row = cb.closest('.ability-select-row');
+    if(row){
+      const checked = row.querySelector('.abi-level:checked');
+      if(!checked){
+        const l2 = row.querySelector('.abi-level[value="L2"]');
+        if(l2) l2.checked = true;
+      }
+    }
+  }
+}
+
+function addLevel(blockId, btnId){
+  const b = document.getElementById(blockId);
+  const btn = document.getElementById(btnId);
+  if(b) b.style.display = '';
+  if(btn) btn.style.display = 'none';
+}
+function removeLevel(blockId, btnId){
+  const b = document.getElementById(blockId);
+  const btn = document.getElementById(btnId);
+  if(b) b.style.display = 'none';
+  if(btn) btn.style.display = '';
+}
+
 // 能力图谱列表数据
 let graphs = [
   {
@@ -818,7 +845,7 @@ function updateNodeParentOptions(){
       parents.push({id:s.id, name:s.name});
       (s.positions||[]).forEach(p=>{
         (p.abilities||[]).forEach(a=>{
-          if(!ablSet.has(a.id)) ablSet.set(a.id, {id:a.id,name:a.name});
+          if(!ablSet.has(a.id)) ablSet.set(a.id, {id:a.id,name:a.name,requiredLevel:a.requiredLevel});
         });
       });
     });
@@ -833,21 +860,63 @@ function updateNodeParentOptions(){
   $('#newNodeParent').innerHTML = parents.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   // 能力项类型：隐藏下层节点
   $('#newNodeChildrenWrap').style.display = type === 3 ? 'none' : 'block';
+  // 更新标签文案
+  const lbl = document.querySelector('#newNodeChildrenLabel');
+  if(lbl) lbl.firstChild.nodeValue = type === 2 ? '能力项（可多选）' : '下层节点（可多选）';
   // 填充下层节点多选
   if(children.length){
-    $('#newNodeChildren').innerHTML = children.map(c=>`<label><input type="checkbox" value="${c.id}"> ${c.name}</label>`).join('');
+    if(type === 2){
+      // 岗位：每个能力项附带 L1/L2/L3 勾选
+      $('#newNodeChildren').innerHTML = children.map(c=>{
+        const lvl = '';
+        const l1Chk = lvl === 'L1' ? 'checked' : '';
+        const l2Chk = lvl === 'L2' ? 'checked' : '';
+        const l3Chk = lvl === 'L3' ? 'checked' : '';
+        return `<div class="ability-select-row" data-id="${c.id}" style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #f0f0f0;">
+          <label style="flex:1;display:flex;align-items:center;gap:6px;"><input type="checkbox" class="abi-check" value="${c.id}" onclick="autoSelectL2(this)"> ${c.name}</label>
+          <span style="display:flex;gap:6px;">
+            <label style="font-size:12px;display:flex;align-items:center;gap:2px;"><input type="radio" class="abi-level" name="lvl-${c.id}" value="L1" ${l1Chk}> L1</label>
+            <label style="font-size:12px;display:flex;align-items:center;gap:2px;"><input type="radio" class="abi-level" name="lvl-${c.id}" value="L2" ${l2Chk}> L2</label>
+            <label style="font-size:12px;display:flex;align-items:center;gap:2px;"><input type="radio" class="abi-level" name="lvl-${c.id}" value="L3" ${l3Chk}> L3</label>
+          </span>
+        </div>`;
+      }).join('');
+    } else {
+      $('#newNodeChildren').innerHTML = children.map(c=>`<label><input type="checkbox" value="${c.id}"> ${c.name}</label>`).join('');
+    }
   } else {
     $('#newNodeChildren').innerHTML = '<span style="font-size:12px;color:var(--text3)">暂无可选下层节点</span>';
   }
   // 能力项额外字段
   if(type === 3){
+    // 收集当前图谱中所有已存在的能力项作为前置能力候选
+    const allAbi = [];
+    (g?.tree?.subIndustries||[]).forEach(sub=>(sub.positions||[]).forEach(pos=>(pos.abilities||[]).forEach(ab=>allAbi.push({id:ab.id,name:ab.name}))));
+    const prereqOpts = allAbi.map(a=>`<label><input type="checkbox" value="${a.id}"> ${a.name}</label>`).join('');
     $('#newNodeExtraFields').innerHTML = `
       <label>类型<select id="newNodeAbiType"><option value="knowledge">知识</option><option value="skill">技能</option><option value="attitude">素养</option></select></label>
       <label>领域<input id="newNodeDomain" type="text" placeholder="如：产品策划与行程设计" /></label>
-      <label>L1 要求（选填）<input id="newNodeL1" type="text" placeholder="L1 级别的要求描述" /></label>
-      <label>L2 要求（选填）<input id="newNodeL2" type="text" placeholder="L2 级别的要求描述" /></label>
-      <label>L3 要求（选填）<input id="newNodeL3" type="text" placeholder="L3 级别的要求描述" /></label>
+      <div style="margin-bottom:15px;border-left:3px solid #5149e9;padding-left:10px;">
+        <div style="color:var(--text2);font-size:12px;font-weight:600;margin-bottom:7px;">L1 要求</div>
+        <label>描述（必输）<input id="newNodeL1" type="text" placeholder="L1 级别的要求描述" /></label>
+        <label>建议考核方式<input id="newNodeL1Assess" type="text" placeholder="如：模拟讲解考核" /></label>
+      </div>
+      <div id="newL2Block" style="display:none;margin-bottom:15px;border-left:3px solid #5149e9;padding-left:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;color:var(--text2);font-size:12px;font-weight:600;margin-bottom:7px;">L2 要求 <button type="button" onclick="removeLevel('newL2Block','newL2AddBtn')" style="border:none;background:none;color:#f44;cursor:pointer;font-size:12px;">× 删除</button></div>
+        <label>描述<input id="newNodeL2" type="text" placeholder="L2 级别的要求描述" /></label>
+        <label>建议考核方式<input id="newNodeL2Assess" type="text" placeholder="如：方案评审" /></label>
+      </div>
+      <div id="newL3Block" style="display:none;margin-bottom:15px;border-left:3px solid #5149e9;padding-left:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;color:var(--text2);font-size:12px;font-weight:600;margin-bottom:7px;">L3 要求 <button type="button" onclick="removeLevel('newL3Block','newL3AddBtn')" style="border:none;background:none;color:#f44;cursor:pointer;font-size:12px;">× 删除</button></div>
+        <label>描述<input id="newNodeL3" type="text" placeholder="L3 级别的要求描述" /></label>
+        <label>建议考核方式<input id="newNodeL3Assess" type="text" placeholder="如：限时实操考核" /></label>
+      </div>
+      <div style="margin-bottom:15px;display:flex;gap:8px;">
+        <button type="button" id="newL2AddBtn" onclick="addLevel('newL2Block','newL2AddBtn')" style="border:1px solid #5149e9;color:#5149e9;background:#fff;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer;">+ 增加 L2</button>
+        <button type="button" id="newL3AddBtn" onclick="addLevel('newL3Block','newL3AddBtn')" style="border:1px solid #5149e9;color:#5149e9;background:#fff;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer;">+ 增加 L3</button>
+      </div>
       <label>核心能力<select id="newNodeCore"><option value="false">否</option><option value="true">是</option></select></label>
+      <div style="margin-bottom:15px;"><span style="display:block;color:var(--text2);font-size:12px;font-weight:600;">前置能力项（选填，可多选）</span><div id="newNodePrereq" class="checkbox-group" style="margin-top:7px;">${prereqOpts || '<span style="font-size:12px;color:#999;">暂无可选能力项</span>'}</div></div>
       <label>行为描述<textarea id="newNodeBehavior" rows="2" placeholder="描述该能力项的可观察行为（可选）"></textarea></label>`;
   } else {
     $('#newNodeExtraFields').innerHTML = '<label>描述<textarea id="newNodeDesc" rows="2" placeholder="描述（可选）"></textarea></label>';
@@ -886,9 +955,12 @@ $('#submitAddNode')?.addEventListener('click', ()=>{
     newNode.describe = ($('#newNodeDesc')?.value || '').trim();
     newNode.careerLevel = '';
     newNode.abilities = [];
-    // 找到选中的下层节点（能力项），链接到这个新岗位
-    const selectedChildIds = [...$('#newNodeChildren').querySelectorAll('input:checked')].map(c=>c.value);
-    selectedChildIds.forEach(cid => {
+    // 找到选中的能力项，链接到新岗位并更新 L1/L2/L3
+    const rows = [...$('#newNodeChildren').querySelectorAll('.ability-select-row')];
+    rows.forEach(row => {
+      const check = row.querySelector('.abi-check');
+      if(!check || !check.checked) return;
+      const cid = check.value;
       let found = null;
       (tree.subIndustries||[]).forEach(s=>{
         (s.positions||[]).forEach(p=>{
@@ -896,27 +968,38 @@ $('#submitAddNode')?.addEventListener('click', ()=>{
           if(idx>-1){ found = p.abilities.splice(idx,1)[0]; }
         });
       });
-      if(found) newNode.abilities.push(found);
+      if(!found) return;
+      // 读取单选等级，默认 L2
+      const levelRadio = row.querySelector('.abi-level:checked');
+      found.requiredLevel = levelRadio ? levelRadio.value : 'L2';
+      newNode.abilities.push(found);
     });
     // 找到父节点（子行业），添加岗位
     const sub = (tree.subIndustries||[]).find(s=>s.id===parentId);
     if(sub){ sub.positions = sub.positions || []; sub.positions.push(newNode); }
   } else if(type === 3){ // 能力项
     const l1 = ($('#newNodeL1')?.value || '').trim();
-    const l2 = ($('#newNodeL2')?.value || '').trim();
-    const l3 = ($('#newNodeL3')?.value || '').trim();
-    if(!l1 && !l2 && !l3) return toast('L1/L2/L3 要求至少填写一项');
+    if(!l1) return toast('L1 描述为必输项');
+    const l2Vis = $('#newL2Block')?.style.display !== 'none';
+    const l3Vis = $('#newL3Block')?.style.display !== 'none';
+    const l2 = l2Vis ? ($('#newNodeL2')?.value || '').trim() : '';
+    const l3 = l3Vis ? ($('#newNodeL3')?.value || '').trim() : '';
     newNode.type = $('#newNodeAbiType').value;
     newNode.domain = $('#newNodeDomain').value.trim();
     newNode.l1Req = l1;
+    newNode.l1AssessMethod = ($('#newNodeL1Assess')?.value || '').trim();
     newNode.l2Req = l2;
+    newNode.l2AssessMethod = l2Vis ? ($('#newNodeL2Assess')?.value || '').trim() : '';
     newNode.l3Req = l3;
-    newNode.requiredLevel = l3 ? 'L3' : (l2 ? 'L2' : 'L1');
+    newNode.l3AssessMethod = l3Vis ? ($('#newNodeL3Assess')?.value || '').trim() : '';
+    newNode.requiredLevel = (l3Vis && l3) ? 'L3' : ((l2Vis && l2) ? 'L2' : 'L1');
     newNode.core = $('#newNodeCore').value === 'true';
     newNode.behaviorDesc = $('#newNodeBehavior').value.trim();
-    newNode.assessMethod = '';
+    newNode.assessMethod = newNode.l1AssessMethod || '';
     newNode.inferred = false;
     newNode.flag = null;
+    const prereqBox = $('#newNodePrereq');
+    newNode.prerequisites = prereqBox ? [...prereqBox.querySelectorAll('input:checked')].map(c=>c.value) : [];
     // 找到父节点（岗位），添加能力项
     let parentPos = null;
     (tree.subIndustries||[]).forEach(s=>{
@@ -945,18 +1028,78 @@ function openAddChild(parentId, level){
   addChildLevel = level;
   const result = findNode(parentId, level);
   if(!result) return;
+  const g = getGraph();
+  const tree = g?.tree;
   const childLabels = ['子行业','岗位','能力项'];
   $('#addChildTitle').textContent = '添加' + childLabels[level];
   let fields = `<label>名称<input id="addChildName" type="text" placeholder="请输入${childLabels[level]}名称" /></label>`;
-  if(level < 2) fields += `<label>描述<textarea id="addChildDesc" rows="3" placeholder="描述（可选）"></textarea></label>`;
-  if(level === 1) fields += `<label>职级<input id="addChildCareer" type="text" placeholder="如：初级/中级" /></label>`;
+
+  if(level === 0){
+    // 子行业：下层节点（岗位可多选）
+    const positions = [];
+    (tree?.subIndustries||[]).forEach(s=>(s.positions||[]).forEach(p=>positions.push({id:p.id,name:p.name})));
+    const posHtml = positions.length
+      ? positions.map(p=>`<label><input type="checkbox" class="child-check" value="${p.id}"> ${p.name}</label>`).join('')
+      : '<span style="font-size:12px;color:#999;">暂无可选岗位</span>';
+    fields += `<label>下层节点（岗位 · 可多选）<div class="checkbox-group">${posHtml}</div></label>`;
+    fields += `<label>描述<textarea id="addChildDesc" rows="3" placeholder="描述（可选）"></textarea></label>`;
+  }
+
+  if(level === 1){
+    // 岗位：能力项（可多选）附带 L1/L2/L3 单选
+    const ablSet = new Map();
+    (tree?.subIndustries||[]).forEach(s=>(s.positions||[]).forEach(p=>(p.abilities||[]).forEach(a=>{
+      if(!ablSet.has(a.id)) ablSet.set(a.id, {id:a.id,name:a.name,requiredLevel:a.requiredLevel});
+    })));
+    const abilities = [...ablSet.values()];
+    const abiHtml = abilities.length
+      ? abilities.map(c=>{
+          const lvl = '';
+          const l1Chk = lvl === 'L1' ? 'checked' : '';
+          const l2Chk = lvl === 'L2' ? 'checked' : '';
+          const l3Chk = lvl === 'L3' ? 'checked' : '';
+          return `<div class="ability-select-row" data-id="${c.id}" style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #f0f0f0;">
+            <label style="flex:1;display:flex;align-items:center;gap:6px;"><input type="checkbox" class="abi-check" value="${c.id}" onclick="autoSelectL2(this)"> ${c.name}</label>
+            <span style="display:flex;gap:6px;">
+              <label style="font-size:12px;display:flex;align-items:center;gap:2px;"><input type="radio" class="abi-level" name="lvl-${c.id}" value="L1" ${l1Chk}> L1</label>
+              <label style="font-size:12px;display:flex;align-items:center;gap:2px;"><input type="radio" class="abi-level" name="lvl-${c.id}" value="L2" ${l2Chk}> L2</label>
+              <label style="font-size:12px;display:flex;align-items:center;gap:2px;"><input type="radio" class="abi-level" name="lvl-${c.id}" value="L3" ${l3Chk}> L3</label>
+            </span>
+          </div>`;
+        }).join('')
+      : '<span style="font-size:12px;color:#999;">暂无可选能力项</span>';
+    fields += `<label>能力项（可多选）<div id="addChildAbilities">${abiHtml}</div></label>`;
+    fields += `<label>描述<textarea id="addChildDesc" rows="3" placeholder="描述（可选）"></textarea></label>`;
+  }
+
   if(level === 2){
+    // 能力项：与新增节点弹框完全一致
     fields += `<label>类型<select id="addChildType"><option value="knowledge">知识</option><option value="skill">技能</option><option value="attitude">素养</option></select></label>`;
     fields += `<label>领域<input id="addChildDomain" type="text" placeholder="如：产品策划与行程设计" /></label>`;
-    fields += `<label>L1 要求（选填）<input id="addChildL1" type="text" placeholder="L1 级别的要求描述" /></label>`;
-    fields += `<label>L2 要求（选填）<input id="addChildL2" type="text" placeholder="L2 级别的要求描述" /></label>`;
-    fields += `<label>L3 要求（选填）<input id="addChildL3" type="text" placeholder="L3 级别的要求描述" /></label>`;
+    fields += `<div style="margin-bottom:15px;border-left:3px solid #5149e9;padding-left:10px;">
+      <div style="color:var(--text2);font-size:12px;font-weight:600;margin-bottom:7px;">L1 要求</div>
+      <label>描述（必输）<input id="addChildL1" type="text" placeholder="L1 级别的要求描述" /></label>
+      <label>建议考核方式<input id="addChildL1Assess" type="text" placeholder="如：模拟讲解考核" /></label>
+    </div>
+    <div id="childL2Block" style="display:none;margin-bottom:15px;border-left:3px solid #5149e9;padding-left:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;color:var(--text2);font-size:12px;font-weight:600;margin-bottom:7px;">L2 要求 <button type="button" onclick="removeLevel('childL2Block','childL2AddBtn')" style="border:none;background:none;color:#f44;cursor:pointer;font-size:12px;">× 删除</button></div>
+      <label>描述<input id="addChildL2" type="text" placeholder="L2 级别的要求描述" /></label>
+      <label>建议考核方式<input id="addChildL2Assess" type="text" placeholder="如：方案评审" /></label>
+    </div>
+    <div id="childL3Block" style="display:none;margin-bottom:15px;border-left:3px solid #5149e9;padding-left:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;color:var(--text2);font-size:12px;font-weight:600;margin-bottom:7px;">L3 要求 <button type="button" onclick="removeLevel('childL3Block','childL3AddBtn')" style="border:none;background:none;color:#f44;cursor:pointer;font-size:12px;">× 删除</button></div>
+      <label>描述<input id="addChildL3" type="text" placeholder="L3 级别的要求描述" /></label>
+      <label>建议考核方式<input id="addChildL3Assess" type="text" placeholder="如：限时实操考核" /></label>
+    </div>
+    <div style="margin-bottom:15px;display:flex;gap:8px;">
+      <button type="button" id="childL2AddBtn" onclick="addLevel('childL2Block','childL2AddBtn')" style="border:1px solid #5149e9;color:#5149e9;background:#fff;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer;">+ 增加 L2</button>
+      <button type="button" id="childL3AddBtn" onclick="addLevel('childL3Block','childL3AddBtn')" style="border:1px solid #5149e9;color:#5149e9;background:#fff;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer;">+ 增加 L3</button>
+    </div>`;
     fields += `<label>核心能力<select id="addChildCore"><option value="false">否</option><option value="true">是</option></select></label>`;
+    const allAbilities = [];
+    (g?.tree?.subIndustries||[]).forEach(sub=>(sub.positions||[]).forEach(pos=>(pos.abilities||[]).forEach(ab=>allAbilities.push({id:ab.id,name:ab.name}))));
+    const prereqOptions = allAbilities.map(a=>`<label><input type="checkbox" value="${a.id}"> ${a.name}</label>`).join('');
+    fields += `<div style="margin-bottom:15px;"><span style="display:block;color:var(--text2);font-size:12px;font-weight:600;">前置能力项（选填，可多选）</span><div id="addChildPrereq" class="checkbox-group" style="margin-top:7px;">${prereqOptions || '<span style="font-size:12px;color:#999;">暂无可选能力项</span>'}</div></div>`;
     fields += `<label>行为描述<textarea id="addChildBehavior" rows="3" placeholder="描述该能力项的可观察行为（可选）"></textarea></label>`;
   }
   $('#addChildForm').innerHTML = fields;
@@ -970,25 +1113,72 @@ if($('#submitAddChild')) $('#submitAddChild').onclick = ()=>{
   if(!result) return;
   const node = result.node;
   const child = { id: uid(), name };
-  if(addChildLevel < 2) child.describe = ($('#addChildDesc')?.value || '').trim();
-  if(addChildLevel === 1){
-    child.careerLevel = ($('#addChildCareer')?.value || '').trim();
-    child.abilities = [];
+  const g = graphs.find(x=>x.id===currentGraphId);
+  const tree = g?.tree;
+
+  if(addChildLevel === 0){
+    // 子行业
+    child.describe = ($('#addChildDesc')?.value || '').trim();
+    child.positions = [];
+    // 找到选中的岗位，移动到这个新子行业下
+    const selectedIds = [...$('#addChildForm').querySelectorAll('.child-check:checked')].map(c=>c.value);
+    selectedIds.forEach(cid => {
+      let found = null;
+      (tree?.subIndustries||[]).forEach(s=>{
+        const idx = (s.positions||[]).findIndex(p=>p.id===cid);
+        if(idx>-1){ found = s.positions.splice(idx,1)[0]; }
+      });
+      if(found) child.positions.push(found);
+    });
   }
+
+  if(addChildLevel === 1){
+    // 岗位
+    child.describe = ($('#addChildDesc')?.value || '').trim();
+    child.careerLevel = '';
+    child.abilities = [];
+    // 找到选中的能力项，移动到新岗位并设置等级
+    const rows = [...$('#addChildForm').querySelectorAll('.ability-select-row')];
+    rows.forEach(row => {
+      const check = row.querySelector('.abi-check');
+      if(!check || !check.checked) return;
+      const cid = check.value;
+      let found = null;
+      (tree?.subIndustries||[]).forEach(s=>{
+        (s.positions||[]).forEach(p=>{
+          const idx = (p.abilities||[]).findIndex(a=>a.id===cid);
+          if(idx>-1){ found = p.abilities.splice(idx,1)[0]; }
+        });
+      });
+      if(!found) return;
+      const levelRadio = row.querySelector('.abi-level:checked');
+      found.requiredLevel = levelRadio ? levelRadio.value : 'L2';
+      child.abilities.push(found);
+    });
+  }
+
   if(addChildLevel === 2){
+    // 能力项
     const l1 = ($('#addChildL1')?.value || '').trim();
-    const l2 = ($('#addChildL2')?.value || '').trim();
-    const l3 = ($('#addChildL3')?.value || '').trim();
-    if(!l1 && !l2 && !l3) return toast('L1/L2/L3 要求至少填写一项');
+    if(!l1) return toast('L1 描述为必输项');
+    const l2Vis = $('#childL2Block')?.style.display !== 'none';
+    const l3Vis = $('#childL3Block')?.style.display !== 'none';
+    const l2 = l2Vis ? ($('#addChildL2')?.value || '').trim() : '';
+    const l3 = l3Vis ? ($('#addChildL3')?.value || '').trim() : '';
     child.type = $('#addChildType').value;
     child.domain = $('#addChildDomain').value.trim();
     child.l1Req = l1;
+    child.l1AssessMethod = ($('#addChildL1Assess')?.value || '').trim();
     child.l2Req = l2;
+    child.l2AssessMethod = l2Vis ? ($('#addChildL2Assess')?.value || '').trim() : '';
     child.l3Req = l3;
-    child.requiredLevel = l3 ? 'L3' : (l2 ? 'L2' : 'L1');
+    child.l3AssessMethod = l3Vis ? ($('#addChildL3Assess')?.value || '').trim() : '';
+    child.requiredLevel = (l3Vis && l3) ? 'L3' : ((l2Vis && l2) ? 'L2' : 'L1');
     child.core = $('#addChildCore').value === 'true';
     child.behaviorDesc = $('#addChildBehavior').value.trim();
-    child.assessMethod = '';
+    child.assessMethod = child.l1AssessMethod || '';
+    const prereqBox = $('#addChildPrereq');
+    child.prerequisites = prereqBox ? [...prereqBox.querySelectorAll('input:checked')].map(c=>c.value) : [];
     child.inferred = false;
     child.flag = null;
   }
@@ -998,9 +1188,8 @@ if($('#submitAddChild')) $('#submitAddChild').onclick = ()=>{
   expandedNodes.add(node.id);
   closeModal('#addChildModal');
   toast('已添加' + (addChildLevel===0?'子行业':addChildLevel===1?'岗位':'能力项'));
-  const g = graphs.find(x=>x.id===currentGraphId);
-  renderTree(g.tree);
-  renderTreeStats(g.tree);
+  renderTree(tree);
+  renderTreeStats(tree);
   saveGraphs();
 };
 
