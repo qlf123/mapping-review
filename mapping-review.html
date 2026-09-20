@@ -44,11 +44,11 @@
 
       <section class="table-toolbar">
         <div class="toolbar-note"><strong id="visibleCount">6</strong> 条待审核候选 <span>·</span> 置信度与锚定依据由算法生成</div>
-        <div class="toolbar-actions"><label class="search"><span>⌕</span><input id="searchInput" placeholder="搜索知识点、能力项或课程" /></label><select id="typeFilter"><option value="all">全部映射类型</option><option value="direct_support">直接支撑</option><option value="partial_support">部分支撑</option><option value="foundation_support">基础支撑</option><option value="assessment_basis">提供达标判据</option><option value="scenario_support">情境案例</option><option value="related">相关但不构成覆盖</option></select><button class="primary-button" id="batchApprove">批量确认</button></div>
+        <div class="toolbar-actions"><label class="search"><span>⌕</span><input id="searchInput" placeholder="搜索节点" /></label><select id="ksFilter"><option value="all">全部知识体系</option><option value="旅游管理专业知识体系 V1.0">旅游管理专业知识体系 V1.0</option><option value="酒店管理专业知识体系 V1.0">酒店管理专业知识体系 V1.0</option><option value="景区开发与管理专业知识体系 V1.0">景区开发与管理专业知识体系 V1.0</option></select><select id="agFilter"><option value="all">全部能力图谱</option><option value="旅游行业能力图谱 V1.0">旅游行业能力图谱 V1.0</option><option value="电商行业能力图谱 V1.0">电商行业能力图谱 V1.0</option></select><select id="typeFilter"><option value="all">全部映射类型</option><option value="direct_support">直接支撑</option><option value="partial_support">部分支撑</option><option value="foundation_support">基础支撑</option><option value="assessment_basis">提供达标判据</option><option value="scenario_support">情境案例</option><option value="related">相关但不构成覆盖</option></select><button class="primary-button" id="searchBtn" type="button" style="background:#fff;border:1px solid #5149e9;color:#5149e9;">搜索</button><button class="primary-button" id="batchApprove">批量确认</button></div>
       </section>
 
       <section class="mapping-table" aria-label="映射审核表格">
-        <div class="table-head"><span class="head-source"><input id="pageSelectAll" type="checkbox" aria-label="选择本页全部候选" />知识体系节点</span><span>能力项</span><span>映射类型</span><span>服务等级</span><span>置信度</span><span>判定依据</span><span id="headSource">来源</span><span class="reviewer-col">审核人</span><span>操作</span></div>
+        <div class="table-head"><span class="head-select"><input id="pageSelectAll" type="checkbox" aria-label="选择本页全部候选" /></span><span class="head-ks">知识体系</span><span class="head-source">知识体系节点</span><span class="head-ag">能力图谱</span><span>能力项</span><span>映射类型</span><span>服务等级</span><span>置信度</span><span>判定依据</span><span id="headSource">来源</span><span class="reviewer-col">审核人</span><span>操作</span></div>
         <div id="tableBody"></div>
       </section>
       <section class="pagination-bar" aria-label="列表分页">

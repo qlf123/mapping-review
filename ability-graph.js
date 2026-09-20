@@ -128,19 +128,21 @@ function aiBuildNewChildren(){
     if(btn3){ btn3.disabled = true; btn3.textContent = 'AI构建中…'; }
     setTimeout(()=>{
       // AI 根据能力项名称自动填充字段
-      const typeVal = $('#addChildType')?.value || 'knowledge';
-      const domainVal = $('#addChildDomain')?.value || '';
       const l1Desc = '了解' + name + '的基本概念和术语';
       const l1Assess = '笔试';
       const l2Desc = '能独立完成' + name + '相关操作';
       const l2Assess = '实操考核';
-      // 填充表单字段
-      if($('#addChildL1Desc')) $('#addChildL1Desc').value = l1Desc;
-      if($('#addChildL1Assess')) $('#addChildL1Assess').value = l1Assess;
-      if($('#addChildL2Desc')) $('#addChildL2Desc').value = l2Desc;
-      if($('#addChildL2Assess')) $('#addChildL2Assess').value = l2Assess;
-      if($('#addChildBehaviorDesc')){
-        $('#addChildBehaviorDesc').value = '能在实际工作中运用' + name + '完成相关任务';
+      // 填充表单字段（addNodeModal 使用 newNode* 前缀）
+      if($('#newNodeAbiType')) $('#newNodeAbiType').value = 'knowledge';
+      if($('#newNodeDomain')) $('#newNodeDomain').value = name + '领域';
+      if($('#newNodeL1')) $('#newNodeL1').value = l1Desc;
+      if($('#newNodeL1Assess')) $('#newNodeL1Assess').value = l1Assess;
+      // 展示 L2 区块并填充
+      addLevel('newL2Block', 'newL2AddBtn');
+      if($('#newNodeL2')) $('#newNodeL2').value = l2Desc;
+      if($('#newNodeL2Assess')) $('#newNodeL2Assess').value = l2Assess;
+      if($('#newNodeBehavior')){
+        $('#newNodeBehavior').value = '能在实际工作中运用' + name + '完成相关任务';
       }
       if(btn3){ btn3.disabled = false; btn3.textContent = '⚡ AI自动构建'; }
       toast('AI已补充「' + name + '」的等级要求和描述信息');
@@ -204,12 +206,14 @@ function aiBuildAddChildren(){
       const l2Desc = '能独立完成' + name2 + '相关操作';
       const l2Assess = '实操考核';
       // 填充表单字段
-      if($('#addChildL1Desc')) $('#addChildL1Desc').value = l1Desc;
+      if($('#addChildL1')) $('#addChildL1').value = l1Desc;
       if($('#addChildL1Assess')) $('#addChildL1Assess').value = l1Assess;
-      if($('#addChildL2Desc')) $('#addChildL2Desc').value = l2Desc;
+      // 展示 L2 区块并填充
+      addLevel('childL2Block', 'childL2AddBtn');
+      if($('#addChildL2')) $('#addChildL2').value = l2Desc;
       if($('#addChildL2Assess')) $('#addChildL2Assess').value = l2Assess;
-      if($('#addChildBehaviorDesc')){
-        $('#addChildBehaviorDesc').value = '能在实际工作中运用' + name2 + '完成相关任务';
+      if($('#addChildBehavior')){
+        $('#addChildBehavior').value = '能在实际工作中运用' + name2 + '完成相关任务';
       }
       if(btn2){ btn2.disabled = false; btn2.textContent = '⚡ AI自动构建'; }
       toast('AI已补充「' + name2 + '」的等级要求和描述信息');
