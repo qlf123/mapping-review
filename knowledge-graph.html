@@ -10,6 +10,52 @@
     <link rel="stylesheet" href="mapping-reference.css" />
     <link rel="stylesheet" href="mapping-task.css" />
     <link rel="stylesheet" href="mapping-task-override.css" />
+    <style>
+      .task-list-section{margin-top:16px;}
+      .task-list-toolbar{display:flex;gap:8px;margin-bottom:16px;}
+      .task-list-toolbar input{height:32px;padding:0 12px;border:1px solid #ddd;border-radius:6px;font-size:13px;min-width:240px;}
+      .task-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
+      .task-card{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:18px 20px;transition:box-shadow .2s,border-color .2s;position:relative;}
+      .task-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);border-color:#d4d4d4;}
+      .task-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:14px;}
+      .task-card-title{font-size:15px;font-weight:600;color:#333;line-height:1.4;word-break:break-all;}
+      .task-status-badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:600;white-space:nowrap;flex-shrink:0;}
+      .task-status-generating{background:#fff7e6;color:#fa8c16;}
+      .task-status-done{background:#f6ffed;color:#52c41a;}
+      .task-status-failed{background:#fff1f0;color:#f5222d;}
+      .task-card-body{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+      .task-card-row{display:flex;gap:6px;font-size:13px;line-height:1.5;}
+      .task-card-label{color:#999;white-space:nowrap;min-width:70px;}
+      .task-card-value{color:#333;word-break:break-all;}
+      .task-card-footer{display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid #f0f0f0;}
+      .task-card-time{font-size:12px;color:#aaa;}
+      .task-card-actions{display:flex;gap:6px;}
+      .task-card-actions button{height:28px;font-size:12px;padding:0 12px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;white-space:nowrap;}
+      .task-card-actions button.view-btn{color:#5149e9;border-color:#5149e9;}
+      .task-card-actions button.view-btn:hover{background:#5149e9;color:#fff;}
+      .task-card-actions button.delete-btn{color:#f5222d;border-color:#f5222d;}
+      .task-card-actions button.delete-btn:hover{background:#f5222d;color:#fff;}
+      .task-list-empty{text-align:center;color:var(--text3);padding:40px 0;font-size:14px;}
+      .task-form input[type=text]{display:block;width:100%;height:40px;margin-top:7px;border:1px solid #dfe6ef;border-radius:8px;color:#41536f;background:#fff;font-size:13px;padding:0 12px;box-sizing:border-box;}
+      .ms-dropdown{position:relative;margin-top:7px;}
+      .ms-trigger{width:100%;text-align:left;background:#fff;border:1px solid #dfe6ef;border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer;color:#8b99ac;display:flex;justify-content:space-between;align-items:center;transition:.15s;}
+      .ms-trigger:hover{border-color:#5149e9;}
+      .ms-trigger::after{content:'\25BE';font-size:12px;color:#999;}
+      .ms-trigger.open{border-color:#5149e9;color:#41536f;}
+      .ms-trigger.open::after{content:'\25B4';}
+      .ms-panel{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:100;background:#fff;border:1px solid #dfe6ef;border-radius:8px;max-height:260px;overflow-y:auto;padding:8px 12px;box-shadow:0 8px 24px rgba(30,49,82,.15);display:none;}
+      .ms-panel.open{display:block;}
+      .ms-panel label{display:flex;align-items:center;gap:6px;font-size:13px;color:#60718a;cursor:pointer;padding:4px 0;}
+            .ms-panel input[type=checkbox]{width:15px;height:15px;accent-color:#5149e9;}
+      .task-dialog{overflow:visible !important;}
+      .task-dialog-head{border-radius:14px 14px 0 0;}
+            .task-dialog-actions{border-radius:0 0 14px 14px;}
+      .kg-tabs{display:flex;gap:0;border-bottom:2px solid #edf1f5;margin-bottom:20px;}
+      .kg-tab{padding:8px 20px;font-size:14px;font-weight:500;color:#8b99ac;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.15s;}
+      .kg-tab.active{color:#5149e9;border-bottom-color:#5149e9;}
+      .kg-tab.disabled{color:#c0c8d4;cursor:not-allowed;}
+      .task-form input[type=text]{display:block;width:100%;height:40px;margin-top:7px;border:1px solid #dfe6ef;border-radius:8px;color:#41536f;background:#fff;font-size:13px;padding:0 12px;box-sizing:border-box;}
+    </style>
   </head>
   <body>
     <aside class="platform-sidebar" aria-label="图谱平台导航">
@@ -29,39 +75,203 @@
     <main class="app-shell">
       <section class="page-heading">
         <div><h1>知识图谱</h1></div>
-        <button class="task-button" id="createTaskButton" type="button">＋ 新建映射任务</button>
+      </section>
+      <div class="kg-tabs">
+        <span class="kg-tab disabled">知识库图谱</span>
+        <span class="kg-tab disabled">知识体系</span>
+        <span class="kg-tab active" id="kgTabPanorama">全景图谱</span>
+      </div>
+      <section class="tab-panorama">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+          <button class="task-button" id="createTaskButton" type="button">＋ 新建映射任务</button>
+        </div>
+        <section class="task-list-section">
+        <div class="task-list-toolbar">
+          <input type="text" id="taskSearchInput" placeholder="搜索任务名称" />
+          <button class="task-button" id="taskSearchBtn" type="button" style="height:32px;font-size:12px;padding:0 12px;">搜索</button>
+        </div>
+        <div class="task-card-grid" id="taskCardGrid"></div>
+        <div id="taskListEmpty" class="task-list-empty">暂无映射任务，点击右上角新建</div>
+      </section>
       </section>
       <div class="task-modal" id="taskModal" aria-hidden="true">
         <div class="task-dialog" role="dialog" aria-modal="true" aria-labelledby="taskDialogTitle">
           <div class="task-dialog-head"><div><h2 id="taskDialogTitle">新建映射任务</h2></div><button class="task-close" id="closeTaskButton" type="button" aria-label="关闭">×</button></div>
           <div class="task-form">
+            <label>任务名称<input id="taskName" type="text" placeholder="请输入任务名称" /></label>
             <label>行业能力图谱<select id="industryGraph"><option value="tourism-v1">旅游行业能力图谱 V1.0</option><option value="ecommerce-v1">电商行业能力图谱 V1.0</option></select></label>
-            <div class="task-field"><span>专业知识体系</span><div class="knowledge-options" id="knowledgeGraph"><label><input type="checkbox" value="tourism-major-v1" data-count="2186" checked />旅游管理专业知识体系 V1.0</label><label><input type="checkbox" value="hotel-major-v1" data-count="1640" />酒店管理专业知识体系 V1.0</label><label><input type="checkbox" value="scenic-major-v1" data-count="1280" />景区开发与管理专业知识体系 V1.0</label></div></div>
+            <label>专业知识体系
+              <div class="ms-dropdown">
+                <button type="button" class="ms-trigger" id="ksMSTrigger" onclick="toggleKSMulti()">请选择</button>
+                <div id="knowledgeGraph" class="ms-panel">
+                  <label><input type="checkbox" value="tourism-major-v1" data-count="2186" data-name="旅游管理专业知识体系 V1.0" checked onclick="updateKSTrigger()" />旅游管理专业知识体系 V1.0 <small style="color:#999">2186节点</small></label>
+                  <label><input type="checkbox" value="hotel-major-v1" data-count="1640" data-name="酒店管理专业知识体系 V1.0" onclick="updateKSTrigger()" />酒店管理专业知识体系 V1.0 <small style="color:#999">1640节点</small></label>
+                  <label><input type="checkbox" value="scenic-major-v1" data-count="1280" data-name="景区开发与管理专业知识体系 V1.0" onclick="updateKSTrigger()" />景区开发与管理专业知识体系 V1.0 <small style="color:#999">1280节点</small></label>
+                </div>
+              </div>
+            </label>
           </div>
           <div class="task-dialog-actions"><button class="ghost-button" id="cancelTaskButton" type="button">取消</button><button class="primary-button" id="submitTaskButton" type="button">创建任务</button></div>
         </div>
       </div>
       <div id="toast" class="toast" role="status"></div>
-      <p class="footnote">知识图谱用于管理专业知识体系与行业能力图谱之间的映射关系。</p>
     </main>
     </div>
     <script>
       function toast(text){var t=document.getElementById('toast');t.textContent=text;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(function(){t.classList.remove('show')},2200)}
       var taskModal=document.getElementById('taskModal');
-      function closeTaskModal(){taskModal.classList.remove('open');taskModal.setAttribute('aria-hidden','true')}
-      document.getElementById('createTaskButton').onclick=function(){taskModal.classList.add('open');taskModal.setAttribute('aria-hidden','false')};
+      var taskNameInput=document.getElementById('taskName');
+      function closeTaskModal(){taskModal.classList.remove('open');taskModal.setAttribute('aria-hidden','true');taskNameInput.value='';var panel=document.getElementById('knowledgeGraph');if(panel)panel.classList.remove('open');var trigger=document.getElementById('ksMSTrigger');if(trigger){trigger.classList.remove('open');trigger.textContent='请选择';}}
+      document.getElementById('createTaskButton').onclick=function(){taskModal.classList.add('open');taskModal.setAttribute('aria-hidden','false');setTimeout(function(){taskNameInput.focus()},100)};
       document.getElementById('closeTaskButton').onclick=closeTaskModal;
       document.getElementById('cancelTaskButton').onclick=closeTaskModal;
       taskModal.onclick=function(e){if(e.target===taskModal)closeTaskModal()};
+
+      // --- Task list ---
+      var KEY='kg_tasks';
+      var tasks=[];
+      try{tasks=JSON.parse(sessionStorage.getItem(KEY)||'[]')}catch(e){tasks=[]}
+
+      // Seed sample data if empty
+      if(!tasks.length){
+        tasks=[
+          {id:'T001',name:'旅游管理-能力图谱映射',graph:'旅游行业能力图谱 V1.0',majors:'旅游管理专业知识体系 V1.0',status:'done',createdAt:'2026-09-18 10:30'},
+          {id:'T002',name:'酒店管理-能力图谱映射',graph:'旅游行业能力图谱 V1.0',majors:'酒店管理专业知识体系 V1.0',status:'generating',createdAt:'2026-09-19 14:20'}
+        ];
+        sessionStorage.setItem(KEY,JSON.stringify(tasks));
+      }
+
+      var searchKw='';
+
+      function renderTasks(){
+        var filtered=tasks;
+        if(searchKw){
+          filtered=tasks.filter(function(t){return t.name.toLowerCase().indexOf(searchKw.toLowerCase())>=0});
+        }
+        var grid=document.getElementById('taskCardGrid');
+        var empty=document.getElementById('taskListEmpty');
+        if(!filtered.length){
+          grid.innerHTML='';
+          empty.style.display='block';
+          return;
+        }
+        empty.style.display='none';
+        grid.innerHTML=filtered.map(function(t){
+          var statusBadge='';
+          if(t.status==='generating')statusBadge='<span class="task-status-badge task-status-generating">生成中</span>';
+          else if(t.status==='done')statusBadge='<span class="task-status-badge task-status-done">已完成</span>';
+          else if(t.status==='failed')statusBadge='<span class="task-status-badge task-status-failed">生成失败</span>';
+          return '<div class="task-card">'
+            +'<div class="task-card-head">'
+            +'<div class="task-card-title">'+t.name+'</div>'
+            +statusBadge
+            +'</div>'
+            +'<div class="task-card-body">'
+            +'<div class="task-card-row"><span class="task-card-label">能力图谱</span><span class="task-card-value">'+t.graph+'</span></div>'
+            +'<div class="task-card-row"><span class="task-card-label">知识体系</span><span class="task-card-value">'+t.majors+'</span></div>'
+            +''
+            +'</div>'
+            +'<div class="task-card-footer">'
+            +'<span class="task-card-time">'+t.createdAt+'</span>'
+            +'<div class="task-card-actions">'
+            +'<button class="view-btn" onclick="viewTask(\''+t.id+'\')">查看</button>'
+            +'<button class="delete-btn" onclick="deleteTask(\''+t.id+'\')">删除</button>'
+            +'</div>'
+            +'</div>'
+            +'</div>';
+        }).join('');
+      }
+
+      function viewTask(id){
+        var t=tasks.find(function(x){return x.id===id});
+        if(t){
+          if(t.status==='generating'){
+            toast('任务「'+t.name+'」正在生成候选映射，请稍后查看审核台');
+          }else if(t.status==='done'){
+            toast('任务「'+t.name+'」已完成，可前往图谱映射审核台查看候选映射');
+          }else{
+            toast('任务「'+t.name+'」生成失败，请重新构建');
+          }
+        }
+      }
+
+      function deleteTask(id){
+        var t=tasks.find(function(x){return x.id===id});
+        if(!t)return;
+        if(t.status==='generating')return toast('生成中的任务不可删除');
+        if(!confirm('确认删除任务「'+t.name+'」？'))return;
+        tasks=tasks.filter(function(x){return x.id!==id});
+        sessionStorage.setItem(KEY,JSON.stringify(tasks));
+        renderTasks();
+        toast('任务已删除');
+      }
+
+      function toggleKSMulti(){
+        var panel=document.getElementById('knowledgeGraph');
+        var trigger=document.getElementById('ksMSTrigger');
+        var isOpen=panel.classList.contains('open');
+        if(isOpen){panel.classList.remove('open');trigger.classList.remove('open');}
+        else{panel.classList.add('open');trigger.classList.add('open');}
+      }
+      function updateKSTrigger(){
+        var checks=document.querySelectorAll('#knowledgeGraph input:checked');
+        var trigger=document.getElementById('ksMSTrigger');
+        if(checks.length===0){trigger.textContent='请选择';}
+        else if(checks.length===1){trigger.textContent=checks[0].dataset.name;}
+        else{trigger.textContent='已选 '+checks.length+' 项';}
+      }
+      // Close dropdown when clicking outside
+      document.addEventListener('click',function(e){
+        var dd=e.target.closest('.ms-dropdown');
+        if(!dd){
+          var panel=document.getElementById('knowledgeGraph');
+          var trigger=document.getElementById('ksMSTrigger');
+          if(panel)panel.classList.remove('open');
+          if(trigger)trigger.classList.remove('open');
+        }
+      });
       var knowledgeInputs=document.querySelectorAll('#knowledgeGraph input');
-      function updateKnowledgeCount(){var total=0;knowledgeInputs.forEach(function(input){if(input.checked)total+=Number(input.dataset.count||0)});document.getElementById('knowledgeCount').textContent=total.toLocaleString('zh-CN')+' 个'}
-      knowledgeInputs.forEach(function(input){input.onchange=updateKnowledgeCount});
+      updateKSTrigger();
+
+      function formatTime(){
+        var d=new Date();
+        var p=function(n){return n<10?'0'+n:n};
+        return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+      }
+
       document.getElementById('submitTaskButton').onclick=function(){
+        var name=taskNameInput.value.trim();
+        if(!name)return toast('请输入任务名称');
         var industry=document.getElementById('industryGraph').selectedOptions[0].textContent;
-        var majors=[];knowledgeInputs.forEach(function(input){if(input.checked)majors.push(input.parentElement.textContent.trim())});
+        var majors=[];
+        knowledgeInputs.forEach(function(input){if(input.checked){majors.push(input.dataset.name||input.parentElement.textContent.trim())}});
         if(!majors.length)return toast('请至少选择一个专业知识体系');
-        closeTaskModal();toast(industry+' × '+majors.length+' 个专业已创建映射任务，正在生成候选映射');
+        var newTask={
+          id:'T'+String(tasks.length+1).padStart(3,'0'),
+          name:name,
+          graph:industry,
+          majors:majors.join('、'),
+
+          status:'generating',
+          createdAt:formatTime()
+        };
+        tasks.unshift(newTask);
+        sessionStorage.setItem(KEY,JSON.stringify(tasks));
+        renderTasks();
+        closeTaskModal();
+        toast('任务「'+name+'」已创建，正在生成候选映射');
       };
+
+      // Search
+      document.getElementById('taskSearchInput').addEventListener('keydown',function(e){
+        if(e.key==='Enter'){searchKw=this.value.trim();renderTasks()}
+      });
+      document.getElementById('taskSearchBtn').onclick=function(){
+        searchKw=document.getElementById('taskSearchInput').value.trim();
+        renderTasks();
+      };
+
+      renderTasks();
     </script>
   </body>
 </html>
