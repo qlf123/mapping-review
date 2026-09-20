@@ -64,7 +64,8 @@
     <div class="task-form" id="addChildForm"></div>
     <div class="task-dialog-actions">
       <button class="ghost-button" id="cancelAddChild" type="button">取消</button>
-      <button class="primary-button" id="submitAddChild" type="button">添加</button>
+      <button class="primary-button" id="submitAddChild" type="button" style="background:#fff;border:1px solid #ddd;color:#333;">添加</button>
+      <button class="primary-button" id="addChildAIBuildBtn" type="button" onclick="aiBuildAddChildren()" style="background:#5149e9;border:1px solid #5149e9;color:#fff;">⚡ AI自动构建</button>
     </div>
   </div>
 </div>
@@ -76,15 +77,22 @@
       <button class="task-close" id="closeAddNode" type="button" aria-label="关闭">×</button>
     </div>
     <div class="task-form" id="addNodeForm">
+      <label>节点类型<select id="newNodeType"><option value="2">岗位</option><option value="1">子行业</option><option value="3">能力项</option></select></label>
       <label>节点名称<input id="newNodeName" type="text" placeholder="请输入节点名称" /></label>
-      <label>节点类型<select id="newNodeType"><option value="1">子行业</option><option value="2">岗位</option><option value="3">能力项</option></select></label>
       <label>上层节点<select id="newNodeParent"></select></label>
-      <div id="newNodeChildrenWrap"><label id="newNodeChildrenLabel">下层节点（可多选）<div id="newNodeChildren" class="checkbox-group"></div></label></div>
+      <div id="newNodeChildrenWrap">
+        <span id="newNodeChildrenLabel" style="display:block;color:var(--text2);font-size:12px;font-weight:600;margin-bottom:7px;">下层节点（可多选）</span>
+        <div class="ms-dropdown">
+          <button type="button" class="ms-trigger" id="newNodeMSTrigger" onclick="toggleMS('newNodeChildren','newNodeMSTrigger')">请选择</button>
+          <div id="newNodeChildren" class="checkbox-group ms-panel"></div>
+        </div>
+      </div>
       <div id="newNodeExtraFields"></div>
     </div>
     <div class="task-dialog-actions">
       <button class="ghost-button" id="cancelAddNode" type="button">取消</button>
-      <button class="primary-button" id="submitAddNode" type="button">添加</button>
+      <button class="primary-button" id="submitAddNode" type="button" style="background:#fff;border:1px solid #ddd;color:#333;">添加</button>
+      <button class="primary-button" id="newNodeAIBuildBtn" type="button" onclick="aiBuildNewChildren()" style="background:#5149e9;border:1px solid #5149e9;color:#fff;">⚡ AI自动构建</button>
     </div>
   </div>
 </div>
