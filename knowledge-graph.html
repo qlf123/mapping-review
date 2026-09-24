@@ -379,7 +379,7 @@
           else if(t.status==='failed')badge='<span class="task-status-badge task-status-failed">映射失败</span>';
           var action='';
           if(t.status==='failed')action='<button class="remap-btn" onclick="remapTask(\''+t.id+'\')">重新映射</button>';
-          else if(t.status==='done')action='<button class="view-btn" onclick="viewTask(\''+t.id+'\');closeAllTasksModal()" style="height:28px;font-size:12px;padding:0 12px;border:1px solid #5149e9;border-radius:4px;background:#fff;color:#5149e9;cursor:pointer;">查看图谱</button>';
+          else if(t.status==='done')action='';
           return '<tr>'
             +'<td class="col-name">'+t.name+'</td>'
             +'<td>'+t.graph+'</td>'
