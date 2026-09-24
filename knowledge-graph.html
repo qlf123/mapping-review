@@ -185,12 +185,12 @@
       function viewTask(id){
         var t=tasks.find(function(x){return x.id===id});
         if(t){
-          if(t.status==='generating'){
-            toast('任务「'+t.name+'」正在生成候选映射，请稍后查看审核台');
-          }else if(t.status==='done'){
-            toast('任务「'+t.name+'」已完成，可前往图谱映射审核台查看候选映射');
-          }else{
+          if(t.status==='failed'){
             toast('任务「'+t.name+'」生成失败，请重新构建');
+          }else{
+            sessionStorage.setItem('viewTaskId',id);
+            sessionStorage.setItem('viewTaskName',t.name);
+            location.href='knowledge-graph-view.html';
           }
         }
       }
