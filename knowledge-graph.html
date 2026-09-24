@@ -55,6 +55,39 @@
       .kg-tab.active{color:#5149e9;border-bottom-color:#5149e9;}
       .kg-tab.disabled{color:#c0c8d4;cursor:not-allowed;}
       .task-form input[type=text]{display:block;width:100%;height:40px;margin-top:7px;border:1px solid #dfe6ef;border-radius:8px;color:#41536f;background:#fff;font-size:13px;padding:0 12px;box-sizing:border-box;}
+      .industry-filter-cards{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+      .industry-card{display:flex;flex-direction:column;justify-content:center;min-width:120px;padding:12px 18px;border:1px solid #e8e8e8;border-radius:8px;background:#fff;cursor:pointer;transition:box-shadow .2s,border-color .2s;text-align:center;}
+      .industry-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.06);border-color:#d4d4d4;}
+      .industry-card.active{border-color:#5149e9;background:#f5f3fa;box-shadow:0 2px 10px rgba(81,73,233,.1);}
+      .industry-card-name{font-size:14px;font-weight:600;color:#333;}
+      .industry-card.active .industry-card-name{color:#5149e9;}
+      .industry-card-count{font-size:11px;color:#999;margin-top:4px;}
+      .panorama-industry-card{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:18px 20px;transition:box-shadow .2s,border-color .2s;position:relative;cursor:pointer;}
+      .panorama-industry-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);border-color:#d4d4d4;}
+      .panorama-industry-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:14px;}
+      .panorama-industry-card-title{font-size:16px;font-weight:600;color:#333;}
+      .panorama-industry-card-body{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+      .panorama-industry-card-row{display:flex;gap:6px;font-size:13px;line-height:1.5;}
+      .panorama-industry-card-footer{display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid #f0f0f0;}
+      .panorama-all-card{border-color:#5149e9;background:linear-gradient(135deg,#f5f3fa 0%,#fff 60%);}
+      .panorama-all-card:hover{border-color:#5149e9;box-shadow:0 4px 16px rgba(81,73,233,.12);}
+      .panorama-all-card .panorama-industry-card-title{color:#5149e9;}
+      .all-tasks-list{max-height:560px;overflow-y:auto;}
+      .all-tasks-table{width:100%;border-collapse:collapse;font-size:13px;}
+      .all-tasks-table th{text-align:left;padding:10px 12px;background:#f5f3fa;color:#666;font-weight:600;font-size:12px;white-space:nowrap;position:sticky;top:0;z-index:1;}
+      .all-tasks-table td{padding:10px 12px;border-bottom:1px solid #f0f0f0;color:#333;vertical-align:middle;}
+      .all-tasks-table tr:hover td{background:#fafafa;}
+      .all-tasks-table .col-name{font-weight:500;min-width:120px;}
+      .all-tasks-table .col-majors{max-width:200px;word-break:break-all;}
+      .all-tasks-table .col-action{white-space:nowrap;}
+      .all-task-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f0f0f0;font-size:13px;}
+      .all-task-row:last-child{border-bottom:none;}
+      .all-task-name{flex:1;color:#333;font-weight:500;}
+      .all-task-meta{font-size:12px;color:#999;}
+      .remap-btn{height:28px;font-size:12px;padding:0 12px;border:1px solid #fa8c16;border-radius:4px;background:#fff;color:#fa8c16;cursor:pointer;white-space:nowrap;}
+      .remap-btn:hover{background:#fa8c16;color:#fff;}
+      .task-button.ghost{background:#fff;color:#5149e9;border:1px solid #5149e9;}
+      .task-button.ghost:hover{background:#f5f3fa;}
     </style>
   </head>
   <body>
@@ -82,16 +115,13 @@
         <span class="kg-tab active" id="kgTabPanorama">全景图谱</span>
       </div>
       <section class="tab-panorama">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:16px;">
+          <button class="task-button ghost" id="viewAllTasksButton" type="button">查看映射任务</button>
           <button class="task-button" id="createTaskButton" type="button">＋ 新建映射任务</button>
         </div>
         <section class="task-list-section">
-        <div class="task-list-toolbar">
-          <input type="text" id="taskSearchInput" placeholder="搜索任务名称" />
-          <button class="task-button" id="taskSearchBtn" type="button" style="height:32px;font-size:12px;padding:0 12px;">搜索</button>
-        </div>
-        <div class="task-card-grid" id="taskCardGrid"></div>
-        <div id="taskListEmpty" class="task-list-empty">暂无映射任务，点击右上角新建</div>
+        <div class="task-card-grid" id="industryCardGrid"></div>
+        <div id="taskListEmpty" class="task-list-empty">暂无已映射完成的行业，点击右上角新建映射任务</div>
       </section>
       </section>
       <div class="task-modal" id="taskModal" aria-hidden="true">
@@ -99,7 +129,7 @@
           <div class="task-dialog-head"><div><h2 id="taskDialogTitle">新建映射任务</h2></div><button class="task-close" id="closeTaskButton" type="button" aria-label="关闭">×</button></div>
           <div class="task-form">
             <label>任务名称<input id="taskName" type="text" placeholder="请输入任务名称" /></label>
-            <label>行业能力图谱<select id="industryGraph"><option value="tourism-v1">旅游行业能力图谱 V1.0</option><option value="ecommerce-v1">电商行业能力图谱 V1.0</option></select></label>
+            <label>行业能力图谱<select id="industryGraph"><option value="tourism-v1" data-industry="旅游业">旅游行业能力图谱 V1.0</option><option value="ecommerce-v1" data-industry="电商行业">电商行业能力图谱 V1.0</option></select></label>
             <label>专业知识体系
               <div class="ms-dropdown">
                 <button type="button" class="ms-trigger" id="ksMSTrigger" onclick="toggleKSMulti()">请选择</button>
@@ -112,6 +142,12 @@
             </label>
           </div>
           <div class="task-dialog-actions"><button class="ghost-button" id="cancelTaskButton" type="button">取消</button><button class="primary-button" id="submitTaskButton" type="button">创建任务</button></div>
+        </div>
+      </div>
+      <div class="task-modal" id="allTasksModal" aria-hidden="true">
+        <div class="task-dialog" role="dialog" aria-modal="true" style="max-width:1100px;width:90vw;">
+          <div class="task-dialog-head"><div><h2>映射任务</h2></div><button class="task-close" id="closeAllTasksBtn" type="button" aria-label="关闭">×</button></div>
+          <div class="all-tasks-list" id="allTasksList"></div>
         </div>
       </div>
       <div id="toast" class="toast" role="status"></div>
@@ -128,58 +164,109 @@
       taskModal.onclick=function(e){if(e.target===taskModal)closeTaskModal()};
 
       // --- Task list ---
-      var KEY='kg_tasks';
+      var KEY='kg_tasks_v3';
       var tasks=[];
       try{tasks=JSON.parse(sessionStorage.getItem(KEY)||'[]')}catch(e){tasks=[]}
 
       // Seed sample data if empty
       if(!tasks.length){
         tasks=[
-          {id:'T001',name:'旅游管理-能力图谱映射',graph:'旅游行业能力图谱 V1.0',majors:'旅游管理专业知识体系 V1.0',status:'done',createdAt:'2026-09-18 10:30'},
-          {id:'T002',name:'酒店管理-能力图谱映射',graph:'旅游行业能力图谱 V1.0',majors:'酒店管理专业知识体系 V1.0',status:'generating',createdAt:'2026-09-19 14:20'}
+          {id:'T001',name:'旅游管理-能力图谱映射',graph:'旅游行业能力图谱 V1.0',industry:'旅游业',majors:'旅游管理专业知识体系 V1.0',status:'done',creator:'张明',createdAt:'2026-09-18 10:30'},
+          {id:'T002',name:'酒店管理-能力图谱映射',graph:'旅游行业能力图谱 V1.0',industry:'旅游业',majors:'酒店管理专业知识体系 V1.0',status:'done',creator:'张明',createdAt:'2026-09-19 14:20'},
+          {id:'T003',name:'电商运营-能力图谱映射',graph:'电商行业能力图谱 V1.0',industry:'电商行业',majors:'电商运营专业知识体系 V1.0',status:'done',creator:'李芳',createdAt:'2026-09-20 09:15'},
+          {id:'T004',name:'智能制造-能力图谱映射',graph:'智能制造行业能力图谱 V1.0',industry:'制造业',majors:'智能制造专业知识体系 V1.0',status:'done',creator:'李芳',createdAt:'2026-09-21 11:00'},
+          {id:'T005',name:'现代物流-能力图谱映射',graph:'物流行业能力图谱 V1.0',industry:'物流业',majors:'现代物流管理专业知识体系 V1.0',status:'done',creator:'王强',createdAt:'2026-09-22 08:45'},
+          {id:'T006',name:'金融科技-能力图谱映射',graph:'金融行业能力图谱 V1.0',industry:'金融业',majors:'金融科技专业知识体系 V1.0',status:'done',creator:'王强',createdAt:'2026-09-22 15:30'},
+          {id:'T007',name:'护理康养-能力图谱映射',graph:'健康产业能力图谱 V1.0',industry:'健康产业',majors:'护理康养专业知识体系 V1.0',status:'done',creator:'赵琳',createdAt:'2026-09-23 09:00'},
+          {id:'T008',name:'学前教育-能力图谱映射',graph:'教育行业能力图谱 V1.0',industry:'教育业',majors:'学前教育专业知识体系 V1.0',status:'generating',creator:'赵琳',createdAt:'2026-09-23 14:00'},
+          {id:'T009',name:'新媒体运营-能力图谱映射',graph:'传媒行业能力图谱 V1.0',industry:'传媒业',majors:'新媒体运营专业知识体系 V1.0',status:'failed',creator:'张明',createdAt:'2026-09-23 16:00'},
+          {id:'T010',name:'智慧农业-能力图谱映射',graph:'农业行业能力图谱 V1.0',industry:'农业',majors:'智慧农业专业知识体系 V1.0',status:'failed',creator:'王强',createdAt:'2026-09-24 09:30'}
         ];
         sessionStorage.setItem(KEY,JSON.stringify(tasks));
       }
 
-      var searchKw='';
-
-      function renderTasks(){
-        var filtered=tasks;
-        if(searchKw){
-          filtered=tasks.filter(function(t){return t.name.toLowerCase().indexOf(searchKw.toLowerCase())>=0});
-        }
-        var grid=document.getElementById('taskCardGrid');
+      function renderIndustryCards(){
+        // Group completed tasks by industry
+        var indMap={};
+        tasks.forEach(function(t){
+          if(t.industry){
+            if(!indMap[t.industry])indMap[t.industry]={industry:t.industry,graph:t.graph,tasks:[],latestTime:'',latestStatus:t.status};
+            indMap[t.industry].tasks.push(t);
+            if(t.createdAt>=indMap[t.industry].latestTime){indMap[t.industry].latestTime=t.createdAt;indMap[t.industry].latestStatus=t.status;}
+          }
+        });
+        var statusOrder={'done':0,'generating':1,'failed':2};
+        var industries=Object.values(indMap).sort(function(a,b){return (statusOrder[a.latestStatus]||3)-(statusOrder[b.latestStatus]||3);});
+        var grid=document.getElementById('industryCardGrid');
         var empty=document.getElementById('taskListEmpty');
-        if(!filtered.length){
-          grid.innerHTML='';
-          empty.style.display='block';
-          return;
-        }
         empty.style.display='none';
-        grid.innerHTML=filtered.map(function(t){
-          var statusBadge='';
-          if(t.status==='generating')statusBadge='<span class="task-status-badge task-status-generating">生成中</span>';
-          else if(t.status==='done')statusBadge='<span class="task-status-badge task-status-done">已完成</span>';
-          else if(t.status==='failed')statusBadge='<span class="task-status-badge task-status-failed">生成失败</span>';
-          return '<div class="task-card">'
-            +'<div class="task-card-head">'
-            +'<div class="task-card-title">'+t.name+'</div>'
-            +statusBadge
+        // Always show "全部" card first
+        var html='<div class="panorama-industry-card panorama-all-card" onclick="viewAllGraph()">'
+          +'<div class="panorama-industry-card-head">'
+          +'<div class="panorama-industry-card-title">全部</div>'
+          
+          +'</div>'
+          +'<div class="panorama-industry-card-body">'
+          +'<div class="panorama-industry-card-row"><span class="task-card-label">说明</span><span class="task-card-value">查看完整全景图谱，包含所有已映射行业</span></div>'
+          +'</div>'
+          +'<div class="panorama-industry-card-footer">'
+          +'<span class="task-card-time">所有行业</span>'
+          +'<div class="task-card-actions">'
+          +'<button class="view-btn" onclick="event.stopPropagation();viewAllGraph()">进入图谱</button>'
+          +'</div>'
+          +'</div>'
+          +'</div>';
+        // Then show each industry card
+        html+=industries.map(function(ind){
+          var majorNames=ind.tasks.map(function(t){return t.majors}).join('、');
+          var st=ind.latestStatus;
+          var badgeCls=st==='done'?'task-status-done':(st==='generating'?'task-status-generating':'task-status-failed');
+          var badgeText=st==='done'?'映射完成':(st==='generating'?'映射中':'映射失败');
+          var btnHtml;
+          if(st==='done'){
+            btnHtml='<button class="view-btn" onclick="event.stopPropagation();viewIndustry(\''+ind.industry+'\')">进入图谱</button>';
+          }else if(st==='failed'){
+            btnHtml='<button class="remap-btn" onclick="event.stopPropagation();remapTask(\''+ind.tasks[ind.tasks.length-1].id+'\')">重新映射</button>';
+          }else{
+            btnHtml='<button class="remap-btn" disabled style="opacity:.5;cursor:not-allowed;">重新映射</button>';
+          }
+          return '<div class="panorama-industry-card" onclick="'+(st==='done'?'viewIndustry(\''+ind.industry+'\')':'')+'">'
+            +'<div class="panorama-industry-card-head">'
+            +'<div class="panorama-industry-card-title">'+ind.industry+'</div>'
+            +'<span class="task-status-badge '+badgeCls+'">'+badgeText+'</span>'
             +'</div>'
-            +'<div class="task-card-body">'
-            +'<div class="task-card-row"><span class="task-card-label">能力图谱</span><span class="task-card-value">'+t.graph+'</span></div>'
-            +'<div class="task-card-row"><span class="task-card-label">知识体系</span><span class="task-card-value">'+t.majors+'</span></div>'
-            +''
+            +'<div class="panorama-industry-card-body">'
+            +'<div class="panorama-industry-card-row"><span class="task-card-label">能力图谱</span><span class="task-card-value">'+ind.graph+'</span></div>'
+            +'<div class="panorama-industry-card-row"><span class="task-card-label">知识体系</span><span class="task-card-value">'+majorNames+'</span></div>'
             +'</div>'
-            +'<div class="task-card-footer">'
-            +'<span class="task-card-time">'+t.createdAt+'</span>'
-            +'<div class="task-card-actions">'
-            +'<button class="view-btn" onclick="viewTask(\''+t.id+'\')">查看</button>'
-            +'<button class="delete-btn" onclick="deleteTask(\''+t.id+'\')">删除</button>'
-            +'</div>'
+            +'<div class="panorama-industry-card-footer">'
+            +'<span class="task-card-time">'+ind.latestTime+'</span>'
+            +'<div class="task-card-actions">'+btnHtml+'</div>'
             +'</div>'
             +'</div>';
         }).join('');
+        grid.innerHTML=html;
+      }
+
+      function viewAllGraph(){
+        sessionStorage.setItem('viewTaskId','all');
+        sessionStorage.setItem('viewTaskName','全部 · 全景图谱');
+        sessionStorage.removeItem('viewIndustry');
+        location.href='knowledge-graph-view.html';
+      }
+
+      function viewIndustry(industry){
+        var firstTask=tasks.find(function(t){return t.industry===industry&&t.status==='done'});
+        if(firstTask){
+          sessionStorage.setItem('viewTaskId',firstTask.id);
+          sessionStorage.setItem('viewTaskName',industry+' · 全景图谱');
+          sessionStorage.setItem('viewIndustry',industry);
+          location.href='knowledge-graph-view.html';
+        }
+      }
+
+      function renderTasks(){
+        // kept for search compatibility in all-tasks modal
       }
 
       function viewTask(id){
@@ -202,7 +289,7 @@
         if(!confirm('确认删除任务「'+t.name+'」？'))return;
         tasks=tasks.filter(function(x){return x.id!==id});
         sessionStorage.setItem(KEY,JSON.stringify(tasks));
-        renderTasks();
+        renderIndustryCards();
         toast('任务已删除');
       }
 
@@ -220,7 +307,6 @@
         else if(checks.length===1){trigger.textContent=checks[0].dataset.name;}
         else{trigger.textContent='已选 '+checks.length+' 项';}
       }
-      // Close dropdown when clicking outside
       document.addEventListener('click',function(e){
         var dd=e.target.closest('.ms-dropdown');
         if(!dd){
@@ -242,36 +328,87 @@
       document.getElementById('submitTaskButton').onclick=function(){
         var name=taskNameInput.value.trim();
         if(!name)return toast('请输入任务名称');
-        var industry=document.getElementById('industryGraph').selectedOptions[0].textContent;
+        var indSelect=document.getElementById('industryGraph');
+        var industry=indSelect.selectedOptions[0].dataset.industry;
+        var graphName=indSelect.selectedOptions[0].textContent;
         var majors=[];
         knowledgeInputs.forEach(function(input){if(input.checked){majors.push(input.dataset.name||input.parentElement.textContent.trim())}});
         if(!majors.length)return toast('请至少选择一个专业知识体系');
         var newTask={
           id:'T'+String(tasks.length+1).padStart(3,'0'),
           name:name,
-          graph:industry,
+          graph:graphName,
+          industry:industry,
           majors:majors.join('、'),
-
           status:'generating',
+          creator:'张明',
           createdAt:formatTime()
         };
         tasks.unshift(newTask);
         sessionStorage.setItem(KEY,JSON.stringify(tasks));
-        renderTasks();
+        renderIndustryCards();
         closeTaskModal();
         toast('任务「'+name+'」已创建，正在生成候选映射');
       };
 
-      // Search
-      document.getElementById('taskSearchInput').addEventListener('keydown',function(e){
-        if(e.key==='Enter'){searchKw=this.value.trim();renderTasks()}
-      });
-      document.getElementById('taskSearchBtn').onclick=function(){
-        searchKw=document.getElementById('taskSearchInput').value.trim();
-        renderTasks();
-      };
+      // All tasks modal
+      var allTasksModal=document.getElementById('allTasksModal');
+      function openAllTasksModal(){
+        renderAllTasksList();
+        allTasksModal.classList.add('open');
+        allTasksModal.setAttribute('aria-hidden','false');
+      }
+      function closeAllTasksModal(){
+        allTasksModal.classList.remove('open');
+        allTasksModal.setAttribute('aria-hidden','true');
+      }
+      function renderAllTasksList(){
+        var list=document.getElementById('allTasksList');
+        if(!tasks.length){
+          list.innerHTML='<div style="text-align:center;color:#999;padding:30px 0;font-size:14px;">暂无映射任务</div>';
+          return;
+        }
+        var sortedTasks=tasks.slice().sort(function(a,b){return b.createdAt>a.createdAt?1:b.createdAt<a.createdAt?-1:0});
+        var html='<table class="all-tasks-table"><thead><tr>'
+          +'<th>任务名称</th><th>能力图谱</th><th>知识体系</th><th>创建人</th><th>创建时间</th><th>状态</th><th>操作</th>'
+          +'</tr></thead><tbody>';
+        html+=sortedTasks.map(function(t){
+          var badge='';
+          if(t.status==='generating')badge='<span class="task-status-badge task-status-generating">映射中</span>';
+          else if(t.status==='done')badge='<span class="task-status-badge task-status-done">映射完成</span>';
+          else if(t.status==='failed')badge='<span class="task-status-badge task-status-failed">映射失败</span>';
+          var action='';
+          if(t.status==='failed')action='<button class="remap-btn" onclick="remapTask(\''+t.id+'\')">重新映射</button>';
+          else if(t.status==='done')action='<button class="view-btn" onclick="viewTask(\''+t.id+'\');closeAllTasksModal()" style="height:28px;font-size:12px;padding:0 12px;border:1px solid #5149e9;border-radius:4px;background:#fff;color:#5149e9;cursor:pointer;">查看图谱</button>';
+          return '<tr>'
+            +'<td class="col-name">'+t.name+'</td>'
+            +'<td>'+t.graph+'</td>'
+            +'<td class="col-majors">'+t.majors+'</td>'
+            +'<td>'+(t.creator||'-')+'</td>'
+            +'<td style="white-space:nowrap;">'+t.createdAt+'</td>'
+            +'<td>'+badge+'</td>'
+            +'<td class="col-action">'+action+'</td>'
+            +'</tr>';
+        }).join('');
+        html+='</tbody></table>';
+        list.innerHTML=html;
+      }
+      function remapTask(id){
+        var t=tasks.find(function(x){return x.id===id});
+        if(!t)return;
+        if(!confirm('确认重新映射任务「'+t.name+'」？'))return;
+        t.status='generating';
+        t.createdAt=formatTime();
+        sessionStorage.setItem(KEY,JSON.stringify(tasks));
+        renderAllTasksList();
+        renderIndustryCards();
+        toast('任务「'+t.name+'」已重新提交映射');
+      }
+      document.getElementById('viewAllTasksButton').onclick=openAllTasksModal;
+      document.getElementById('closeAllTasksBtn').onclick=closeAllTasksModal;
+      allTasksModal.onclick=function(e){if(e.target===allTasksModal)closeAllTasksModal()};
 
-      renderTasks();
+      renderIndustryCards();
     </script>
   </body>
 </html>
