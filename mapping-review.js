@@ -78,36 +78,151 @@ function toast(text){const t=$('#toast');t.textContent=text;t.classList.add('sho
 function refreshFilterOptions(){const ksSet=new Set(),agSet=new Set();records.forEach(r=>{if(r.ks)ksSet.add(r.ks);if(r.ag)agSet.add(r.ag)});const ksSel=$('#ksFilter'),agSel=$('#agFilter');if(ksSel){const cur=ksSel.value;ksSel.innerHTML='<option value="all">全部知识体系</option>'+[...ksSet].map(v=>'<option value="'+v+'">'+v+'</option>').join('');ksSel.value=cur}if(agSel){const cur=agSel.value;agSel.innerHTML='<option value="all">全部能力图谱</option>'+[...agSet].map(v=>'<option value="'+v+'">'+v+'</option>').join('');agSel.value=cur}}
 document.querySelectorAll('.status-tab').forEach(t=>t.onclick=()=>{state.status=t.dataset.status;state.page=1;state.openReject=null;document.querySelectorAll('.status-tab').forEach(x=>x.classList.toggle('active',x===t));render()});$('#searchInput').onkeydown=e=>{if(e.key==='Enter'){state.query=e.target.value.trim().toLowerCase();state.page=1;render()}};$('#searchBtn').onclick=()=>{state.query=$('#searchInput').value.trim().toLowerCase();state.page=1;render()};$('#typeFilter').onchange=e=>{state.type=e.target.value;state.page=1;render()};$('#ksFilter').onchange=e=>{state.ks=e.target.value;state.page=1;render()};$('#agFilter').onchange=e=>{state.ag=e.target.value;state.page=1;render()};$('#nodeTypeFilter').onchange=e=>{state.nodeType=e.target.value;state.page=1;render()};$('#pageSelectAll').onchange=e=>{pageItems(visible()).forEach(r=>r.checked=e.target.checked);render()};$('#pageSize').onchange=e=>{state.pageSize=Number(e.target.value);state.page=1;render()};$('#prevPage').onclick=()=>{if(state.page>1){state.page-=1;render()}};$('#nextPage').onclick=()=>{if(state.page<Math.ceil(visible().length/state.pageSize)){state.page+=1;render()}};$('#batchApprove').onclick=()=>{const selected=visible().filter(r=>r.checked);if(!selected.length)return toast('请先选择当前筛选结果中的候选映射');selected.forEach(r=>{r.status='approved';r.checked=false});toast(`已确认 ${selected.length} 条候选映射`);render()};
 
+// 知识体系节点选项（按节点类型分类）
+const ksNodeOptions = {
+  '知识点': [
+    {value:'KNP-19|投诉四要素与记录表填写规范', label:'KNP-19 投诉四要素与记录表填写规范'},
+    {value:'KNP-39|讲解时长与行程节点的匹配规则', label:'KNP-39 讲解时长与行程节点的匹配规则'},
+    {value:'KNP-40|讲解词主题提炼方法', label:'KNP-40 讲解词主题提炼方法'},
+    {value:'KNP-50|入住登记信息核对规范', label:'KNP-50 入住登记信息核对规范'},
+  ],
+  '技能规范': [
+    {value:'SKS-09|投诉要素倾听与记录', label:'SKS-09 投诉要素倾听与记录'},
+    {value:'SKS-10|情绪安抚与复述确认', label:'SKS-10 情绪安抚与复述确认'},
+    {value:'SKS-12|补偿方案设计与书面确认', label:'SKS-12 补偿方案设计与书面确认'},
+    {value:'SKS-14|应急上报与事件记录', label:'SKS-14 应急上报与事件记录'},
+    {value:'SKS-16|讲解词结构编排', label:'SKS-16 讲解词结构编排'},
+    {value:'SKS-20|入住登记操作', label:'SKS-20 入住登记操作'},
+  ],
+  '章节': [
+    {value:'CH-02-01|第一章 投诉处理规范', label:'第一章 投诉处理规范'},
+    {value:'CH-02-02|第二章 讲解服务规范', label:'第二章 讲解服务规范'},
+    {value:'CH-03-01|第一章 讲解词创作', label:'第一章 讲解词创作'},
+    {value:'CH-05-01|第一章 入住登记', label:'第一章 入住登记'},
+  ],
+  '课程': [
+    {value:'CRS-02|导游实务', label:'CRS-02 导游实务'},
+    {value:'CRS-03|导游词编撰实务', label:'CRS-03 导游词编撰实务'},
+    {value:'CRS-05|前厅服务实务', label:'CRS-05 前厅服务实务'},
+  ],
+};
+
+// 能力图谱节点选项（按节点类型分类）
+const agNodeOptions = {
+  '岗位': [
+    {value:'POS-01|导游', label:'POS-01 导游', level:''},
+    {value:'POS-02|计调', label:'POS-02 计调', level:''},
+    {value:'POS-10|电商运营专员', label:'POS-10 电商运营专员', level:''},
+  ],
+  '能力项': [
+    {value:'ABL-07|客诉情绪安抚与共情表达', label:'ABL-07 客诉情绪安抚与共情表达', level:'L1'},
+    {value:'ABL-08|补偿方案设计与权限判断', label:'ABL-08 补偿方案设计与权限判断', level:'L2'},
+    {value:'ABL-11|突发事件现场处置与上报', label:'ABL-11 突发事件现场处置与上报', level:'L2'},
+    {value:'ABL-04|现场讲解与节奏控制', label:'ABL-04 现场讲解与节奏控制', level:'L1'},
+    {value:'ABL-03|导游讲解词编创', label:'ABL-03 导游讲解词编创', level:'L2'},
+    {value:'ABL-15|行程编排与资源调度', label:'ABL-15 行程编排与资源调度', level:'L1'},
+    {value:'ABL-16|供应商谈判与合同管理', label:'ABL-16 供应商谈判与合同管理', level:'L2'},
+    {value:'ABL-20|商品上架与详情页维护', label:'ABL-20 商品上架与详情页维护', level:'L1'},
+    {value:'ABL-21|店铺活动策划与执行', label:'ABL-21 店铺活动策划与执行', level:'L2'},
+  ],
+};
+
+// 初始化模糊搜索下拉框
+function initSearchSelect(inputId, dropdownId, hiddenId, options) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  const hidden = document.getElementById(hiddenId);
+  if(!input || !dropdown) return;
+  function renderDropdown(query) {
+    const q = query.trim().toLowerCase();
+    const filtered = q ? options.filter(o => o.label.toLowerCase().includes(q)) : options;
+    if(!filtered.length) {
+      dropdown.innerHTML = '<div style="padding:8px 12px;color:#999;font-size:12px;text-align:center;">无匹配结果</div>';
+      dropdown.style.display = 'block';
+      return;
+    }
+    dropdown.innerHTML = filtered.map(o => '<div class="search-select-option" data-value="'+o.value+'" data-label="'+o.label+'" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0;">'+o.label+'</div>').join('');
+    dropdown.style.display = 'block';
+    dropdown.querySelectorAll('.search-select-option').forEach(el => {
+      el.onmousedown = function(e) {
+        e.preventDefault();
+        input.value = el.dataset.label;
+        hidden.value = el.dataset.value;
+        dropdown.style.display = 'none';
+      };
+      el.onmouseenter = function(){this.style.background='#f5f3fa'};
+      el.onmouseleave = function(){this.style.background=''};
+    });
+  }
+  input.onfocus = () => renderDropdown(input.value);
+  input.oninput = () => { hidden.value=''; renderDropdown(input.value); };
+  input.onblur = () => { setTimeout(() => { dropdown.style.display = 'none'; }, 200); };
+}
+
+
+// Toggle relation field between text input and select dropdown
+function toggleRelationField(){
+  var sourceType=$('#newSourceType').value;
+  var targetType=$('#newTargetType').value;
+  var isSkillMapping=(sourceType==='技能'&&targetType==='能力');
+  var textInput=$('#newRelationText');
+  var selectEl=$('#newRelationSelect');
+  if(isSkillMapping){
+    textInput.style.display='none';
+    selectEl.style.display='block';
+    textInput.value='';
+  }else{
+    textInput.style.display='block';
+    selectEl.style.display='none';
+    selectEl.value='';
+  }
+}
+
 const addMappingModal=$('#addMappingModal');
-function closeAddMappingModal(){addMappingModal.classList.remove('open');addMappingModal.setAttribute('aria-hidden','true')}
-$('#addMappingButton').onclick=()=>{addMappingModal.classList.add('open');addMappingModal.setAttribute('aria-hidden','false');initSearchSelect('newSourceNodeInput','sourceNodeDropdown','newSourceNode',sourceNodeOptions);initSearchSelect('newTargetAbilityInput','targetAbilityDropdown','newTargetAbility',targetAbilityOptions)};
+function closeAddMappingModal(){addMappingModal.classList.remove('open');addMappingModal.setAttribute('aria-hidden','true');$('#newEvidence').value='';$('#newRelationText').value='';$('#newSourceNodeInput').value='';$('#newSourceNode').value='';$('#newTargetAbilityInput').value='';$('#newTargetAbility').value='';$('#newKnowledgeSystem').value='';$('#newIndustryGraph').value='';}
+$('#addMappingButton').onclick=()=>{
+  addMappingModal.classList.add('open');addMappingModal.setAttribute('aria-hidden','false');
+  initSearchSelect('newSourceNodeInput','sourceNodeDropdown','newSourceNode', ksNodeOptions[$('#newSourceType').value]||[]);
+  initSearchSelect('newTargetAbilityInput','targetAbilityDropdown','newTargetAbility', agNodeOptions[$('#newTargetType').value]||[]);
+  toggleRelationField();
+};
+$('#newSourceType').onchange=function(){
+  $('#newSourceNodeInput').value='';$('#newSourceNode').value='';
+  initSearchSelect('newSourceNodeInput','sourceNodeDropdown','newSourceNode', ksNodeOptions[this.value]||[]);
+  toggleRelationField();
+};
+$('#newTargetType').onchange=function(){
+  $('#newTargetAbilityInput').value='';$('#newTargetAbility').value='';
+  initSearchSelect('newTargetAbilityInput','targetAbilityDropdown','newTargetAbility', agNodeOptions[this.value]||[]);
+  var levelWrap=$('#levelFieldWrap');
+  levelWrap.style.display=(this.value==='能力')?'block':'none';
+  if(this.value!=='能力')$('#newLevel').value='L1';
+  toggleRelationField();
+};
 $('#closeAddMapping').onclick=closeAddMappingModal;
 $('#cancelAddMapping').onclick=closeAddMappingModal;
 addMappingModal.onclick=e=>{if(e.target===addMappingModal)closeAddMappingModal()};
 $('#submitAddMapping').onclick=()=>{
   const ksVal=$('#newKnowledgeSystem').value;
-  const igVal=$('#newIndustryGraph').value;
   if(!ksVal)return toast('请选择知识体系');
-  if(!igVal)return toast('请选择行业能力图谱');
-  const ksLabels={'tourism-major-v1':'旅游管理专业知识体系 V1.0','hotel-major-v1':'酒店管理专业知识体系 V1.0','scenic-major-v1':'景区开发与管理专业知识体系 V1.0'};
-  const agLabels={'tourism-v1':'旅游行业能力图谱 V1.0','ecommerce-v1':'电商行业能力图谱 V1.0'};
-  const ksName=ksLabels[ksVal]||ksVal;
-  const agName=agLabels[igVal]||igVal;
+  const agVal=$('#newIndustryGraph').value;
+  if(!agVal)return toast('请选择能力图谱');
   const sourceVal=$('#newSourceNode').value;
-  const targetVal=$('#newTargetAbility').value;
   if(!sourceVal)return toast('请选择知识体系节点');
-  if(!targetVal)return toast('请选择能力项');
-  const[sid,sname,stype]=sourceVal.split('|');
-  const[tid,tname]=targetVal.split('|');
+  const targetVal=$('#newTargetAbility').value;
+  if(!targetVal)return toast('请选择能力图谱节点');
+  var relText=$('#newRelationText').value.trim()||$('#newRelationSelect').value;
+  if(!relText)return toast('请输入映射关系');
+  const [sid,sname]=sourceVal.split('|');
+  const [tid,tname]=targetVal.split('|');
   const newId='MAP-'+sid+'-'+tid;
   if(records.some(r=>r.id===newId))return toast('该映射关系已存在');
-  const relationVal=$('#newRelation').value;
+  const sourceType=$('#newSourceType').value;
+  const targetType=$('#newTargetType').value;
   const levelVal=$('#newLevel').value;
   const evidenceVal=$('#newEvidence').value;
-  const relationLabels={direct_support:'直接支撑',partial_support:'部分支撑',foundation_support:'基础支撑',assessment_basis:'提供达标判据',scenario_support:'情境案例',related:'相关但不构成覆盖'};
-  records.unshift({id:newId,sourceType:stype||'知识点',sourceId:sid,sourceName:sname,sourceText:'',targetId:tid,targetName:tname,course:'自定义映射',ks:ksName,ag:agName,relation:relationVal,relationLabel:relationLabels[relationVal]||'',level:levelVal,confidence:1,evidence:evidenceVal||'人工新增映射关系',status:'pending'});
+  records.unshift({id:newId,sourceType:sourceType,sourceId:sid,sourceName:sname,sourceText:'',targetId:tid,targetName:tname,course:'自定义映射',ks:ksVal,ag:agVal,relation:relText,relationLabel:relText,level:levelVal,confidence:1,evidence:evidenceVal||'人工新增映射关系',status:'pending'});
   closeAddMappingModal();
-  $('#newSourceNode').value='';$('#newTargetAbility').value='';$('#newSourceNodeInput').value='';$('#newTargetAbilityInput').value='';$('#newEvidence').value='';$('#newKnowledgeSystem').value='';$('#newIndustryGraph').value='';
   state.status='pending';state.page=1;
   document.querySelectorAll('.status-tab').forEach(x=>x.classList.toggle('active',x.dataset.status==='pending'));
   toast('已新增映射关系：'+sname+' → '+tname);
