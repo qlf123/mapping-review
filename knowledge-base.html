@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>知识库｜专业图谱平台</title>
+    <link rel="stylesheet" href="mapping-review.css" />
+    <link rel="stylesheet" href="mapping-polish.css" />
+    <link rel="stylesheet" href="mapping-compact.css" />
+    <link rel="stylesheet" href="mapping-reference.css" />
+    <style>
+      .kb-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:20px;flex-wrap:wrap;}
+      .kb-toolbar select,.kb-toolbar input{height:32px;padding:0 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;}
+      .kb-toolbar input{min-width:200px;}
+      .kb-toolbar select{min-width:120px;}
+      .kb-create-btn{display:flex;align-items:center;gap:6px;height:36px;padding:0 16px;border:1px solid #5149e9;border-radius:8px;background:#fff;color:#5149e9;font-size:14px;cursor:pointer;transition:all .15s;margin-bottom:16px;}
+      .kb-create-btn:hover{background:#5149e9;color:#fff;}
+      .kb-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;}
+      .kb-card{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:18px;transition:box-shadow .2s,border-color .2s;cursor:pointer;display:flex;flex-direction:column;}
+      .kb-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);border-color:#d4d4d4;}
+      .kb-card-head{display:flex;gap:12px;margin-bottom:12px;}
+      .kb-card-icon{width:40px;height:40px;border-radius:8px;background:#e6f0ff;display:flex;align-items:center;justify-content:center;font-size:20px;color:#5149e9;flex-shrink:0;overflow:hidden;}
+      .kb-card-icon img{width:100%;height:100%;object-fit:cover;border-radius:8px;}
+      .kb-card-info{flex:1;min-width:0;}
+      .kb-card-title{font-size:15px;font-weight:600;color:#333;line-height:1.4;word-break:break-all;margin-bottom:4px;}
+      .kb-card-meta{font-size:12px;color:#aaa;}
+      .kb-card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
+      .kb-tag{padding:2px 8px;border-radius:4px;font-size:11px;background:#e6f0ff;color:#5149e9;}
+      .kb-card-desc{font-size:13px;color:#8b99ac;line-height:1.5;flex:1;margin-bottom:10px;}
+      .kb-card-footer{display:flex;gap:16px;align-items:center;padding-top:8px;border-top:1px solid #f0f0f0;font-size:12px;color:#aaa;}
+      .kb-stat{display:flex;align-items:center;gap:4px;}
+      .kb-stat svg{width:14px;height:14px;stroke:#bbb;}
+      .kb-empty{text-align:center;color:#8b99ac;padding:40px 0;font-size:14px;}
+    </style>
+  </head>
+  <body>
+    <aside class="platform-sidebar" aria-label="图谱平台导航">
+      <div class="platform-brand">
+        <span class="platform-brand-mark">图</span>
+        <div><strong>专业图谱平台</strong><small>知识与能力管理</small></div>
+      </div>
+      <nav class="platform-nav">
+        <div class="nav-section-title">图谱建设</div>
+        <a href="knowledge-graph.html" class="platform-nav-item"><span class="nav-icon">图</span><span>知识图谱</span></a>
+        <a href="knowledge-system.html" class="platform-nav-item"><span class="nav-icon">系</span><span>知识体系</span></a>
+        <a href="knowledge-base.html" class="platform-nav-item active" aria-current="page"><span class="nav-icon">库</span><span>知识库</span></a>
+        <a href="ability-graph.html" class="platform-nav-item"><span class="nav-icon">能</span><span>能力图谱</span></a>
+        <a href="mapping-review.html" class="platform-nav-item"><span class="nav-icon">映</span><span>图谱映射审核台</span></a>
+      </nav>
+      <div class="platform-sidebar-footer"><span class="platform-avatar">秦</span><span>平台管理员</span><span class="sidebar-more">···</span></div>
+    </aside>
+    <div class="platform-page">
+    <main class="app-shell">
+      <section class="page-heading">
+        <div><h1>知识库</h1></div>
+      </section>
+      <button class="kb-create-btn" onclick="createKb()">+ 创建知识库</button>
+      <div class="kb-toolbar">
+        <select id="kbBaseFilter"><option value="all">所有知识库</option><option value="tourism">旅游类</option><option value="hotel">酒店类</option><option value="test">测试</option></select>
+        <select id="kbTagFilter"><option value="all">全部标签</option><option value="semantic">语义</option><option value="quality">高质量</option><option value="vector">向量检索</option><option value="hybrid">混合检索</option><option value="multimodal">多模态</option></select>
+        <input type="text" id="kbSearchInput" placeholder="搜索知识库名称" />
+        <button class="task-button" id="kbSearchBtn" type="button" style="height:32px;font-size:12px;padding:0 12px;">搜索</button>
+      </div>
+      <div class="kb-card-grid" id="kbCardGrid"></div>
+      <div id="kbEmpty" class="kb-empty" style="display:none;">没有匹配的知识库</div>
+      <div id="toast" class="toast" role="status"></div>
+    </main>
+    </div>
+    <script>
+      function toast(text){var t=document.getElementById('toast');t.textContent=text;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(function(){t.classList.remove('show')},2200)}
+
+      function createKb(){location.href='knowledge-base-create.html';}
+
+      var kbList = [
+        {id:'KB001',name:'xhf_test_09_14',desc:'',icon:'doc',creator:'admin',editTime:'25 天前',updateTime:'25 天前',docs:0,views:0,tags:[],category:'test'},
+        {id:'KB002',name:'知识工程与知识体系详解.docx',desc:'useful for when you want to answer queries about the 知识工程与知识体系详解.docx',icon:'docx',creator:'admin',editTime:'2 个月前',updateTime:'2 个月前',docs:1,views:0,tags:['semantic','quality','vector','multimodal'],category:'tourism'},
+        {id:'KB003',name:'现代酒店管理',desc:'酒店管理专业知识库，涵盖前厅、客房、餐饮等模块',icon:'img',creator:'admin',editTime:'1 个月前',updateTime:'1 个月前',docs:1,views:0,tags:['semantic','quality','hybrid'],category:'hotel'},
+        {id:'KB004',name:'旅游管理专业教学资源库',desc:'旅游管理专业核心课程教学资源，包含教案、课件、案例',icon:'doc',creator:'admin',editTime:'3 周前',updateTime:'3 周前',docs:128,views:56,tags:['semantic','quality','vector'],category:'tourism'},
+        {id:'KB005',name:'导游实务案例集',desc:'导游实务课程配套案例库，含投诉处理、应急处置等场景',icon:'doc',creator:'admin',editTime:'1 周前',updateTime:'1 周前',docs:45,views:23,tags:['semantic','hybrid'],category:'tourism'},
+        {id:'KB006',name:'景区开发与管理规范',desc:'景区开发与管理专业标准文件库',icon:'docx',creator:'admin',editTime:'2 周前',updateTime:'2 周前',docs:32,views:12,tags:['quality','vector'],category:'tourism'}
+      ];
+
+      var tagMap={semantic:'语义',quality:'高质量',vector:'向量检索',hybrid:'混合检索',multimodal:'多模态'};
+
+      function renderKbCards(){
+        var query=document.getElementById('kbSearchInput').value.trim().toLowerCase();
+        var cat=document.getElementById('kbBaseFilter').value;
+        var tag=document.getElementById('kbTagFilter').value;
+        var filtered=kbList.filter(function(k){
+          var matchQuery=!query||k.name.toLowerCase().includes(query)||(k.desc&&k.desc.toLowerCase().includes(query));
+          var matchCat=cat==='all'||k.category===cat;
+          var matchTag=tag==='all'||k.tags.includes(tag);
+          return matchQuery&&matchCat&&matchTag;
+        });
+        var grid=document.getElementById('kbCardGrid');
+        var empty=document.getElementById('kbEmpty');
+        if(!filtered.length){grid.innerHTML='';empty.style.display='block';return;}
+        empty.style.display='none';
+        grid.innerHTML=filtered.map(function(k){
+          var iconHtml=k.icon==='img'?'<img src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 40 40\'%3E%3Crect width=\'40\' height=\'40\' rx=\'8\' fill=\'%23e6f0ff\'/%3E%3Ctext x=\'20\' y=\'26\' text-anchor=\'middle\' font-size=\'16\' fill=\'%235149e9\'%3E酒%3C/text%3E%3C/svg%3E" alt="" />':'<span>'+(k.name.charAt(0)||'?')+'</span>';
+          var tagsHtml=k.tags.map(function(t){return '<span class="kb-tag">'+(tagMap[t]||t)+'</span>';}).join('');
+          return '<div class="kb-card" onclick="viewKb(\''+k.id+'\')">'
+            +'<div class="kb-card-head">'
+              +'<div class="kb-card-icon">'+iconHtml+'</div>'
+              +'<div class="kb-card-info">'
+                +'<div class="kb-card-title">'+k.name+'</div>'
+                +'<div class="kb-card-meta">'+k.creator+' · 编辑于 '+k.editTime+'</div>'
+              +'</div>'
+            +'</div>'
+            +(tagsHtml?'<div class="kb-card-tags">'+tagsHtml+'</div>':'')
+            +(k.desc?'<div class="kb-card-desc">'+k.desc+'</div>':'')
+            +'<div class="kb-card-footer">'
+              +'<div class="kb-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>'+k.docs+'</div>'
+              +'<div class="kb-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'+k.views+'</div>'
+              +'<span>更新于 '+k.updateTime+'</span>'
+            +'</div>'
+          +'</div>';
+        }).join('');
+      }
+
+      function viewKb(id){location.href='knowledge-base-detail.html?id='+id;}
+
+      document.getElementById('kbSearchInput').onkeydown=function(e){if(e.key==='Enter')renderKbCards();};
+      document.getElementById('kbSearchBtn').onclick=renderKbCards;
+      document.getElementById('kbBaseFilter').onchange=renderKbCards;
+      document.getElementById('kbTagFilter').onchange=renderKbCards;
+
+      renderKbCards();
+    </script>
+  </body>
+</html>

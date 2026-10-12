@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>知识体系｜专业图谱平台</title>
+    <link rel="stylesheet" href="mapping-review.css" />
+    <link rel="stylesheet" href="mapping-polish.css" />
+    <link rel="stylesheet" href="mapping-compact.css" />
+    <link rel="stylesheet" href="mapping-reference.css" />
+    <style>
+      .ks-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:20px;flex-wrap:wrap;}
+      .ks-toolbar select,.ks-toolbar input{height:32px;padding:0 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;}
+      .ks-toolbar input{min-width:200px;}
+      .ks-toolbar select{min-width:120px;}
+      .ks-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
+      .ks-create-card{border:2px dashed #d4d4d4;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;cursor:pointer;transition:all .2s;background:#fafafa;}
+      .ks-create-card:hover{border-color:#5149e9;background:#f5f3fa;}
+      .ks-create-card .plus{font-size:36px;color:#bbb;font-weight:300;line-height:1;}
+      .ks-create-card .label{font-size:14px;color:#8b99ac;margin-top:8px;}
+      .ks-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px;box-shadow:0 2px 8px rgba(30,49,82,.06);cursor:pointer;transition:.2s;position:relative;min-height:180px;display:flex;flex-direction:column;}
+      .ks-card:hover{box-shadow:0 6px 20px rgba(30,49,82,.1);border-color:#c7d2fe;transform:translateY(-1px);}
+      .ks-card-name{font-size:16px;font-weight:600;color:#31425e;margin-bottom:4px;word-break:break-all;padding-right:44px;}
+      .ks-card-status{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;margin-bottom:12px;width:max-content;}
+      .ks-card-status.published{background:#edf9f5;color:#12946f;}
+      .ks-card-status.building{background:#fff8e6;color:#b7791f;}
+      .ks-card-status.draft{background:#eef1f6;color:#60718a;}
+      .ks-card-desc{font-size:12px;color:#60718a;line-height:1.7;margin-bottom:14px;flex:1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+      .ks-card-stats{display:flex;gap:16px;border-top:1px solid #dfe6ef;padding-top:12px;}
+      .ks-card-stats div{display:flex;flex-direction:column;gap:2px;}
+      .ks-card-stats span{font-size:10px;color:#8b99ac;}
+      .ks-card-stats strong{font-size:15px;color:#31425e;font-weight:600;}
+      .ks-card-meta{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;font-size:11px;color:#8b99ac;flex-wrap:wrap;}
+      .ks-card-actions{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid #dfe6ef;}
+      .ks-card-actions button{flex:1;height:30px;border:1px solid #dfe6ef;border-radius:7px;background:#fff;color:#60718a;font-size:12px;cursor:pointer;transition:.15s;}
+      .ks-card-actions button:hover{background:#f5f7fa;border-color:#5149e9;color:#5149e9;}
+      .ks-card-actions .enter-btn{background:#5149e9;color:#fff;border-color:#5149e9;}
+      .ks-card-actions .enter-btn:hover{background:#463bc9;}
+      .ks-card-corner{position:absolute;top:12px;right:12px;display:flex;gap:4px;z-index:3;}
+      .ks-corner-btn{height:24px;padding:0 10px;border:1px solid #dfe6ef;border-radius:6px;background:#fff;color:#60718a;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.12s;box-shadow:0 1px 4px rgba(30,49,82,.06);}
+      .ks-corner-btn:hover{background:#f5f7fa;border-color:#5149e9;color:#5149e9;}
+      .ks-corner-btn.danger:hover{border-color:#c72c2a;color:#c72c2a;}
+      .ks-corner-btn.ks-corner-more{font-size:15px;letter-spacing:1px;line-height:1;}
+      .ks-action-menu{position:fixed;z-index:80;min-width:112px;background:#fff;border:1px solid #dfe6ef;border-radius:8px;box-shadow:0 10px 30px rgba(30,49,82,.18);padding:4px 0;}
+      .ks-action-item{padding:7px 14px;font-size:12px;color:#60718a;cursor:pointer;white-space:nowrap;}
+      .ks-action-item:hover{background:#f5f7fa;color:#5149e9;}
+      .ks-action-item.danger:hover{background:#fff1f0;color:#c72c2a;}
+      .ks-action-divider{height:1px;background:#dfe6ef;margin:4px 0;}
+      .ks-modal{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;}
+      .ks-modal.open{display:flex;}
+      .ks-modal-backdrop{position:absolute;inset:0;background:rgba(31,45,70,.28);}
+      .ks-dialog{position:relative;width:min(420px,92%);background:#fff;border-radius:14px;box-shadow:0 18px 60px rgba(30,49,82,.2);overflow:hidden;}
+      .ks-dialog-head{display:flex;align-items:flex-start;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid #edf1f5;}
+      .ks-dialog-head h2{margin:0;font-size:17px;color:#31425e;}
+      .ks-dialog-head p{margin:6px 0 0;font-size:12px;color:#8b99ac;}
+      .ks-close{border:0;background:transparent;color:#8b99ac;font-size:24px;line-height:1;cursor:pointer;}
+      .ks-dialog-body{padding:20px 24px;}
+      .ks-dialog-body label{display:block;font-size:12px;font-weight:600;color:#60718a;margin-bottom:14px;}
+      .ks-dialog-body input,.ks-dialog-body select{display:block;width:100%;height:36px;margin-top:7px;border:1px solid #dfe6ef;border-radius:8px;padding:0 10px;font-size:13px;color:#31425e;background:#fff;}
+      .ks-dialog-actions{display:flex;justify-content:flex-end;gap:9px;padding:14px 24px;border-top:1px solid #edf1f5;background:#fbfcfe;}
+      .ks-dialog-actions button{height:34px;padding:0 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;}
+      .ks-perm-label{font-size:12px;font-weight:600;color:#60718a;margin-bottom:7px;}
+      .ks-perm-tip{display:block;font-size:11px;font-weight:400;color:#8b99ac;margin-top:3px;}
+      .ks-perm-summary{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border:1px solid #dfe6ef;border-radius:8px;background:#fff;font-size:13px;color:#31425e;cursor:pointer;}
+      .ks-perm-summary:hover{border-color:#c7d2fe;}
+      .ks-perm-caret{color:#8b99ac;font-size:11px;transition:transform .15s;}
+      .ks-perm-summary.open .ks-perm-caret{transform:rotate(180deg);}
+      .ks-org-tree{display:none;margin-top:8px;border:1px solid #dfe6ef;border-radius:8px;background:#fbfcfe;padding:6px 10px;max-height:300px;overflow-y:auto;}
+      .ks-org-tree.open{display:block;}
+      .ks-org-node{margin:1px 0;}
+      .ks-org-row{display:flex;align-items:center;gap:6px;padding:3px 0;}
+      .ks-org-toggle{width:18px;height:18px;border:none;background:none;color:#8b99ac;cursor:pointer;font-size:10px;line-height:1;flex:none;padding:0;transition:transform .12s;}
+      .ks-org-toggle.empty{visibility:hidden;}
+      .ks-org-check{display:flex;align-items:center;gap:6px;font-size:13px;color:#31425e;font-weight:600;cursor:pointer;}
+      .ks-org-type{font-size:10px;font-weight:500;color:#8b99ac;background:#eef1f6;padding:1px 6px;border-radius:4px;margin-left:2px;}
+      .ks-org-check input[type=checkbox],.ks-org-member input[type=checkbox]{width:15px;height:15px;accent-color:#5149e9;}
+      .ks-org-body{margin-left:20px;border-left:1px dashed #dfe6ef;padding-left:8px;}
+      .ks-org-members{display:flex;flex-direction:column;gap:2px;padding:2px 0;}
+      .ks-org-member{display:flex;align-items:center;gap:6px;font-size:12px;color:#60718a;cursor:pointer;padding:3px 0;}
+      .ks-org-member-title{font-size:11px;color:#8b99ac;}
+      .ks-org-node.collapsed > .ks-org-body{display:none;}
+      .ks-org-node.collapsed > .ks-org-row .ks-org-toggle{transform:rotate(-90deg);}
+      .ks-empty{text-align:center;color:#8b99ac;padding:40px 0;font-size:14px;}
+    </style>
+  </head>
+  <body>
+    <aside class="platform-sidebar" aria-label="图谱平台导航">
+      <div class="platform-brand">
+        <span class="platform-brand-mark">图</span>
+        <div><strong>专业图谱平台</strong><small>知识与能力管理</small></div>
+      </div>
+      <nav class="platform-nav">
+        <div class="nav-section-title">图谱建设</div>
+        <a href="knowledge-graph.html" class="platform-nav-item"><span class="nav-icon">图</span><span>知识图谱</span></a>
+        <a href="knowledge-system.html" class="platform-nav-item active" aria-current="page"><span class="nav-icon">系</span><span>知识体系</span></a>
+    <a href="knowledge-base.html" class="platform-nav-item"><span class="nav-icon">库</span><span>知识库</span></a>
+        <a href="ability-graph.html" class="platform-nav-item"><span class="nav-icon">能</span><span>能力图谱</span></a>
+        <a href="mapping-review.html" class="platform-nav-item"><span class="nav-icon">映</span><span>图谱映射审核台</span></a>
+      </nav>
+      <div class="platform-sidebar-footer"><span class="platform-avatar">秦</span><span>平台管理员</span><span class="sidebar-more">···</span></div>
+    </aside>
+    <div class="platform-page">
+    <main class="app-shell">
+      <section class="page-heading">
+        <div><h1>知识体系</h1></div>
+      </section>
+      <div class="ks-toolbar">
+        <select id="ksBaseFilter"><option value="all">所有知识库</option><option value="tourism">旅游类知识库</option><option value="military">军事类知识库</option><option value="elec">电子信息类知识库</option></select>
+        <select id="ksCatFilter"><option value="all">全部分类</option><option value="tourism">旅游类</option><option value="military">军事类</option><option value="elec">电子信息类</option><option value="other">其他</option></select>
+        <input type="text" id="ksSearchInput" placeholder="搜索知识体系名称" />
+        <button class="task-button" id="ksSearchBtn" type="button" style="height:32px;font-size:12px;padding:0 12px;">搜索</button>
+      </div>
+      <div class="ks-card-grid" id="ksCardGrid"></div>
+      <div id="ksEmpty" class="ks-empty" style="display:none;">没有匹配的知识体系</div>
+      <div id="toast" class="toast" role="status"></div>
+    </main>
+    </div>
+
+    <div class="ks-modal" id="ksSettingsModal" aria-hidden="true">
+      <div class="ks-modal-backdrop" onclick="closeKsSettings()"></div>
+      <div class="ks-dialog">
+        <div class="ks-dialog-head">
+          <div><h2>知识体系设置</h2><p>设置名称与访问权限</p></div>
+          <button class="ks-close" onclick="closeKsSettings()" aria-label="关闭">×</button>
+        </div>
+        <div class="ks-dialog-body">
+          <div class="ks-perm-label">权限<span class="ks-perm-tip">选择可访问该知识体系的组织与成员</span></div>
+          <div class="ks-perm-summary" id="ksPermSummary" onclick="toggleKsOrgTree()">
+            <span id="ksPermSummaryText">仅自己</span><span class="ks-perm-caret">▾</span>
+          </div>
+          <div class="ks-org-tree" id="ksOrgTree"></div>
+        </div>
+        <div class="ks-dialog-actions">
+          <button class="ghost-button" onclick="closeKsSettings()">取消</button>
+          <button class="primary-button" onclick="saveKsSettings()">保存</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      function toast(text){var t=document.getElementById('toast');t.textContent=text;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(function(){t.classList.remove('show')},2200)}
+
+      var ksSystems = [
+        {id:'KS001',name:'旅游类-休闲服务与管理',desc:'休闲服务与管理专业',level:'高职',category:'tourism',privacy:'仅自己',status:'published',nodes:2186,createdAt:'2026-08-12',updatedAt:'2026-09-20'},
+        {id:'KS002',name:'旅游类-智慧景区开发与管理',desc:'智慧景区开发与管理专业',level:'高职',category:'tourism',privacy:'仅自己',status:'published',nodes:1640,createdAt:'2026-08-15',updatedAt:'2026-09-18'},
+        {id:'KS003',name:'旅游类-智慧旅游技术应用',desc:'智慧旅游技术应用专业',level:'高职',category:'tourism',privacy:'仅自己',status:'published',nodes:1280,createdAt:'2026-08-18',updatedAt:'2026-09-17'},
+        {id:'KS004',name:'旅游类-研学旅行管理与服务',desc:'研学旅行管理与服务专业',level:'高职',category:'tourism',privacy:'仅自己',status:'published',nodes:960,createdAt:'2026-08-20',updatedAt:'2026-09-16'},
+        {id:'KS005',name:'旅游类-葡萄酒文化与营销',desc:'葡萄酒文化与营销专业',level:'高职',category:'tourism',privacy:'仅自己',status:'published',nodes:720,createdAt:'2026-08-22',updatedAt:'2026-09-15'},
+        {id:'KS006',name:'旅游类-会展策划与管理',desc:'会展策划与管理专业',level:'高职',category:'tourism',privacy:'仅自己',status:'published',nodes:880,createdAt:'2026-08-25',updatedAt:'2026-09-14'},
+        {id:'KS007',name:'旅游类-民宿管理与运营',desc:'民宿管理与运营专业',level:'高职',category:'tourism',privacy:'仅自己',status:'published',nodes:650,createdAt:'2026-08-28',updatedAt:'2026-09-13'},
+        {id:'KS008',name:'旅游类-酒店管理与数字化运营',desc:'酒店管理与数字化运营专业',level:'高职',category:'tourism',privacy:'仅自己',status:'published',nodes:1540,createdAt:'2026-09-01',updatedAt:'2026-09-12'},
+        {id:'KS009',name:'旅游类-定制旅行管理与服务',desc:'定制旅行管理与服务专业',level:'高职',category:'tourism',privacy:'仅自己',status:'published',nodes:820,createdAt:'2026-09-03',updatedAt:'2026-09-11'},
+        {id:'KS010',name:'旅游类-旅游管理',desc:'旅游管理专业',level:'高职',category:'tourism',privacy:'仅自己',status:'published',nodes:2186,createdAt:'2026-09-05',updatedAt:'2026-09-10'},
+        {id:'KS011',name:'旅游类-旅行社经营与管理',desc:'旅行社经营与管理专业',level:'高职',category:'tourism',privacy:'仅自己',status:'published',nodes:980,createdAt:'2026-09-06',updatedAt:'2026-09-09'},
+        {id:'KS012',name:'旅游类-茶艺与茶文化',desc:'茶艺与茶文化专业',level:'高职',category:'tourism',privacy:'仅自己',status:'published',nodes:560,createdAt:'2026-09-07',updatedAt:'2026-09-08'},
+        {id:'KS013',name:'旅游类-导游',desc:'导游专业',level:'高职',category:'tourism',privacy:'仅自己',status:'published',nodes:1240,createdAt:'2026-09-08',updatedAt:'2026-09-07'},
+        {id:'KS014',name:'军事类',desc:'军事类知识体系（构建中）',level:'',category:'military',privacy:'仅自己',status:'building',nodes:0,createdAt:'2026-09-20',updatedAt:'2026-09-20'},
+        {id:'KS015',name:'公安与司法大类',desc:'暂无描述',level:'',category:'other',privacy:'仅自己',status:'draft',nodes:0,createdAt:'2026-09-22',updatedAt:'2026-09-22'},
+        {id:'KS016',name:'模块化教学课程开发实施方案',desc:'暂无描述',level:'',category:'other',privacy:'仅自己',status:'draft',nodes:0,createdAt:'2026-09-24',updatedAt:'2026-09-24'},
+        {id:'KS017',name:'美食制作虚拟仿真设计与实践',desc:'暂无描述',level:'',category:'other',privacy:'仅自己',status:'draft',nodes:0,createdAt:'2026-09-25',updatedAt:'2026-09-25'},
+        {id:'KS018',name:'电子信息类',desc:'电子信息类知识体系（构建中）',level:'',category:'elec',privacy:'仅自己',status:'building',nodes:0,createdAt:'2026-09-26',updatedAt:'2026-09-26'}
+      ];
+
+      // 组织树（院校 → 校区 → 学院/部门 → 系 → 教研室，叶子节点挂成员）
+      var ORG_TREE = [
+        {id:'root', name:'某职业技术学院', type:'院校', children:[
+          {id:'east', name:'东校区', type:'校区', children:[
+            {id:'east-tourism', name:'旅游学院', type:'学院', children:[
+              {id:'east-tourism-mgmt', name:'旅游管理系', type:'系', children:[
+                {id:'east-tourism-guide', name:'导游教研室', type:'教研室', members:[
+                  {id:'m01', name:'张伟', title:'教研室主任'},
+                  {id:'m02', name:'李娜', title:'专任教师'},
+                  {id:'m03', name:'王强', title:'专任教师'},
+                  {id:'m04', name:'刘敏', title:'专任教师'}
+                ]}
+              ]}
+            ]},
+            {id:'east-hotel', name:'酒店学院', type:'学院', members:[
+              {id:'m05', name:'赵磊', title:'副院长'},
+              {id:'m06', name:'孙悦', title:'专任教师'},
+              {id:'m07', name:'周明', title:'专任教师'}
+            ]}
+          ]},
+          {id:'west', name:'西校区', type:'校区', children:[
+            {id:'west-voc', name:'中职部', type:'部门', children:[
+              {id:'west-voc-tourism', name:'旅游专业部', type:'专业部', members:[
+                {id:'m08', name:'吴婷', title:'专业部长'},
+                {id:'m09', name:'郑浩', title:'专任教师'},
+                {id:'m10', name:'冯雪', title:'专任教师'}
+              ]}
+            ]},
+            {id:'west-cont', name:'继续教育部', type:'部门', members:[
+              {id:'m11', name:'陈晨', title:'主任'},
+              {id:'m12', name:'杨帆', title:'教务员'}
+            ]}
+          ]},
+          {id:'public-basic', name:'公共基础部', type:'部门', members:[
+            {id:'m13', name:'黄娟', title:'副主任'},
+            {id:'m14', name:'林涛', title:'专任教师'},
+            {id:'m15', name:'罗静', title:'专任教师'}
+          ]}
+        ]}
+      ];
+      function ksCollectMemberIds(node){
+        var ids=(node.members||[]).map(function(m){return m.id;});
+        (node.children||[]).forEach(function(c){ ids=ids.concat(ksCollectMemberIds(c)); });
+        return ids;
+      }
+      var ORG_MAP={};
+      (function build(nodes){ nodes.forEach(function(n){ ORG_MAP[n.id]=n; if(n.children) build(n.children); }); })(ORG_TREE);
+      var ORG_TOTAL_MEMBERS = ORG_TREE.reduce(function(n,o){return n+ksCollectMemberIds(o).length},0);
+
+      function ksMembers(s){ return (s.permissions && s.permissions.members) || []; }
+      function ksPermText(s){
+        var members = ksMembers(s);
+        if(!members.length) return '权限：仅自己';
+        if(members.length>=ORG_TOTAL_MEMBERS) return '权限：公开';
+        return '权限：'+members.length+' 个成员';
+      }
+
+      function ksStatusBadge(s){
+        if(s.status==='building') return '<span class="ks-card-status building">构建中</span>';
+        if(s.status==='draft') return '<span class="ks-card-status draft">草稿</span>';
+        return '<span class="ks-card-status published">已发布</span>';
+      }
+
+      function renderKsCards(){
+        var query=document.getElementById('ksSearchInput').value.trim().toLowerCase();
+        var cat=document.getElementById('ksCatFilter').value;
+        var filtered=ksSystems.filter(function(s){
+          var matchQuery=!query||s.name.toLowerCase().includes(query)||s.desc.toLowerCase().includes(query);
+          var matchCat=cat==='all'||s.category===cat;
+          return matchQuery&&matchCat;
+        });
+        var grid=document.getElementById('ksCardGrid');
+        var empty=document.getElementById('ksEmpty');
+        if(!filtered.length){
+          grid.innerHTML='';
+          empty.style.display='block';
+          return;
+        }
+        empty.style.display='none';
+        var html='<div class="ks-create-card" onclick="createKs()"><div class="plus">+</div><div class="label">创建知识体系</div></div>';
+        html+=filtered.map(function(s){
+          var bottom = s.status==='published'
+            ? '<button class="enter-btn" onclick="viewKs(\''+s.id+'\')">进入体系</button>'
+            : '<button onclick="editKs(\''+s.id+'\')">继续编辑</button>';
+          return '<div class="ks-card" onclick="viewKs(\''+s.id+'\')">'
+            +'<div class="ks-card-corner" onclick="event.stopPropagation()">'
+              +'<button class="ks-corner-btn ks-corner-more" onclick="toggleKsMenu(event, \''+s.id+'\')" aria-label="操作">···</button>'
+            +'</div>'
+            +'<div class="ks-card-name">'+s.name+'</div>'
+            +ksStatusBadge(s)
+            +'<div class="ks-card-desc">'+(s.desc||'暂无描述')+'</div>'
+            +'<div class="ks-card-stats">'
+              +'<div><span>节点数</span><strong>'+s.nodes+'</strong></div>'
+            +'</div>'
+            +'<div class="ks-card-meta"><span>'+ksPermText(s)+'</span><span>更新于 '+s.updatedAt+'</span></div>'
+            +'<div class="ks-card-actions" onclick="event.stopPropagation()">'+bottom+'</div>'
+          +'</div>';
+        }).join('');
+        grid.innerHTML=html;
+      }
+
+      function createKs(){toast('创建知识体系（开发中）');}
+      function viewKs(id){location.href='knowledge-system-detail.html';}
+      function editKs(id){toast('编辑知识体系（开发中）');}
+      function deleteKs(id){if(confirm('确认删除该知识体系？此操作不可撤销。')){toast('已删除知识体系');}}
+
+      // 卡片操作菜单（··· 编辑 / 删除 / 设置）
+      var ksMenuEl=null, ksMenuId=null;
+      function toggleKsMenu(e, id){
+        e.stopPropagation();
+        if(ksMenuEl && ksMenuId===id){ hideKsMenu(); return; }
+        hideKsMenu();
+        ksMenuId=id;
+        ksMenuEl=document.createElement('div');
+        ksMenuEl.className='ks-action-menu';
+        ksMenuEl.innerHTML=''
+          +'<div class="ks-action-item" data-act="edit">编辑</div>'
+          +'<div class="ks-action-item" data-act="settings">设置</div>'
+          +'<div class="ks-action-divider"></div>'
+          +'<div class="ks-action-item danger" data-act="delete">删除</div>';
+        document.body.appendChild(ksMenuEl);
+        var rect=e.currentTarget.getBoundingClientRect();
+        ksMenuEl.style.top=(rect.bottom+4)+'px';
+        ksMenuEl.style.left=Math.min(rect.right-ksMenuEl.offsetWidth, window.innerWidth-ksMenuEl.offsetWidth-8)+'px';
+        ksMenuEl.addEventListener('click', function(ev){
+          ev.stopPropagation();
+          var it=ev.target.closest('.ks-action-item');
+          var act=it?it.getAttribute('data-act'):null;
+          hideKsMenu();
+          if(act==='edit') editKs(id);
+          else if(act==='settings') openKsSettings(id);
+          else if(act==='delete') deleteKs(id);
+        });
+      }
+      function hideKsMenu(){
+        if(ksMenuEl){ ksMenuEl.remove(); ksMenuEl=null; }
+        ksMenuId=null;
+      }
+      document.addEventListener('click', function(e){
+        if(!e.target.closest('.ks-action-menu') && !e.target.closest('.ks-corner-more')) hideKsMenu();
+      });
+
+      // 设置弹窗（权限）
+      var ksSettingsId=null;
+      function renderKsOrgNode(node, selected){
+        var memberIds=ksCollectMemberIds(node);
+        var allChecked=memberIds.length>0 && memberIds.every(function(id){return selected.indexOf(id)>-1;});
+        var kids=node.children||[];
+        var members=node.members||[];
+        var typeTag=node.type?'<span class="ks-org-type">'+node.type+'</span>':'';
+        var html='<div class="ks-org-node" data-org="'+node.id+'">';
+        html+='<div class="ks-org-row">';
+        html+=(kids.length||members.length)
+          ?'<button type="button" class="ks-org-toggle" onclick="toggleKsOrg(event)">▾</button>'
+          :'<span class="ks-org-toggle empty"></span>';
+        html+='<label class="ks-org-check"><input type="checkbox" class="ks-org-select" value="'+node.id+'"'+(allChecked?' checked':'')+'> <span class="ks-org-name">'+node.name+'</span>'+typeTag+'</label>';
+        html+='</div>';
+        if(kids.length||members.length){
+          html+='<div class="ks-org-body">';
+          if(members.length){
+            html+='<div class="ks-org-members">';
+            members.forEach(function(m){
+              html+='<label class="ks-org-member"><input type="checkbox" class="ks-perm-member" value="'+m.id+'"'+(selected.indexOf(m.id)>-1?' checked':'')+'> <span class="ks-org-member-name">'+m.name+'</span>'+(m.title?'<span class="ks-org-member-title">'+m.title+'</span>':'')+'</label>';
+            });
+            html+='</div>';
+          }
+          if(kids.length){
+            html+='<div class="ks-org-children">';
+            kids.forEach(function(c){ html+=renderKsOrgNode(c, selected); });
+            html+='</div>';
+          }
+          html+='</div>';
+        }
+        html+='</div>';
+        return html;
+      }
+      function renderKsOrgTree(selected){
+        return ORG_TREE.map(function(n){return renderKsOrgNode(n, selected);}).join('');
+      }
+      function refreshKsOrgTree(){
+        var checkedMap={};
+        [].slice.call(document.querySelectorAll('.ks-perm-member:checked')).forEach(function(c){checkedMap[c.value]=1;});
+        [].slice.call(document.querySelectorAll('.ks-org-select')).forEach(function(cb){
+          var node=ORG_MAP[cb.value];
+          if(!node){ cb.checked=false; cb.indeterminate=false; return; }
+          var ids=ksCollectMemberIds(node);
+          var sel=ids.filter(function(id){return checkedMap[id];}).length;
+          cb.checked=ids.length>0 && sel===ids.length;
+          cb.indeterminate=sel>0 && sel<ids.length;
+        });
+        updateKsPermSummary();
+      }
+      function updateKsPermSummary(){
+        var members=[].slice.call(document.querySelectorAll('.ks-perm-member:checked')).map(function(c){return c.value;});
+        document.getElementById('ksPermSummaryText').textContent = members.length ? ('已选 '+members.length+' 个成员') : '仅自己';
+      }
+      function toggleKsOrgTree(){
+        document.getElementById('ksOrgTree').classList.toggle('open');
+        document.getElementById('ksPermSummary').classList.toggle('open');
+      }
+      function toggleKsOrg(e){
+        e.stopPropagation();
+        e.currentTarget.closest('.ks-org-node').classList.toggle('collapsed');
+      }
+      function bindKsOrgTree(){
+        var tree=document.getElementById('ksOrgTree');
+        [].slice.call(tree.querySelectorAll('.ks-org-select')).forEach(function(cb){
+          cb.onchange=function(){
+            var node=ORG_MAP[cb.value];
+            var ids=node?ksCollectMemberIds(node):[];
+            var check=cb.checked;
+            [].slice.call(document.querySelectorAll('.ks-perm-member')).forEach(function(mc){ if(ids.indexOf(mc.value)>-1) mc.checked=check; });
+            refreshKsOrgTree();
+          };
+        });
+        [].slice.call(tree.querySelectorAll('.ks-perm-member')).forEach(function(cb){ cb.onchange=refreshKsOrgTree; });
+        refreshKsOrgTree();
+      }
+      function openKsSettings(id){
+        ksSettingsId=id;
+        var s=ksSystems.find(function(x){return x.id===id;});
+        if(!s) return;
+        var selected=ksMembers(s);
+        document.getElementById('ksOrgTree').innerHTML=renderKsOrgTree(selected);
+        document.getElementById('ksOrgTree').classList.remove('open');
+        document.getElementById('ksPermSummary').classList.remove('open');
+        bindKsOrgTree();
+        document.getElementById('ksSettingsModal').classList.add('open');
+        document.getElementById('ksSettingsModal').setAttribute('aria-hidden','false');
+      }
+      function closeKsSettings(){
+        document.getElementById('ksSettingsModal').classList.remove('open');
+        document.getElementById('ksSettingsModal').setAttribute('aria-hidden','true');
+      }
+      function saveKsSettings(){
+        var s=ksSystems.find(function(x){return x.id===ksSettingsId;});
+        if(s){
+          var members=[].slice.call(document.querySelectorAll('.ks-perm-member:checked')).map(function(c){return c.value;});
+          s.permissions={members:members};
+          renderKsCards();
+        }
+        closeKsSettings();
+        toast('设置已保存');
+      }
+
+      document.getElementById('ksSearchInput').onkeydown=function(e){if(e.key==='Enter')renderKsCards();};
+      document.getElementById('ksSearchBtn').onclick=renderKsCards;
+      document.getElementById('ksCatFilter').onchange=renderKsCards;
+      document.getElementById('ksBaseFilter').onchange=renderKsCards;
+
+      renderKsCards();
+    </script>
+  </body>
+</html>

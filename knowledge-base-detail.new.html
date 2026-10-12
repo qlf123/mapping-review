@@ -1,0 +1,914 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>知识库详情｜专业图谱平台</title>
+    <link rel="stylesheet" href="mapping-review.css" />
+    <link rel="stylesheet" href="mapping-polish.css" />
+    <link rel="stylesheet" href="mapping-compact.css" />
+    <link rel="stylesheet" href="mapping-reference.css" />
+<style>
+:root{--pri:#5149e9;--pri-d:#4038c0;--pri-l:#eef0ff;--pri-ll:#f7f6ff;--t1:#101828;--t2:#344054;--t3:#475467;--t4:#667085;--bd:#EAECF0;--bd2:#D0D5DD;--bg2:#F9FAFB;--bg3:#F2F4F7;--ok:#17B26A;--warn:#F79009;--err:#B42318}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:#F2F4F7;color:var(--t1);font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;font-size:14px}
+button{font-family:inherit;cursor:pointer}
+button:disabled{cursor:not-allowed}
+input,select,textarea{font-family:inherit}
+h1,h2,h3,p{margin:0}
+ul{list-style:none;margin:0;padding:0}
+.col{display:flex;flex-direction:column}.row{display:flex;align-items:center}
+.g4{gap:4px}.g6{gap:6px}.g8{gap:8px}.g10{gap:10px}.g12{gap:12px}.g16{gap:16px}.g24{gap:24px}
+.wrapflex{flex-wrap:wrap}
+.muted{font-size:13px;color:var(--t4)}
+.hr{height:1px;background:var(--bd)}
+/* ---- shell ---- */
+.top{height:64px;display:flex;align-items:center;gap:16px;padding:0 20px;background:#F2F4F7}
+.logo{font-weight:800;font-size:22px;letter-spacing:.5px;color:var(--pri)}
+.ws{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--t2)}
+.ws .w{width:28px;height:28px;border-radius:7px;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav{flex:1;display:flex;justify-content:center;gap:4px;flex-wrap:wrap}
+.nav span{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;font-size:15px;color:var(--t2);font-weight:500;white-space:nowrap}
+.nav span.on{background:#fff;color:var(--pri);box-shadow:0 1px 2px rgba(16,24,40,.06)}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600}
+.frame{display:flex;min-height:calc(100vh - 64px);background:#FCFCFD;border-radius:16px 16px 0 0;overflow:hidden}
+.side{width:260px;flex:none;border-right:1px solid var(--bd);padding:20px 16px;display:flex;flex-direction:column;gap:16px;background:#FCFCFD}
+.kbico{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#e0ddff,#d1cbfa);display:flex;align-items:center;justify-content:center}
+.side .kbname{font-size:16px;font-weight:700;color:var(--t1)}
+.menu button{width:100%;display:flex;align-items:center;gap:10px;min-height:44px;padding:0 14px;border:0;border-radius:10px;background:none;font-size:15px;color:var(--t2);text-align:left}
+.menu button:hover{background:var(--bg3)}
+.menu button.on{background:var(--pri-l);color:var(--pri);font-weight:600}
+.main{flex:1;min-width:0;padding:24px 28px 48px}
+/* ---- common ---- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 16px;border-radius:10px;border:1px solid var(--bd2);background:#fff;font-size:14px;font-weight:600;color:var(--t2);white-space:nowrap}
+.btn:hover{background:var(--bg2)}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
+.btn.pri:hover{background:var(--pri-d)}
+.btn.pri:disabled{background:#d9d5f5;border-color:#d9d5f5}
+.btn.ghost{border-color:transparent;background:none}
+.btn.danger{color:var(--err);border-color:#FDA29B}
+.mini{min-height:30px;padding:0 10px;font-size:13px;border-radius:8px}
+.link{border:0;background:none;padding:0;color:var(--pri);font-size:inherit;font-weight:500}
+.ibtn{width:40px;height:40px;border-radius:10px;border:1px solid var(--bd);background:#fff;display:inline-flex;align-items:center;justify-content:center}
+.field{min-height:40px;border:1px solid var(--bd2);border-radius:8px;padding:0 12px;font-size:14px;color:var(--t1);background:#fff}
+.select{min-height:40px;border:0;border-radius:8px;padding:0 10px;font-size:14px;color:var(--t2);background:var(--bg3)}
+.search{min-height:40px;border:0;border-radius:8px;padding:0 12px 0 34px;font-size:14px;background:var(--bg3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") no-repeat 11px center}
+.chip{font-size:12px;padding:2px 8px;border-radius:6px;background:var(--bg3);color:var(--t3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.chip.done{background:#ECFDF3;color:#067647}.chip.act{background:var(--pri-l);color:var(--pri-d);font-weight:600}.chip.warn{background:#FEF0C7;color:#93370D}
+.k-text{background:#eef0ff;color:#5149e9}.k-image{background:#F0FDF9;color:#107569}.k-av{background:#FEF6EE;color:#B93815}
+.sp{font-size:12px;font-weight:600;padding:1px 8px;border-radius:6px;white-space:nowrap}
+.sp1{background:var(--pri-l);color:var(--pri-d)}.sp2{background:#FEF0C7;color:#93370D}.sp3{background:#F4F3FF;color:#5925DC}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.sw{width:36px;height:20px;border-radius:10px;background:var(--pri);position:relative;flex:none;border:0;padding:0}
+.sw::after{content:"";position:absolute;top:2px;left:18px;width:16px;height:16px;border-radius:50%;background:#fff}
+.sw.off{background:var(--bd2)}.sw.off::after{left:2px}
+/* KP tags */
+.kp{display:inline-flex;align-items:center;gap:4px;font-size:12px;line-height:1.4;padding:3px 8px;border-radius:6px;border:1px solid #c3bff2;background:var(--pri-ll);color:var(--pri-d);max-width:100%}
+.kp svg{flex:none}
+.kp.pend{border:1px dashed #F79009;background:#FFFAEB;color:#93370D}
+.kp .ai{font-size:10px;font-weight:700;background:#F79009;color:#fff;border-radius:4px;padding:0 4px}
+.kp .x{border:0;background:none;padding:0 0 0 2px;color:inherit;font-size:14px;line-height:1}
+.kp-none{font-size:12px;color:var(--t4)}
+/* list table */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:13px;color:var(--t4);font-weight:500;text-align:left;padding:12px 10px;border-bottom:1px solid var(--bd);white-space:nowrap}
+.tbl td{padding:12px 10px;border-bottom:1px solid var(--bd);font-size:14px;color:var(--t2);white-space:nowrap}
+.tbl tr.click{cursor:pointer}.tbl tr.click:hover td{background:var(--bg2)}
+.tblwrap{overflow-x:auto}
+.mode{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:2px 6px;border-radius:6px;border:1px solid var(--bd2);color:var(--t3)}
+/* doc page */
+.dochead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--bd)}
+.docgrid{display:grid;grid-template-columns:260px minmax(0,1fr) 320px;gap:0;min-height:600px}
+.toc{border-right:1px solid var(--bd);padding:16px 12px 16px 0}
+.toc button{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 12px;border-radius:8px;font-size:14px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.toc button:hover{background:var(--bg3)}
+.toc button.on{background:var(--pri-l);color:var(--pri-d);font-weight:600}
+.segs{padding:16px 20px;min-width:0}
+.rpanel{border-left:1px solid var(--bd);padding:16px 0 16px 20px;display:flex;flex-direction:column;gap:16px}
+@media (max-width:1180px){.docgrid{grid-template-columns:minmax(0,1fr) 300px}.toc{display:none}}
+@media (max-width:900px){.docgrid{grid-template-columns:minmax(0,1fr)}.rpanel{border-left:0;padding-left:0}.side{display:none}.main{padding:16px}}
+.seg{display:flex;gap:12px;padding:16px 12px;border-radius:12px;border:1px solid transparent;cursor:pointer}
+.seg:hover{background:var(--bg2)}
+.seg.on{background:var(--pri-ll);border-color:#c3bff2}
+.seg.flash{animation:fl 1.6s ease}
+@keyframes fl{0%,40%{background:#FEF0C7}100%{background:transparent}}
+.seg+.seg{border-top-color:var(--bd)}
+.seghead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--t4)}
+.seghead b{font-weight:500;color:var(--t3)}
+.segbody{font-size:15px;line-height:1.75;color:var(--t2);white-space:pre-line}
+.segbody h4{margin:0 0 4px;font-size:15px;font-weight:700;color:var(--t1)}
+.thumb{border-radius:8px;overflow:hidden;border:1px solid var(--bd);line-height:0;background:#fff}
+.thumb svg{width:100%;height:auto;display:block}
+.play{width:30px;height:30px;border-radius:50%;border:0;background:var(--pri);display:inline-flex;align-items:center;justify-content:center;flex:none}
+.card{border:1px solid var(--bd);border-radius:14px;padding:16px;background:#fff}
+.aicard{border-radius:14px;padding:16px;background:linear-gradient(180deg,#FFFAEB,#fff);border:1px solid #FEDF89}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:10px 12px;font-size:13px}
+.kv span:nth-child(odd){color:var(--t4)}.kv span:nth-child(even){color:var(--t2);word-break:break-all}
+/* drawer */
+.mask{position:fixed;inset:0;background:rgba(16,24,40,.25);z-index:40}
+.drawer{position:fixed;top:12px;right:12px;bottom:12px;width:min(580px,calc(100% - 24px));background:#fff;border-radius:16px;box-shadow:0 20px 40px rgba(16,24,40,.18);z-index:41;display:flex;flex-direction:column}
+.drawer.wide{width:min(960px,calc(100% - 24px))}
+.dhead{padding:18px 20px 12px;display:flex;align-items:flex-start;gap:8px}
+.dbody{flex:1;overflow:auto;padding:0 20px 20px;display:flex;flex-direction:column;gap:16px}
+.dfoot{padding:12px 20px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:10px;align-items:center}
+.kbd{font-size:11px;color:inherit;opacity:.7;margin-left:4px}
+.box{border:1px solid var(--bd);border-radius:12px;padding:12px 14px}
+.box.hl{border:1.5px solid #F04438}
+.lbl{font-size:13px;font-weight:600;color:var(--t2)}
+.pickbtn{width:100%;min-height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-radius:10px;border:0;background:var(--bg3);font-size:14px;color:var(--t4)}
+.picker{border:1px solid var(--bd);border-radius:12px;box-shadow:0 8px 20px rgba(16,24,40,.08);overflow:hidden}
+.picker .list{max-height:300px;overflow:auto;padding:6px}
+.picker .grp{font-size:12px;color:var(--t4);padding:10px 8px 4px;line-height:1.5}
+.picker label{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;font-size:14px;color:var(--t2);cursor:pointer}
+.picker label:hover{background:var(--bg2)}
+.picker input[type=checkbox]{width:16px;height:16px;accent-color:var(--pri)}
+.sugg{border:1px solid #FEDF89;background:#FFFCF5;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.sugg.done{border-color:#ABEFC6;background:#F6FEF9}
+.sugg.rej{border-color:var(--bd);background:var(--bg2);opacity:.8}
+.sugg q{quotes:"「" "」";color:var(--t2);background:#FEF0C7;border-radius:3px;padding:0 2px}
+.edtx{width:100%;border:1px solid var(--bd2);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.7;color:var(--t1);resize:vertical;min-height:120px}
+.edtx:focus,.field:focus,.search:focus{outline:2px solid #c3bff2;border-color:var(--pri)}
+.hbar{background:var(--bg3);border-radius:10px;padding:10px 14px;font-weight:600;color:var(--t1)}
+/* modal */
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(760px,calc(100% - 32px));max-height:calc(100% - 48px);overflow:auto;background:#fff;border-radius:16px;box-shadow:0 20px 40px rgba(16,24,40,.2);z-index:61;padding:20px;display:flex;flex-direction:column;gap:14px}
+.modal.sm{width:min(440px,calc(100% - 32px))}
+.mask2{position:fixed;inset:0;background:rgba(16,24,40,.35);z-index:60}
+.video{position:relative;aspect-ratio:16/8;background:#101828;border-radius:12px}
+.subtitle{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);max-width:88%;padding:6px 12px;border-radius:6px;background:rgba(0,0,0,.6);color:#fff;font-size:14px;line-height:1.6;text-align:center}
+.wave{height:110px;padding:0 16px;background:var(--bg2);border-radius:12px;display:flex;align-items:center;gap:3px;overflow:hidden}
+.bar{width:4px;border-radius:2px;background:var(--bd2);flex:none}.bar.p{background:var(--pri)}
+.seek{flex:1;height:6px;border-radius:3px;background:var(--bd);overflow:hidden;cursor:pointer}
+.seek>div{height:100%;background:var(--pri)}
+/* wizard (from previous demo) */
+.steps{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin-bottom:28px}
+.step{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--t4);white-space:nowrap}
+.step .n{width:24px;height:24px;border-radius:50%;border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.step.on{color:var(--pri);font-weight:600}.step.on .n{background:var(--pri);border-color:var(--pri);color:#fff}
+.step.done{color:var(--t2)}.step.done .n{background:var(--pri-l);border-color:var(--pri-l);color:var(--pri)}
+.step-line{width:40px;height:1px;background:var(--bd2)}
+.srcs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.src{display:flex;align-items:center;gap:12px;min-height:80px;padding:0 18px;border:1px solid var(--bd);border-radius:12px;background:var(--bg2);font-size:15px;font-weight:600;color:var(--t2);text-align:left;position:relative}
+.src.on{border:1.5px solid var(--pri);background:#fff}
+.src small{display:block;font-size:12px;font-weight:400;color:var(--t4);margin-top:2px}
+.ico{width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid var(--bd);border-radius:10px;background:#fff}
+.new{position:absolute;top:-9px;right:12px;font-size:11px;font-weight:600;color:#fff;background:var(--pri);border-radius:6px;padding:1px 7px}
+.drop{border:1px dashed #c3bff2;border-radius:12px;background:var(--pri-ll);padding:22px;display:flex;flex-direction:column;gap:10px}
+.drop.drag{border-color:var(--pri);background:var(--pri-l)}
+.drop p{font-size:14px;color:var(--t4);line-height:1.8}.drop p b{color:var(--t2)}
+.frow{display:flex;align-items:center;gap:12px;padding:8px 8px 8px 12px;border-radius:10px;border:1px solid var(--bd);background:#fff}
+.frow.err{border-color:#FDA29B;background:#FEF3F2}
+.fname{font-size:14px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.x{width:40px;height:40px;border:0;background:none;display:flex;align-items:center;justify-content:center;border-radius:8px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--bd);flex-wrap:wrap}
+.tab{min-height:44px;padding:0 16px;border:0;background:none;font-size:15px;color:var(--t4);border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:8px}
+.tab.on{color:var(--pri);border-bottom-color:var(--pri);font-weight:600}
+.tab .cnt{font-size:12px;background:var(--bg3);color:var(--t3);border-radius:10px;padding:0 7px}
+.pill{min-height:38px;padding:0 14px;border-radius:8px;border:1px solid var(--bd2);background:#fff;font-size:14px;color:var(--t2)}
+.pill.on{border-color:var(--pri);background:var(--pri-l);color:var(--pri-d);font-weight:600}
+.opt{display:flex;flex-direction:column;gap:4px;text-align:left;padding:14px 16px;border-radius:10px;border:1px solid var(--bd);background:#fff}
+.opt.on{border:1.5px solid var(--pri);background:var(--pri-ll)}
+.tg{width:44px;height:26px;border-radius:13px;border:0;background:var(--bd2);position:relative;flex:none;padding:0}
+.tg::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.tg.on{background:var(--pri)}.tg.on::after{left:21px}
+.set{display:flex;align-items:center;gap:16px;padding:14px 16px}.set+.set{border-top:1px solid var(--bd)}
+.set b{font-size:14px;font-weight:600;color:var(--t1)}
+.cardb{border:1px solid var(--bd);border-radius:12px}
+.pv{display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:10px;background:#fff;border:1px solid var(--bd)}
+.pv p{font-size:14px;line-height:1.75;color:var(--t2);white-space:pre-line}
+.pvside{flex:1 1 340px;min-width:0;display:flex;flex-direction:column;gap:14px;padding:18px;border-radius:14px;background:var(--bg2);border:1px solid var(--bd)}
+.proc{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--bd);border-radius:12px;background:#fff}
+.track{height:6px;border-radius:3px;background:var(--bg3);overflow:hidden}
+.track>div{height:100%;background:var(--pri);transition:width .25s}.track>div.ok{background:var(--ok)}
+.fixed{display:flex;gap:8px;align-items:flex-start;padding:12px 14px;border-radius:10px;background:var(--bg2);font-size:13px;color:var(--t3);line-height:1.6}
+.hit input{flex:1 1 260px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#101828;color:#fff;font-size:14px;padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:80;max-width:90%}
+.toast.show{opacity:1}
+/* ---- platform kb header ---- */
+.kb-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 0 2px;}
+#app{background:#FCFCFD;border-radius:16px;padding:20px 28px 48px;margin:12px;min-height:calc(100vh - 40px);}
+</style>
+</head>
+<body>
+    <aside class="platform-sidebar" aria-label="图谱平台导航">
+      <div class="platform-brand">
+        <span class="platform-brand-mark">图</span>
+        <div><strong>专业图谱平台</strong><small>知识与能力管理</small></div>
+      </div>
+      <nav class="platform-nav">
+        <div class="nav-section-title">图谱建设</div>
+        <a href="knowledge-graph.html" class="platform-nav-item"><span class="nav-icon">图</span><span>知识图谱</span></a>
+        <a href="knowledge-system.html" class="platform-nav-item"><span class="nav-icon">系</span><span>知识体系</span></a>
+        <a href="knowledge-base.html" class="platform-nav-item active" aria-current="page"><span class="nav-icon">库</span><span>知识库</span></a>
+        <a href="ability-graph.html" class="platform-nav-item"><span class="nav-icon">能</span><span>能力图谱</span></a>
+        <a href="mapping-review.html" class="platform-nav-item"><span class="nav-icon">映</span><span>图谱映射审核台</span></a>
+      </nav>
+      <div class="platform-sidebar-footer"><span class="platform-avatar">秦</span><span>平台管理员</span><span class="sidebar-more">···</span></div>
+    </aside>
+  <div class="platform-page">
+    <main class="app-shell" style="padding:0;max-width:none;background:transparent;">
+      <div id="app"></div>
+    </main>
+  </div>
+  <div class="toast" id="toast"></div>
+<script>
+/* =====================================================================
+   MOCK：知识体系里的已有知识点（专业 / 课程 / 任务 / 技能 → 知识点）
+   ===================================================================== */
+const P_SAFE=['智慧景区开发与管理','旅游政策与法规','旅游安全事故应急处置与法律责任界定','旅游安全突发事件应急流程执行'];
+const P_CHECKIN=['酒店管理与数字化运营','前厅服务与管理','散客入住接待','入住登记办理'];
+const P_CHECKOUT=['酒店管理与数字化运营','前厅服务与管理','退房结账','退房手续办理'];
+const P_ROOM=['酒店管理与数字化运营','前厅服务与管理','交接班与夜审','房态管理'];
+const P_SHIFT=['酒店管理与数字化运营','前厅服务与管理','交接班与夜审','交接班执行'];
+const P_AUDIT=['酒店管理与数字化运营','前厅服务与管理','交接班与夜审','夜审操作'];
+const P_GUEST=['酒店管理与数字化运营','前厅服务与管理','宾客关系管理','投诉处理'];
+const P_PRICE=['酒店管理与数字化运营','前厅服务与管理','客房销售','房价管理'];
+const P_GUIDE=['导游','导游业务','景点讲解','故宫中轴线讲解'];
+const P_PACE=['导游','导游业务','景点讲解','讲解节奏控制'];
+const KS=[
+  {id:'k1',name:'旅游突发事件分级标准',path:P_SAFE},
+  {id:'k2',name:'突发事件报告时限与报告对象',path:P_SAFE},
+  {id:'k3',name:'组团社与地接社安全责任',path:P_SAFE},
+  {id:'k4',name:'旅游者人身损害赔偿责任',path:P_SAFE},
+  {id:'k5',name:'事故现场控制要点',path:P_SAFE},
+  {id:'k6',name:'入住登记五环节',path:P_CHECKIN},
+  {id:'k7',name:'有效证件核验要求',path:P_CHECKIN},
+  {id:'k8',name:'押金收取标准',path:P_CHECKIN},
+  {id:'k9',name:'提前入住处理规则',path:P_CHECKIN},
+  {id:'k10',name:'延迟退房收费规则',path:P_CHECKOUT},
+  {id:'k11',name:'房态代码',path:P_ROOM},
+  {id:'k12',name:'交接班核对事项',path:P_SHIFT},
+  {id:'k13',name:'投诉处理三步法',path:P_GUEST},
+  {id:'k18',name:'门市价与协议价',path:P_PRICE},
+  {id:'k14',name:'午门形制与别称',path:P_GUIDE},
+  {id:'k15',name:'内金水桥',path:P_GUIDE},
+  {id:'k16',name:'太和殿形制等级',path:P_GUIDE},
+  {id:'k17',name:'讲解点位时长控制',path:P_PACE}
+];
+const SKILL_PATHS=[P_SAFE,P_CHECKIN,P_CHECKOUT,P_ROOM,P_SHIFT,P_AUDIT,P_GUEST,P_PRICE,P_GUIDE,P_PACE];
+
+/* ---- 图文（mock） ---- */
+const IMG_BOARD=`<svg viewBox="0 0 480 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="白板手写房态表"><rect width="480" height="320" fill="#DDE3EA"/><rect x="20" y="16" width="440" height="288" rx="6" fill="#FDFDFB" stroke="#AEB8C4" stroke-width="6"/><g font-family="Kaiti SC, STKaiti, KaiTi, serif" fill="#1F3A8A"><text x="48" y="62" font-size="26" font-weight="700">房态表（8F）</text><line x1="46" y1="76" x2="430" y2="76" stroke="#1F3A8A" stroke-width="2"/><text x="52" y="110" font-size="20">801　VC　空房已清洁</text><text x="52" y="142" font-size="20">802　OC　住客房</text><text x="52" y="174" font-size="20">803　VD　空房未清洁</text><text x="52" y="206" font-size="20">804　OOO　维修房</text><text x="52" y="238" font-size="20">805　VC　空房已清洁</text><text x="52" y="282" font-size="17" fill="#B42318">备注：VD 清洁完 → 客房部通知前台改 VC</text></g></svg>`;
+const IMG_DESK=`<svg viewBox="0 0 480 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="酒店前台工作区照片"><rect width="480" height="320" fill="#EFE7DC"/><rect y="250" width="480" height="70" fill="#D8CBB8"/><rect x="150" y="34" width="180" height="46" rx="6" fill="#3B2F25"/><text x="240" y="56" text-anchor="middle" font-size="14" fill="#E9D8B4" font-family="sans-serif" letter-spacing="3">RECEPTION</text><text x="240" y="73" text-anchor="middle" font-size="12" fill="#E9D8B4" font-family="sans-serif">前台接待</text><rect x="70" y="128" width="100" height="66" rx="4" fill="#1F2937"/><rect x="76" y="134" width="88" height="54" fill="#60A5FA" opacity=".55"/><rect x="112" y="194" width="16" height="16" fill="#374151"/><rect x="86" y="206" width="70" height="10" rx="2" fill="#4B5563"/><rect x="300" y="168" width="54" height="40" rx="4" fill="#E5E7EB" stroke="#9CA3AF"/><rect x="310" y="160" width="34" height="10" rx="2" fill="#CBD5E1"/><rect x="372" y="176" width="34" height="34" rx="5" fill="#111827"/><rect x="378" y="182" width="22" height="10" fill="#34D399"/><rect x="30" y="214" width="420" height="16" rx="3" fill="#C9A27C"/><rect x="40" y="230" width="400" height="70" fill="#8B6B4A"/></svg>`;
+
+/* =====================================================================
+   MOCK：知识库里已有的文档（截图里的那份）
+   sugg: A=关联已有  B=新建知识点  C=相近待判
+   ===================================================================== */
+const SEED_DOCS=[
+ {id:'bus',kind:'text',ext:'docx',name:'大巴车交通事故应急处置案.docx',size:'86 KB',time:'2026-10-09 05:59',recallTotal:3,
+  segs:[
+   {heading:'大巴车交通事故应急处置案',text:'',kps:[],sugg:[]},
+   {heading:'',text:'说明：本案例依据真实行业情境编写的教学模拟案例，人物、型号、地点均为虚构。',kps:[],sugg:[]},
+   {heading:'一、案例基本信息',text:'专业：智慧景区开发与管理（540110）→ 课程：旅游政策与法规 → 任务：旅游安全事故应急处置与法律责任界定 → 技能规范：旅游安全突发事件应急流程执行\n对应岗位：导游（全陪 / 地陪），旅行社计调、领队\n案例类型：情境处置型 + 责任分析型（含正误对照）\n适用对象：高职旅游大类二年级学生；也可用于导游岗前培训',kps:[],sugg:[]},
+   {heading:'2、教学目标',text:'知识目标：说出旅游突发事件的分级标准、报告时限与报告对象；掌握《旅游法》关于安全保障、组团社责任与履行辅助人责任的规定。',kps:['k1'],
+    sugg:[{type:'A',kp:'k2',conf:.94,quote:'报告时限与报告对象'},{type:'A',kp:'k3',conf:.91,quote:'组团社责任与履行辅助人责任'}]},
+   {heading:'四、事件经过',text:'旅游大巴在山区路段侧滑撞上护栏，3 名游客受轻伤。地陪第一时间停车开启双闪、设置警示标志，并清点人数。',kps:[],
+    sugg:[{type:'A',kp:'k5',conf:.86,quote:'第一时间停车开启双闪、设置警示标志'},{type:'B',name:'车辆事故现场警示设置',def:'发生车辆事故后立即开启双闪，并在来车方向设置警示标志，防止二次事故。',conf:.78,quote:'开启双闪、设置警示标志',mount:[P_SAFE]}]},
+   {heading:'（二）第二阶段：按要求报告',text:'导游应在事发后 1 小时内向旅行社报告，旅行社在 2 小时内向事发地县级以上旅游主管部门报告。',kps:[],
+    sugg:[{type:'C',near:'k2',name:'突发事件逐级报告时限',def:'导游 1 小时内报旅行社，旅行社 2 小时内报县级以上旅游主管部门。',conf:.72,quote:'事发后 1 小时内向旅行社报告',mount:[P_SAFE]}]},
+   {heading:'八、法律责任界定',text:'地接社委托的车队属于履行辅助人，因其过错造成游客损害的，由组团社承担责任后可向地接社追偿。',kps:['k3'],
+    sugg:[{type:'A',kp:'k4',conf:.92,quote:'造成游客损害的，由组团社承担责任'}]}
+  ]}
+];
+
+/* =====================================================================
+   MOCK：统一上传示例文件（含 1 个超限）
+   ===================================================================== */
+const IMPORT_FILES=[
+ {id:'t1',kind:'text',ext:'docx',name:'前厅服务规范.docx',size:'1.2 MB',
+  segs:[
+   {heading:'第一章 总则',text:'前厅部是酒店对客服务的第一窗口，员工须统一着装、佩戴工牌，站立服务，主动问候。',kps:[],sugg:[{type:'B',name:'前厅部的服务定位',def:'前厅部是酒店对客服务的第一窗口。',conf:.69,quote:'前厅部是酒店对客服务的第一窗口',mount:[P_CHECKIN]}]},
+   {heading:'第二章 入住登记',text:'核验有效证件，确认预订信息与房型、房价、离店日期，收取押金后制作房卡并告知早餐时间。',kps:[],sugg:[{type:'A',kp:'k7',conf:.93,quote:'核验有效证件'},{type:'A',kp:'k8',conf:.91,quote:'收取押金后制作房卡'}]},
+   {heading:'第三章 提前入住与延迟退房',text:'提前入住视当日可售房态安排；延迟退房至 14:00 不另收费，14:00–18:00 加收半日房费，18:00 后按全日房费计。',kps:[],sugg:[{type:'A',kp:'k9',conf:.96,quote:'提前入住视当日可售房态安排'},{type:'A',kp:'k10',conf:.95,quote:'延迟退房至 14:00 不另收费'}]},
+   {heading:'第四章 交接班',text:'每班结束前核对房态、备用金和未完成事项，填写交接班记录本并双方签字。',kps:[],sugg:[{type:'A',kp:'k12',conf:.92,quote:'核对房态、备用金和未完成事项'}]}
+  ]},
+ {id:'t2',kind:'text',ext:'pdf',name:'夜审操作手册（扫描件）.pdf',size:'8.6 MB',scanned:true,
+  segs:[
+   {heading:'',text:'夜审时间一般为每日 0:00 至 3:00，夜审员需核对当日所有入住、退房及在住房间的房价与账务。',kps:[],sugg:[{type:'B',name:'夜审时间与核对范围',def:'夜审一般在 0:00–3:00 进行，核对当日入住、退房及在住房间的房价与账务。',conf:.81,quote:'夜审时间一般为每日 0:00 至 3:00',mount:[P_AUDIT]}]},
+   {heading:'',text:'完成核对后执行日结，生成营业日报，并将系统营业日期滚动至次日。',kps:[],sugg:[{type:'B',name:'夜审日结',def:'核对完成后执行日结、生成营业日报，并把营业日期滚动到次日。',conf:.84,quote:'执行日结，生成营业日报',mount:[P_AUDIT]}]}
+  ]},
+ {id:'x1',kind:'text',ext:'xlsx',name:'前厅房价表.xlsx',size:'42 KB',sheet:true,
+  segs:[
+   {heading:'工作表：房价',text:'房型：标准间；门市价：588 元；协议价：428 元；早餐：含双早',kps:[],sugg:[{type:'A',kp:'k18',conf:.90,quote:'门市价：588 元；协议价：428 元'}]},
+   {heading:'工作表：房价',text:'房型：大床房；门市价：628 元；协议价：458 元；早餐：含单早；延迟退房：14:00 前免费',kps:[],sugg:[{type:'A',kp:'k10',conf:.88,quote:'延迟退房：14:00 前免费'}]},
+   {heading:'工作表：房价',text:'房型：行政套房；门市价：1288 元；协议价：968 元；早餐：含双早；行政酒廊：可用',kps:[],sugg:[]}
+  ]},
+ {id:'i1',kind:'image',ext:'jpg',name:'房态表板书.jpg',size:'2.4 MB',svg:IMG_BOARD,
+  segs:[{ocr:'房态表（8F）\n801 VC 空房已清洁\n802 OC 住客房\n803 VD 空房未清洁\n804 OOO 维修房\n805 VC 空房已清洁\n备注：VD 清洁完 → 客房部通知前台改 VC',
+         desc:'白板上手写的 8 楼房态表，按房号列出 5 个房间的房态代码与含义，底部有一条红色交接备注，说明 VD 房清洁完成后的改态流程。',kps:[],
+         sugg:[{type:'A',kp:'k11',conf:.97,quote:'801 VC 空房已清洁'},{type:'B',name:'VD 房改态流程',def:'VD 房清洁完成后，由客房部通知前台改为 VC。',conf:.88,quote:'VD 清洁完 → 客房部通知前台改 VC',mount:[P_ROOM]}]}]},
+ {id:'i2',kind:'image',ext:'jpg',name:'前台工作区照片.jpg',size:'3.1 MB',svg:IMG_DESK,
+  segs:[{ocr:'RECEPTION\n前台接待',desc:'酒店前台工作区。台面左侧是电脑显示器和键盘，右侧是房卡制卡机和 POS 机，后方墙上挂着「前台接待」标识，台面整洁，画面中没有客人。',kps:[],
+         sugg:[{type:'B',name:'前台工作区设备配置',def:'前台工作区配有电脑、房卡制卡机和 POS 机。',conf:.66,quote:'右侧是房卡制卡机和 POS 机',mount:[P_CHECKIN],fromDesc:true}]}]},
+ {id:'a',kind:'av',media:'video',ext:'mp4',name:'前厅接待实训课录像.mp4',size:'162.4 MB',sec:1100,
+  segs:[
+   {start:0,end:156,sp:1,text:'同学们好，今天这节实训课我们练习前厅散客入住登记的完整流程。先回顾上节课讲的五个环节：问候、确认预订、核验证件、收取押金、发放房卡。',raw:'嗯，同学们好，那个今天这节实训课我们练习前厅散客入住登记的完整流程。先回顾一下啊上节课讲的五个环节：问候、确认预订、核验证件、收取押金、发放房卡。',kps:[],sugg:[{type:'A',kp:'k6',conf:.95,quote:'问候、确认预订、核验证件、收取押金、发放房卡'}]},
+   {start:156,end:370,sp:1,text:'核验证件这一步要同时核对系统里的预订姓名和证件姓名，不一致时先问清楚是不是代订，再按酒店规定处理。',raw:'那个核验证件这一步呢，要同时核对系统里的预订姓名和证件姓名，不一致时先问清楚是不是代订，再按酒店规定处理。',kps:[],sugg:[{type:'A',kp:'k7',conf:.93,quote:'核对系统里的预订姓名和证件姓名'}]},
+   {start:370,end:522,sp:2,text:'老师，如果客人是通过 OTA 平台预订的，押金也要在前台另外收吗？',kps:[],sugg:[]},
+   {start:522,end:725,sp:1,text:'要看预订类型。预付房型通常只收杂费押金，现付房型收房费加杂费。另外常遇到客人要求提前入住，先查当前可售房态，有已清洁的同类型房就可以安排，没有的话请客人寄存行李，并告知预计可入住时间。',kps:[],sugg:[{type:'A',kp:'k8',conf:.91,quote:'预付房型通常只收杂费押金'},{type:'A',kp:'k9',conf:.94,quote:'先查当前可售房态'}]},
+   {start:725,end:930,sp:3,text:'我来演示一遍。您好，欢迎光临，请问有预订吗？好的，麻烦出示一下您的身份证，我为您办理入住登记。',kps:[],sugg:[]},
+   {start:930,end:1100,sp:1,text:'刚才的演示流程是对的，有两个细节：递还证件要双手，并且要复述房号和早餐时间。',kps:[],sugg:[]}
+  ]},
+ {id:'b',kind:'av',media:'audio',ext:'m4a',name:'导游讲解示范_故宫中轴线.m4a',size:'38.6 MB',sec:960,
+  segs:[
+   {start:0,end:200,sp:1,text:'各位游客朋友，大家好。我们现在站在午门前，午门是紫禁城的正门，平面呈凹字形，俗称五凤楼。',kps:[],sugg:[{type:'A',kp:'k14',conf:.96,quote:'俗称五凤楼'}]},
+   {start:200,end:465,sp:1,text:'穿过午门，眼前这条金水河自西向东流过，河上五座汉白玉石桥就是内金水桥，中间一座是皇帝专用的御路桥。',kps:[],sugg:[{type:'A',kp:'k15',conf:.95,quote:'五座汉白玉石桥就是内金水桥'}]},
+   {start:465,end:730,sp:1,text:'接下来看到的是太和殿，也就是俗称的金銮殿，是紫禁城中规格最高的建筑，明清两代的重大典礼都在这里举行。',kps:[],sugg:[{type:'A',kp:'k16',conf:.93,quote:'紫禁城中规格最高的建筑'}]},
+   {start:730,end:960,sp:1,text:'讲解时要注意节奏，每个点位控制在三到五分钟，并提醒游客注意台阶和人流。',kps:[],sugg:[{type:'A',kp:'k17',conf:.90,quote:'每个点位控制在三到五分钟'}]}
+  ]},
+ {id:'c',kind:'av',media:'audio',ext:'mp3',name:'企业师傅访谈-酒店前台.mp3',size:'21.7 MB',sec:1125,
+  segs:[
+   {start:0,end:110,sp:1,text:'王经理您好，想请您谈谈新员工到前台岗位后，最常见的问题是什么？',kps:[],sugg:[]},
+   {start:110,end:390,sp:2,text:'最常见的是房态不熟。新人上岗前两周，我们要求每天交接班时手工核对一次房态表，熟了以后系统操作才不容易出错。',kps:[],sugg:[{type:'A',kp:'k11',conf:.82,quote:'房态不熟'},{type:'A',kp:'k12',conf:.87,quote:'每天交接班时手工核对一次房态表'}]},
+   {start:390,end:615,sp:2,text:'第二是处理投诉时急于解释。我们教的是先倾听、再致歉、最后给方案，而且方案要给客人选择。',kps:[],sugg:[{type:'A',kp:'k13',conf:.94,quote:'先倾听、再致歉、最后给方案'}]},
+   {start:615,end:820,sp:1,text:'那您觉得学校在实训课里应该加强哪方面？',kps:[],sugg:[]},
+   {start:820,end:1125,sp:2,text:'多练夜审和交接班。学校实训一般练入住退房比较多，夜审很少涉及，但上岗后每个人都要轮。',kps:[],sugg:[]}
+  ]},
+ {id:'d',kind:'av',media:'video',ext:'mov',name:'研学活动全程记录.mov',size:'1.8 GB',sec:13330,error:'时长超过 3 小时，无法导入',segs:[]}
+];
+
+const KB_META={'KB001':'xhf_test_09_14','KB002':'知识工程与知识体系详解.docx','KB003':'现代酒店管理','KB004':'旅游管理专业教学资源库','KB005':'导游实务案例集','KB006':'景区开发与管理规范'};
+const KB_NAME=KB_META[new URLSearchParams(location.search).get('id')]||'旅游大类实训素材';
+const EXT={text:['html','mdx','txt','markdown','md','docx','pdf','xls','xlsx','csv','htm','properties','vtt'],image:['jpg','jpeg','png','webp','bmp'],av:['mp3','wav','m4a','aac','flac','mp4','mov','mkv','webm']};
+const LIMIT={perBatch:20,text:100*1024**2,image:20*1024**2,av:2*1024**3};
+const KIND_LABEL={text:'文本',image:'图文',av:'音视频'};
+const REJECT_REASONS=['不是知识点','关联错误','挂载错误','内容与原文不符','其他'];
+
+/* =====================================================================
+   状态
+   ===================================================================== */
+const S={
+  view:'list',           // list | wizard | doc | recall
+  docs:[], activeDoc:null, hl:null,
+  segFilter:'all', kpFilter:'all', segQ:'', tocOn:null,
+  drawer:null, picker:{open:false,q:''}, wide:false,
+  editSugg:null, rejecting:null,
+  modal:null,            // {kind:'oneclick'|'preview'|'leave'}
+  playing:false,
+  // wizard
+  step:1, source:'local', files:[], drag:false, tab:null,
+  ocrScan:true, imgMode:'both', lang:'zh', diarize:true, clean:true, keepTs:true, segMode:'semantic', dur:5,
+  hotwords:'前厅部，入住登记，预授权，押金，OTA，散客，房态，夜审', progress:{},
+  // recall
+  query:'客人要求提前入住怎么处理', hits:null
+};
+let procTimer=null, playTimer=null, uid=1, kpUid=100;
+
+/* =====================================================================
+   工具
+   ===================================================================== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=s=>{s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60,p=n=>(n<10?'0':'')+n;return h?h+':'+p(m)+':'+p(x):p(m)+':'+p(x)};
+const clone=o=>JSON.parse(JSON.stringify(o));
+const toast=t=>{const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2200)};
+const kpById=id=>KS.find(k=>k.id===id);
+const pathStr=p=>p.join(' / ');
+const docById=id=>S.docs.find(d=>d.id===id);
+const segById=(d,id)=>d.segs.find(s=>s.id===id);
+const segText=(d,s)=>d.kind==='image'?[s.ocr,s.desc].filter(Boolean).join('\n'):d.kind==='av'?s.text:[s.heading,s.text].filter(Boolean).join('\n');
+const segChars=(d,s)=>segText(d,s).replace(/\n/g,'').length;
+const pend=s=>s.sugg.filter(g=>g.status==='pending');
+const nowStr=()=>{const d=new Date(),p=n=>(n<10?'0':'')+n;return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`};
+const validFiles=()=>S.files.filter(f=>!f.error);
+const ofKind=k=>validFiles().filter(f=>f.kind===k);
+
+const I={
+  doc:(c='#5149e9',w=18)=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round"><path d="M6 2.5h8l5 5V20a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V4A1.5 1.5 0 0 1 6.5 2.5z"/><path d="M14 2.5V8h5M8.5 13h7M8.5 16.5h5"/></svg>`,
+  word:(w=18)=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" fill="#5149e9"/><path d="M7 8l1.6 8L12 10l3.4 6L17 8" stroke="#fff" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>`,
+  pdf:(w=18)=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" fill="#E5484D"/><path d="M8 15.5c2-1 4.5-4.5 4-7s-2 1 0 3.5 4 3 4 3" stroke="#fff" stroke-width="1.5" fill="none"/></svg>`,
+  xls:(w=18)=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" fill="#12A150"/><path d="M8 8l8 8M16 8l-8 8" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>`,
+  image:(c='#0E9384',w=18)=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-9 9"/></svg>`,
+  video:(c='#DC6803',w=18)=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round"><rect x="2.5" y="5" width="13" height="14" rx="2.5"/><path d="M15.5 10l5-3v10l-5-3"/></svg>`,
+  audio:(c='#DC6803',w=18)=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round"><path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/></svg>`,
+  play:(w=14)=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="#fff"><path d="M8 5.5v13l10.5-6.5z"/></svg>`,
+  pause:(w=14)=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="#fff"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>`,
+  x:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#667085" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  back:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>',
+  arrow:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  chev:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>',
+  plus:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  kp:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>',
+  expand:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#475467" stroke-width="2" stroke-linecap="round"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg>',
+  cloud:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#344054" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a5 5 0 0 1-.6-9.96A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9"/><path d="M12 12v8M9 15l3-3 3 3"/></svg>',
+  upload:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5149e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a5 5 0 0 1-.6-9.96A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9"/><path d="M12 12v8M9 15l3-3 3 3"/></svg>',
+  info:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#475467" stroke-width="2" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>',
+  spark:'<svg width="16" height="16" viewBox="0 0 24 24" fill="#F79009"><path d="M12 2l2.2 6.3L20.5 10l-6.3 2.2L12 18.5l-2.2-6.3L3.5 10l6.3-1.7z"/></svg>'
+};
+const docIcon=(d,w=18)=>d.kind==='image'?I.image('#0E9384',w):d.kind==='av'?(d.media==='video'?I.video('#DC6803',w):I.audio('#DC6803',w)):d.ext==='docx'?I.word(w):d.ext==='pdf'?I.pdf(w):d.ext==='xlsx'||d.ext==='xls'||d.ext==='csv'?I.xls(w):I.doc('#5149e9',w);
+const kindChip=k=>`<span class="chip k-${k}">${KIND_LABEL[k]}</span>`;
+
+/* 文档初始化：补 id / 状态 */
+function toDoc(f,opt={}){
+  const d=clone(f); if(f.svg) d.svg=f.svg;
+  d.status='可用'; d.enabled=true; d.time=d.time||nowStr(); d.recallTotal=d.recallTotal||0;
+  d.imgMode=opt.imgMode||'both';
+  if(d.kind==='text'&&d.scanned&&opt.ocrScan===false){ d.segs=[]; d.skipped=true; }
+  if(d.kind==='image'){ d.segs.forEach(s=>{ if(d.imgMode==='ocr'){s.desc='';s.sugg=s.sugg.filter(g=>!g.fromDesc);} if(d.imgMode==='desc') s.ocr=''; }); }
+  if(d.kind==='av'&&opt.clean===false){ d.segs.forEach(s=>{ if(s.raw) s.text=s.raw; }); }
+  d.segs.forEach((s,i)=>{ s.id=d.id+'-s'+i; s.no='分段-'+String(i+1).padStart(2,'0'); s.enabled=true; s.recall=i===3&&d.id==='bus'?3:0;
+    s.sugg.forEach((g,j)=>{ g.id=s.id+'-g'+j; g.status='pending'; }); });
+  return d;
+}
+S.docs=SEED_DOCS.map(d=>toDoc(d));
+
+/* =====================================================================
+   外壳
+   ===================================================================== */
+function shell(inner){
+  return `<div class="kb-top">
+    <div class="row g12"><span class="kbico">${I.doc('#5149e9',26)}</span>
+      <div class="col g6"><h1 style="font-size:20px;font-weight:700;color:var(--t1)">${KB_NAME}</h1><span class="muted">知识库文档：文本、图文、音视频 · 分段关联知识点</span></div>
+    </div>
+    <div class="row g24"><div class="col"><b style="font-size:18px">${S.docs.length}</b><span class="muted">文档</span></div><div class="col"><b style="font-size:18px">0</b><span class="muted">个关联应用</span></div></div>
+  </div>
+  <div class="tabs" style="margin:16px 0 20px">
+    <button class="tab ${S.view==='list'||S.view==='doc'||S.view==='wizard'?'on':''}" data-act="nav" data-v="list">${I.doc('currentColor',16)}文档</button>
+    <button class="tab ${S.view==='recall'?'on':''}" data-act="nav" data-v="recall">${I.kp}召回测试</button>
+  </div>
+  ${inner}`;
+}
+
+/* =====================================================================
+   文档列表
+   ===================================================================== */
+function kpStats(d){ let linked=0,pending=0; d.segs.forEach(s=>{linked+=s.kps.length;pending+=pend(s).length;}); return {linked,pending}; }
+function viewList(){
+  const rows=S.docs.map((d,i)=>{const st=kpStats(d);const chars=d.segs.reduce((a,s)=>a+segChars(d,s),0);
+    return `<tr class="click" data-act="open" data-v="${d.id}">
+      <td><input type="checkbox" aria-label="选择" onclick="event.stopPropagation()"></td><td>${i+1}</td>
+      <td><span class="row g8" style="font-weight:500;color:var(--t1)">${docIcon(d)}${esc(d.name)}</span></td>
+      <td><span class="mode">${d.kind==='av'?'转写 · 语义':d.kind==='image'?'图文 · 单图单段':'语义'}</span></td>
+      <td>${chars>=1000?(chars/1000).toFixed(1)+'k':chars}</td><td>${d.recallTotal}</td>
+      <td>${st.linked||st.pending?`<span class="row g6"><span class="chip done">已关联 ${st.linked}</span>${st.pending?`<span class="chip warn">待确认 ${st.pending}</span>`:''}</span>`:'<span class="muted">—</span>'}</td>
+      <td>${d.time}</td>
+      <td><span class="row g6"><span class="dot" style="background:var(--ok)"></span><span style="color:#067647">${d.status}</span></span></td>
+      <td><button class="sw ${d.enabled?'':'off'}" aria-label="启用" onclick="event.stopPropagation()"></button></td></tr>`;}).join('');
+  const imported=S.docs.some(d=>d.id!=='bus');
+  return `<section class="col g16">
+    <div class="col g4"><h1 style="font-size:20px">文档</h1><span class="muted" style="font-size:14px">知识库的所有文件都在这里显示</span></div>
+    ${imported?'':`<div class="fixed" style="background:var(--pri-ll);border:1px solid #d9d5f5">${I.info}<span>点右上角「添加文件」体验统一上传（文本 / 图文 / 音视频）；也可以直接点开「大巴车交通事故应急处置案.docx」体验编辑分段与关联知识点。</span></div>`}
+    <div class="row g12 wrapflex"><select class="select" aria-label="筛选"><option>全部</option></select><input class="search" placeholder="搜索" aria-label="搜索文档" style="width:240px">
+      <span style="flex:1"></span><button class="btn">元数据</button><button class="btn pri" data-act="nav" data-v="wizard">${I.plus}添加文件</button></div>
+    <div class="tblwrap"><table class="tbl"><thead><tr><th style="width:36px"></th><th>#</th><th>名称</th><th>分段模式</th><th>字符数</th><th>召回次数</th><th>知识点</th><th>上传时间</th><th>状态</th><th>操作</th></tr></thead><tbody>${rows}</tbody></table></div>
+  </section>`;
+}
+
+/* =====================================================================
+   文档详情
+   ===================================================================== */
+function kpTags(d,s,editable){
+  const act=s.kps.map(id=>{const k=kpById(id);return `<span class="kp" title="${esc(pathStr(k.path))}">${I.kp}${esc(k.name)}${editable?`<button class="x" data-act="dr-unlink" data-v="${id}" aria-label="移除关联">×</button>`:''}</span>`}).join('');
+  const pd=editable?'':pend(s).map(g=>`<span class="kp pend" title="AI 建议，待确认"><span class="ai">AI</span>${esc(suggName(g))}<span style="opacity:.75">· 待确认</span></span>`).join('');
+  if(!act&&!pd) return editable?'':`<span class="kp-none">${s.sugg.length?'':'AI：未识别到知识点'}</span>`;
+  return act+pd;
+}
+const suggName=g=>g.type==='A'?kpById(g.kp).name:g.name;
+function segFiltered(d){
+  const q=S.segQ.trim();
+  return d.segs.filter(s=>{
+    if(S.segFilter==='on'&&!s.enabled) return false; if(S.segFilter==='off'&&s.enabled) return false;
+    if(S.kpFilter==='linked'&&!s.kps.length) return false;
+    if(S.kpFilter==='pending'&&!pend(s).length) return false;
+    if(S.kpFilter==='none'&&(s.kps.length||pend(s).length)) return false;
+    if(q&&!segText(d,s).includes(q)) return false;
+    return true;});
+}
+function tocItems(d){
+  if(d.kind==='av') return d.segs.map(s=>({id:s.id,label:`${fmt(s.start)}  ${s.text.slice(0,14)}…`}));
+  if(d.kind==='image') return d.segs.map(s=>({id:s.id,label:'图文全文'}));
+  return d.segs.map(s=>({id:s.id,label:s.heading||s.text.slice(0,16)+'…'}));
+}
+function segCard(d,s){
+  const on=S.drawer&&S.drawer.segId===s.id;
+  let body='';
+  if(d.kind==='image'){
+    body=`<div class="row g12" style="align-items:flex-start"><div class="thumb" style="width:160px;flex:none">${d.svg}</div>
+      <div class="col g6" style="min-width:0">${s.ocr?`<span class="muted">图中文字</span><div class="segbody" style="font-size:14px">${esc(s.ocr)}</div>`:''}${s.desc?`<span class="muted">画面描述</span><div class="segbody" style="font-size:14px">${esc(s.desc)}</div>`:''}</div></div>`;
+  } else if(d.kind==='av'){
+    body=`<div class="row g8 wrapflex" style="margin-bottom:4px"><button class="play" data-act="preview" data-t="${s.start}" aria-label="从 ${fmt(s.start)} 播放">${I.play(12)}</button><span class="chip">${fmt(s.start)} – ${fmt(s.end)}</span><span class="sp sp${s.sp}">说话人 ${s.sp}</span></div><div class="segbody">${esc(s.text)}</div>`;
+  } else {
+    body=`<div class="segbody">${s.heading?`<h4>${esc(s.heading)}</h4>`:''}${esc(s.text)}</div>`;
+  }
+  return `<div class="seg ${on?'on':''} ${S.hl===s.id?'flash':''}" id="${s.id}" data-act="edit" data-v="${s.id}">
+    <input type="checkbox" aria-label="选择分段" style="margin-top:3px" onclick="event.stopPropagation()">
+    <div class="col g8" style="flex:1;min-width:0">
+      <div class="seghead"><b>⠿ ${s.no}</b>·<span>${segChars(d,s)} 字符</span>·<span>${s.recall} 召回次数</span><span style="margin-left:auto" class="row g6">${s.enabled?'已启用':'已禁用'}<span class="dot" style="background:${s.enabled?'var(--ok)':'var(--bd2)'}"></span></span></div>
+      ${body}
+      <div class="row g6 wrapflex">${kpTags(d,s,false)}</div>
+    </div></div>`;
+}
+function viewDoc(){
+  const d=docById(S.activeDoc); const list=segFiltered(d); const st=kpStats(d);
+  const pendAll=d.segs.flatMap(s=>pend(s));
+  const high=pendAll.filter(g=>g.type==='A'&&g.conf>=.9).length;
+  const info=d.kind==='av'?[['时长',fmt(d.sec)],['说话人',new Set(d.segs.map(s=>s.sp)).size+' 人'],['分段规则','转写 · 语义段落'],['段落数量',d.segs.length+' 段']]
+    :d.kind==='image'?[['解析方式',d.imgMode==='both'?'识别文字 + 描述画面':d.imgMode==='ocr'?'仅识别文字':'仅描述画面'],['分段规则','每张图文一个分段'],['段落数量','1 段']]
+    :[['分段规则',d.sheet?'语义（按表格行）':'语义'],['平均段落长度',d.segs.length?Math.round(d.segs.reduce((a,s)=>a+segChars(d,s),0)/d.segs.length)+' characters':'—'],['段落数量',d.segs.length+' paragraphs'],...(d.scanned?[['扫描件','无文字层页面已 OCR']]:[])];
+  return `<section class="col">
+   <div class="dochead">
+     <button class="ibtn" data-act="nav" data-v="list" aria-label="返回文档列表">${I.back}</button>
+     <span class="row g8" style="font-size:17px;font-weight:700">${docIcon(d,22)}${esc(d.name)}</span>
+     <span style="flex:1"></span>
+     <button class="btn" data-act="preview" data-t="0">源文预览</button>
+     <span class="row g8 btn" style="cursor:default"><span class="dot" style="background:var(--ok)"></span><span style="color:#067647">可用</span><button class="sw" aria-label="启用文档"></button></span>
+   </div>
+   ${d.skipped?`<div class="fixed" style="margin-top:16px">${I.info}<span>该文件为扫描件，导入时未开启 OCR，已跳过，未生成分段。</span></div>`:''}
+   <div class="docgrid">
+     <nav class="toc" aria-label="目录"><div class="row" style="justify-content:space-between;padding:0 12px 10px"><b>目录</b><span class="muted">收起</span></div>
+       <button class="${S.tocOn?'':'on'}" data-act="toc" data-v="">全部</button>
+       ${tocItems(d).map(t=>`<button class="${S.tocOn===t.id?'on':''}" data-act="toc" data-v="${t.id}" title="${esc(t.label)}">${esc(t.label)}</button>`).join('')}
+     </nav>
+     <div class="segs col g8">
+       <div class="row g8 wrapflex" style="padding-bottom:8px">
+         <b style="font-size:15px;margin-right:4px">${d.segs.length} 分段</b>
+         <select class="select" id="f-en" aria-label="启用状态"><option value="all" ${S.segFilter==='all'?'selected':''}>全部状态</option><option value="on" ${S.segFilter==='on'?'selected':''}>已启用</option><option value="off" ${S.segFilter==='off'?'selected':''}>已禁用</option></select>
+         <select class="select" id="f-kp" aria-label="知识点"><option value="all" ${S.kpFilter==='all'?'selected':''}>全部知识点</option><option value="linked" ${S.kpFilter==='linked'?'selected':''}>已关联</option><option value="pending" ${S.kpFilter==='pending'?'selected':''}>有待确认</option><option value="none" ${S.kpFilter==='none'?'selected':''}>未关联</option></select>
+         <input class="search" id="f-q" placeholder="搜索" value="${esc(S.segQ)}" aria-label="搜索分段" style="flex:1 1 160px">
+       </div>
+       ${list.length?list.map(s=>segCard(d,s)).join(''):'<div class="muted" style="padding:24px 12px">没有符合条件的分段。</div>'}
+     </div>
+     <aside class="rpanel">
+       <div class="aicard col g10">
+         <span class="row g6" style="font-weight:700">${I.spark}AI 知识点建议</span>
+         <div class="row g16"><div class="col"><b style="font-size:22px">${st.linked}</b><span class="muted">已关联</span></div><div class="col"><b style="font-size:22px;color:#B54708">${pendAll.length}</b><span class="muted">待确认</span></div><div class="col"><b style="font-size:22px">${high}</b><span class="muted">高置信关联</span></div></div>
+         <button class="btn pri" data-act="oneclick" ${high?'':'disabled'}>一键通过高置信关联（${high} 条）</button>
+         <button class="btn" data-act="onlypending" ${pendAll.length?'':'disabled'}>只看有待确认的分段</button>
+         <span class="muted">只对「关联已有知识点、置信度 ≥ 0.90」生效；新建知识点和相近判定需逐条确认。点分段可逐条审核。</span>
+       </div>
+       <div class="col g10"><b>文档信息</b><div class="kv"><span>原始文件名称</span><span>${esc(d.name)}</span><span>原始文件大小</span><span>${d.size}</span><span>上传日期</span><span>${d.time}</span><span>来源</span><span>文件上传</span></div></div>
+       <div class="col g10"><b>技术参数</b><div class="kv">${info.map(([k,v])=>`<span>${k}</span><span>${v}</span>`).join('')}</div></div>
+     </aside>
+   </div></section>`;
+}
+
+/* ---------------- 编辑分段抽屉 ---------------- */
+function openDrawer(segId){
+  const d=docById(S.activeDoc), s=segById(d,segId);
+  S.drawer={segId, kps:[...s.kps], heading:s.heading||'', text:s.text||'', ocr:s.ocr||'', desc:s.desc||'', sp:s.sp||1, dirty:false};
+  S.picker={open:false,q:''}; S.editSugg=null; S.rejecting=null;
+}
+function suggCard(d,s,g){
+  const typeLbl={A:'关联已有',B:'新建知识点',C:'相近待判'}[g.type];
+  const head=`<div class="row g8 wrapflex"><span class="chip ${g.type==='A'?'act':'warn'}">${typeLbl}</span>
+    ${g.type==='A'?`<b>${esc(kpById(g.kp).name)}</b>`:`<b>${esc(g.name)}</b>`}
+    ${g.conf!=null?`<span class="chip" title="置信度">置信度 ${g.conf.toFixed(2)}</span>`:''}
+    ${g.fromDesc?'<span class="chip warn">来自画面描述，请对照原图</span>':''}
+    ${g.status==='done'?'<span class="chip done" style="margin-left:auto">已通过</span>':g.status==='rejected'?`<span class="chip" style="margin-left:auto">已驳回 · ${esc(g.reason)}</span>`:''}</div>`;
+  const quote=`<span class="muted">原文依据：<q>${esc(g.quote)}</q>${d.kind==='av'?' · '+fmt(s.start):''}</span>`;
+  let detail='';
+  if(g.type==='A') detail=`<span class="muted">挂载：${esc(pathStr(kpById(g.kp).path))}</span>`;
+  if(g.type!=='A'){
+    if(S.editSugg===g.id){
+      const e=g.edit;
+      detail=`<div class="col g8"><label class="col g4"><span class="muted">知识点名称（不超过 20 字）</span><input class="field" id="se-name" maxlength="20" value="${esc(e.name)}"></label>
+        <label class="col g4"><span class="muted">定义（不超过 60 字）</span><textarea class="edtx" id="se-def" maxlength="60" style="min-height:64px;font-size:14px">${esc(e.def)}</textarea></label>
+        <label class="col g4"><span class="muted">挂载节点</span><select class="field" id="se-mount">${SKILL_PATHS.map((p,i)=>`<option value="${i}" ${pathStr(p)===pathStr(e.mount)?'selected':''}>${esc(pathStr(p))}</option>`).join('')}</select></label></div>`;
+    } else {
+      detail=`<span style="font-size:13px;color:var(--t2)">定义：${esc(g.def)}</span><span class="muted">建议挂载：${g.mount.map(p=>esc(pathStr(p))).join('；')}</span>${g.type==='C'?`<span class="muted">相近的已有知识点：<b style="color:var(--t2)">${esc(kpById(g.near).name)}</b></span>`:''}`;
+    }
+  }
+  let actions='';
+  if(g.status==='pending'){
+    if(S.rejecting===g.id){
+      actions=`<div class="row g8 wrapflex"><select class="field" id="rj-reason" style="min-height:32px">${REJECT_REASONS.map(r=>`<option>${r}</option>`).join('')}</select><button class="btn mini danger" data-act="sg-reject-ok" data-v="${g.id}">确认驳回</button><button class="btn mini ghost" data-act="sg-cancel">取消</button></div>`;
+    } else if(S.editSugg===g.id){
+      actions=`<div class="row g8"><button class="btn mini pri" data-act="sg-edit-ok" data-v="${g.id}">修改后通过</button><button class="btn mini ghost" data-act="sg-cancel">取消</button></div>`;
+    } else if(g.type==='A'){
+      actions=`<div class="row g8 wrapflex"><button class="btn mini pri" data-act="sg-ok" data-v="${g.id}">通过</button><button class="btn mini" data-act="sg-reject" data-v="${g.id}">驳回</button></div>`;
+    } else if(g.type==='B'){
+      actions=`<div class="row g8 wrapflex"><button class="btn mini pri" data-act="sg-ok" data-v="${g.id}">通过</button><button class="btn mini" data-act="sg-edit" data-v="${g.id}">修改</button><button class="btn mini" data-act="sg-reject" data-v="${g.id}">驳回</button></div>`;
+    } else {
+      actions=`<div class="row g8 wrapflex"><button class="btn mini pri" data-act="sg-merge" data-v="${g.id}">合并到「${esc(kpById(g.near).name)}」</button><button class="btn mini" data-act="sg-asnew" data-v="${g.id}">作为新知识点</button><button class="btn mini" data-act="sg-reject" data-v="${g.id}">驳回</button></div>`;
+    }
+  }
+  return `<div class="sugg ${g.status==='done'?'done':g.status==='rejected'?'rej':''}">${head}${quote}${detail}${actions}</div>`;
+}
+function viewDrawer(){
+  if(!S.drawer) return '';
+  const d=docById(S.activeDoc), s=segById(d,S.drawer.segId), dr=S.drawer;
+  const meta=d.kind==='av'?` · ${fmt(s.start)} – ${fmt(s.end)}`:d.kind==='image'?' · 图文分段':'';
+  // picker
+  let picker='';
+  if(S.picker.open){
+    const q=S.picker.q.trim();
+    const groups=SKILL_PATHS.map(p=>({p,items:KS.filter(k=>pathStr(k.path)===pathStr(p)&&(!q||k.name.includes(q)||pathStr(k.path).includes(q)))})).filter(g=>g.items.length);
+    picker=`<div class="picker"><div style="padding:10px;border-bottom:1px solid var(--bd)"><input class="search" id="pk-q" placeholder="搜索知识点或节点名称" value="${esc(S.picker.q)}" style="width:100%" aria-label="搜索知识点"></div>
+      <div class="list">${groups.length?groups.map(g=>`<div class="grp">${esc(pathStr(g.p))}</div>${g.items.map(k=>`<label><input type="checkbox" data-act="pk-toggle" data-v="${k.id}" ${dr.kps.includes(k.id)?'checked':''}>${esc(k.name)}</label>`).join('')}`).join(''):'<div class="muted" style="padding:12px">没有匹配的知识点</div>'}</div>
+      <div class="row" style="justify-content:space-between;padding:8px 12px;border-top:1px solid var(--bd)"><span class="muted">已选 ${dr.kps.length} 个 · 只能从知识体系已有知识点中选择</span><button class="btn mini" data-act="pk-close">完成</button></div></div>`;
+  }
+  // editor by kind
+  let editor='';
+  if(d.kind==='image'){
+    editor=`<div class="thumb">${d.svg}</div>
+      ${d.imgMode!=='desc'?`<label class="col g6"><span class="lbl">图中文字</span><textarea class="edtx" data-fld="ocr">${esc(dr.ocr)}</textarea></label>`:''}
+      ${d.imgMode!=='ocr'?`<label class="col g6"><span class="lbl">画面描述</span><textarea class="edtx" data-fld="desc" style="min-height:96px">${esc(dr.desc)}</textarea></label>`:''}`;
+  } else if(d.kind==='av'){
+    editor=`<div class="row g10 wrapflex box"><button class="play" data-act="preview" data-t="${s.start}" aria-label="播放本段">${I.play(12)}</button><span class="chip">${fmt(s.start)} – ${fmt(s.end)}</span>
+      <label class="row g6"><span class="muted">说话人</span><select class="field" data-fld="sp" style="min-height:32px">${Object.keys(Object.fromEntries(d.segs.map(x=>[x.sp,1]))).map(n=>`<option value="${n}" ${+n===+dr.sp?'selected':''}>说话人 ${n}</option>`).join('')}</select></label>
+      <span class="muted">起止时间由转写生成，不可编辑</span></div>
+      <label class="col g6"><span class="lbl">转写文本</span><textarea class="edtx" data-fld="text">${esc(dr.text)}</textarea></label>`;
+  } else {
+    editor=`${d.sheet?'<span class="muted">表格行分段：按「列名：值」编辑，用「；」分隔各列</span>':''}
+      ${dr.heading?`<input class="field hbar" data-fld="heading" value="${esc(dr.heading)}" aria-label="分段标题">`:''}
+      <textarea class="edtx" data-fld="text" style="min-height:${d.kind==='text'?200:120}px" aria-label="分段内容">${esc(dr.text)}</textarea>`;
+  }
+  const ps=pend(s), doneOrRej=s.sugg.filter(g=>g.status!=='pending');
+  return `<div class="mask" data-act="dr-close"></div>
+  <div class="drawer ${S.wide?'wide':''}" role="dialog" aria-label="编辑分段">
+    <div class="dhead"><div class="col g4" style="flex:1"><h2 style="font-size:18px">编辑分段</h2><span class="muted">⠿ ${s.no} · ${segChars(d,s)} 字符${meta}</span></div>
+      <button class="ibtn" style="border:0" data-act="dr-wide" aria-label="展开">${I.expand}</button><button class="ibtn" style="border:0" data-act="dr-close" aria-label="关闭">${I.x}</button></div>
+    <div class="dbody">
+      <div class="box hl col g10">
+        <span class="lbl">关联知识点</span>
+        ${dr.kps.length?`<div class="row g6 wrapflex">${dr.kps.map(id=>{const k=kpById(id);return `<span class="kp" title="${esc(pathStr(k.path))}">${I.kp}${esc(k.name)}<button class="x" data-act="dr-unlink" data-v="${id}" aria-label="移除关联">×</button></span>`}).join('')}</div>`:''}
+        <button class="pickbtn" data-act="pk-open"><span>${dr.kps.length?'继续选择知识点':'点击选择知识点'}</span>${I.chev}</button>
+        ${picker}
+        ${s.sugg.length?`<div class="col g8" style="margin-top:4px"><span class="row g6 lbl">${I.spark}AI 建议${ps.length?`<span class="chip warn">待确认 ${ps.length}</span>`:'<span class="chip done">已处理完</span>'}</span>
+          ${ps.map(g=>suggCard(d,s,g)).join('')}${doneOrRej.map(g=>suggCard(d,s,g)).join('')}
+          <span class="muted">AI 建议的通过 / 驳回立即生效并写入图谱；手动选择的知识点和分段内容点「保存」后生效。</span></div>`
+          :`<span class="muted">${I.spark} AI 未从本分段识别到知识点。</span>`}
+      </div>
+      ${editor}
+      ${dr.dirty?`<div class="fixed" style="background:#FFFAEB">${I.info}<span>分段内容已修改。保存后该分段会重新索引，并重新提取知识点；未审核的 AI 建议将作废。</span></div>`:''}
+    </div>
+    <div class="dfoot"><button class="btn" data-act="dr-close">取消<span class="kbd">ESC</span></button><button class="btn pri" data-act="dr-save">保存<span class="kbd">⌘ S</span></button></div>
+  </div>`;
+}
+
+/* ---------------- 审核动作 ---------------- */
+function approve(d,s,g,mode){
+  let kpId;
+  if(g.type==='A') kpId=g.kp;
+  else if(g.type==='C'&&mode==='merge') kpId=g.near;
+  else { const e=g.edit||{name:g.name,def:g.def,mount:g.mount[0]}; kpId='k'+(kpUid++); KS.push({id:kpId,name:e.name,def:e.def,path:e.mount,isNew:true}); }
+  if(!s.kps.includes(kpId)) s.kps.push(kpId);
+  if(S.drawer&&S.drawer.segId===s.id&&!S.drawer.kps.includes(kpId)) S.drawer.kps.push(kpId);
+  g.status='done';
+}
+function doOneClick(){
+  const d=docById(S.activeDoc); let n=0;
+  d.segs.forEach(s=>pend(s).forEach(g=>{ if(g.type==='A'&&g.conf>=.9){approve(d,s,g);n++;} }));
+  S.modal=null; toast(`已通过 ${n} 条高置信关联，已写入知识图谱`);
+}
+
+/* =====================================================================
+   源文预览 / 弹窗
+   ===================================================================== */
+function viewModal(){
+  if(!S.modal) return '';
+  if(S.modal.kind==='oneclick'){
+    const d=docById(S.activeDoc); const n=d.segs.flatMap(s=>pend(s)).filter(g=>g.type==='A'&&g.conf>=.9).length;
+    return `<div class="mask2" data-act="m-close"></div><div class="modal sm" role="dialog" aria-label="一键通过"><h2 style="font-size:17px">一键通过高置信关联</h2>
+      <p style="line-height:1.7;color:var(--t2)">将通过本文档中 <b>${n}</b> 条置信度 ≥ 0.90 的「关联已有知识点」建议，不包含新建知识点、相近判定和低于 0.90 的关联。</p>
+      <div class="row g8" style="justify-content:flex-end"><button class="btn" data-act="m-close">取消</button><button class="btn pri" data-act="oneclick-ok">确认通过</button></div></div>`;
+  }
+  if(S.modal.kind==='preview'){
+    const d=docById(S.activeDoc); let body='';
+    if(d.kind==='image') body=`<div class="thumb">${d.svg}</div>`;
+    else if(d.kind==='av'){
+      const t=S.modal.t, ratio=Math.min(1,t/d.sec); let ai=d.segs.findIndex(s=>t>=s.start&&t<s.end); if(ai<0) ai=d.segs.length-1;
+      const cur=d.segs[ai]; const N=80, seed=d.id.charCodeAt(0);
+      const media=d.media==='video'?`<div class="video"><span style="font-size:13px;color:#98A2B3;position:absolute;top:12px;left:14px">视频画面（mock）</span>${cur?`<div class="subtitle">${esc(cur.text.slice(0,42))}${cur.text.length>42?'…':''}</div>`:''}</div>`
+        :`<div class="wave">${Array.from({length:N},(_,i)=>`<span class="bar ${i/N<ratio?'p':''}" style="height:${Math.round(14+Math.abs(Math.sin(i*1.7+seed)*Math.cos(i*.37+seed))*64)}px"></span>`).join('')}</div>`;
+      body=`${media}<div class="row g12"><button class="play" style="width:40px;height:40px" data-act="m-play" aria-label="${S.playing?'暂停':'播放'}">${S.playing?I.pause(16):I.play(16)}</button>
+        <div class="seek" data-act="m-seek"><div style="width:${(ratio*100).toFixed(1)}%"></div></div><span class="muted" style="font-variant-numeric:tabular-nums">${fmt(t)} / ${fmt(d.sec)}</span></div>
+        ${cur?`<div class="box col g6"><span class="row g8"><span class="chip">${cur.no}</span><span class="sp sp${cur.sp}">说话人 ${cur.sp}</span></span><span style="line-height:1.7">${esc(cur.text)}</span><div class="row g6 wrapflex">${kpTags(d,cur,false)}</div></div>`:''}`;
+    } else body=`<div class="col g12" style="line-height:1.8;color:var(--t2)">${d.segs.map(s=>`${s.heading?`<b style="color:var(--t1)">${esc(s.heading)}</b>`:''}<div style="white-space:pre-line">${esc(s.text)}</div>`).join('')||'<span class="muted">无内容</span>'}</div>`;
+    return `<div class="mask2" data-act="m-close"></div><div class="modal" role="dialog" aria-label="源文预览"><div class="row g8"><h2 style="font-size:17px;flex:1" class="row g8">${docIcon(d,20)}${esc(d.name)}</h2><button class="ibtn" style="border:0" data-act="m-close" aria-label="关闭">${I.x}</button></div>${body}</div>`;
+  }
+  return '';
+}
+
+/* =====================================================================
+   召回测试
+   ===================================================================== */
+function doSearch(q){
+  q=q.trim(); if(!q) return [];
+  const toks=[...new Set(q.replace(/[？?。，,！!\s]/g,'').match(/.{2}/g)||[])];
+  const out=[];
+  S.docs.forEach(d=>d.segs.forEach(s=>{ if(!s.enabled) return; const t=segText(d,s)+' '+s.kps.map(id=>kpById(id).name).join(' ');
+    const hit=toks.filter(x=>t.includes(x)).length; if(hit) out.push({d,s,score:Math.min(.95,.55+hit/toks.length*.45)}); }));
+  return out.sort((a,b)=>b.score-a.score).slice(0,5);
+}
+function viewRecall(){
+  const hits=S.hits||[];
+  return `<section class="col g16" style="max-width:920px">
+    <div class="col g4"><h1 style="font-size:20px">召回测试</h1><span class="muted" style="font-size:14px">在整个知识库里检索，文本、图文、音视频分段一起召回；命中结果附带该分段已关联的知识点</span></div>
+    <form class="row g8 wrapflex hit" id="qform"><input class="field" id="q" value="${esc(S.query)}" aria-label="测试问题" placeholder="例如：VD 房是什么意思"><button class="btn pri" type="submit">测试</button></form>
+    ${S.hits===null?'':hits.length?hits.map(h=>`<div class="card row g12 wrapflex">
+      ${h.d.kind==='image'?`<div class="thumb" style="width:110px;flex:none">${h.d.svg}</div>`:''}
+      <div class="col g6" style="flex:1 1 300px;min-width:0">
+        <span class="row g8 wrapflex">${kindChip(h.d.kind)}<span class="chip">${esc(h.d.name)}</span><span class="chip">${h.s.no}${h.d.kind==='av'?' · '+fmt(h.s.start):''}</span><span class="chip act">相似度 ${h.score.toFixed(2)}</span></span>
+        <span style="line-height:1.7;color:var(--t2);white-space:pre-line">${esc(segText(h.d,h.s).slice(0,120))}${segText(h.d,h.s).length>120?'…':''}</span>
+        <span class="row g6 wrapflex">${h.s.kps.map(id=>`<span class="kp">${I.kp}${esc(kpById(id).name)}</span>`).join('')||'<span class="kp-none">未关联知识点</span>'}</span></div>
+      <button class="btn mini" data-act="goto" data-d="${h.d.id}" data-s="${h.s.id}" data-t="${h.s.start||0}">${h.d.kind==='av'?'▶ 从 '+fmt(h.s.start)+' 播放':h.d.kind==='image'?'查看原图':'定位分段'}</button></div>`).join(''):'<span class="muted">没有命中的分段。</span>'}
+  </section>`;
+}
+
+/* =====================================================================
+   添加文件向导（沿用统一上传 demo）
+   ===================================================================== */
+function stepper(){const c=n=>S.step===n?'step on':(S.step>n?'step done':'step');
+  return `<div class="row g12" style="margin-bottom:16px"><button class="ibtn" data-act="nav" data-v="list" aria-label="返回文档">${I.back}</button><h1 style="font-size:20px">添加文件</h1></div>
+  <nav class="steps"><div class="${c(1)}"><span class="n">1</span>选择数据源</div><div class="step-line"></div><div class="${c(2)}"><span class="n">2</span>解析与分段</div><div class="step-line"></div><div class="${c(3)}"><span class="n">3</span>处理并完成</div></nav>`;}
+function fileIcon(f,w){return docIcon(f,w);}
+function wStep1(){
+  const src=(k,ico,label,sub,isNew)=>`<button class="src ${S.source===k?'on':''}" data-act="source" data-v="${k}">${isNew?'<span class="new">新</span>':''}<span class="ico">${ico}</span><span>${label}${sub?`<small>${sub}</small>`:''}</span></button>`;
+  let body='';
+  if(S.source==='local'){
+    const counts=['text','image','av'].map(k=>({k,n:S.files.filter(f=>f.kind===k).length})).filter(x=>x.n);
+    const rows=S.files.map(f=>`<li class="frow ${f.error?'err':''}"><span class="ico" style="width:38px;height:38px">${fileIcon(f,20)}</span>
+      <div class="col" style="flex:1;min-width:0;gap:2px"><span class="fname">${esc(f.name)}</span><span class="row g6 wrapflex">${kindChip(f.kind)}<span class="muted">${f.size}${f.kind==='av'?' · 时长 '+fmt(f.sec):''}${f.scanned?' · 扫描件':''}${f.sheet?' · 表格':''}</span></span></div>
+      <span style="font-size:13px;white-space:nowrap;${f.error?'font-weight:600;color:var(--err)':'color:var(--t3)'}">${f.error||'待处理'}</span>
+      <button class="x" data-act="remove" data-v="${f.id}" aria-label="移除文件">${I.x}</button></li>`).join('');
+    const err=S.files.filter(f=>f.error).length;
+    body=`<div class="col g12"><h3 style="font-size:16px">上传本地文件</h3>
+      <div class="drop ${S.drag?'drag':''}" id="drop"><div class="row g10" style="justify-content:center;font-size:16px;color:var(--t2)">${I.cloud}<span>拖拽文件或文件夹至此，或者 <button class="link" data-act="pick">选择文件</button></span></div>
+        <p><b>文本</b>：${EXT.text.map(x=>x.toUpperCase()).join('、')}，单个不超过 100 MB<br><b>图文</b>：${EXT.image.map(x=>x.toUpperCase()).join('、')}，单张不超过 20 MB<br><b>音视频</b>：${EXT.av.map(x=>x.toUpperCase()).join('、')}，单个不超过 2 GB、时长不超过 3 小时<br>每批最多 ${LIMIT.perBatch} 个文件，系统按文件类型自动识别并分别处理。</p>
+        <div class="row g8 wrapflex"><span class="muted">没有素材？</span><button class="btn mini" data-act="mock">载入示例文件（文本 3 · 图文 2 · 音视频 3 · 超限 1）</button></div></div>
+      ${S.files.length?`<div class="row g8 wrapflex"><span class="muted">已识别：</span>${counts.map(c=>`<span class="chip k-${c.k}">${KIND_LABEL[c.k]} ${c.n}</span>`).join('')}</div><ul class="col g8">${rows}</ul>`:''}
+      ${err?`<p class="muted" style="color:var(--err)">有 ${err} 个文件不符合要求，移除后才能继续。</p>`:''}
+      <input type="file" id="picker" multiple accept="${[...EXT.text,...EXT.image,...EXT.av].map(x=>'.'+x).join(',')}" hidden></div>`;
+  } else body=`<div class="cardb" style="padding:24px;color:var(--t4)">沿用现有同步流程，本 demo 不展开。</div>`;
+  const ok=S.source==='local'&&validFiles().length>0&&validFiles().length===S.files.length;
+  return `<section class="col g24"><h2 style="font-size:16px">选择数据源</h2>
+    <div class="srcs">${src('local',I.upload,'上传本地文件','文本、图文、音视频',true)}${src('notion',I.doc('#101828',22),'同步自 Notion 内容')}${src('web',I.doc('#5149e9',22),'同步自 Web 站点')}</div>
+    <div><button class="btn">选择知识体</button></div>${body}
+    <div class="row" style="justify-content:flex-end"><button class="btn pri" style="min-width:150px" data-act="wgo" data-v="2" ${ok?'':'disabled'}>下一步 ${I.arrow}</button></div></section>`;
+}
+const pill=(act,k,label,cur)=>`<button class="pill ${String(cur)===String(k)?'on':''}" data-act="${act}" data-v="${k}">${label}</button>`;
+const tg=(k,label,desc)=>`<div class="set"><div class="col" style="flex:1;gap:2px"><b>${label}</b><span class="muted">${desc}</span></div><button class="tg ${S[k]?'on':''}" data-act="toggle" data-v="${k}" aria-label="${label}" aria-pressed="${S[k]}"></button></div>`;
+function hl(t){const ws=S.hotwords.split(/[，,、\s]+/).map(w=>w.trim()).filter(Boolean);let h=esc(t);ws.forEach(w=>{const e=esc(w).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');h=h.replace(new RegExp(e,'g'),`<mark style="background:#FEF0C7">${esc(w)}</mark>`)});return h;}
+function wStep2(){
+  const kinds=['text','image','av'].filter(k=>ofKind(k).length); if(!kinds.includes(S.tab)) S.tab=kinds[0];
+  const k=S.tab, list=ofKind(k);
+  let settings='',preview='';
+  if(k==='text'){
+    settings=`<div class="col g12"><b>分段规则</b><div class="cardb"><div class="set"><div class="col" style="flex:1"><b>分段标识符</b></div><input class="field" style="width:110px" value="\\n\\n" readonly></div><div class="set"><div class="col" style="flex:1"><b>分段最大长度</b><span class="muted">tokens</span></div><input class="field" style="width:110px" value="500" readonly></div></div><span class="muted">沿用现有文本分段设置；表格文件按行分段。</span></div>
+      <div class="col g12"><b>扫描件处理</b><div class="cardb">${tg('ocrScan','无文字层页面自动识别文字（OCR）','扫描版 PDF 没有可复制的文字，开启后自动识别；关闭则跳过这些页面')}</div></div>`;
+    const f=list[0]; preview=f.segs.slice(0,2).map((s,i)=>`<div class="pv"><span class="muted">${esc(f.name)} · #${i+1}</span><p>${s.heading?'<b>'+esc(s.heading)+'</b>\n':''}${esc(s.text)}</p></div>`).join('');
+  } else if(k==='image'){
+    const modes=[['both','识别文字 + 描述画面','图中文字和画面内容都入库',1],['ocr','仅识别文字','适合板书、课件截图、表单'],['desc','仅描述画面','适合实训现场、设备、操作照片']];
+    settings=`<div class="col g12"><b>解析方式</b><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px">${modes.map(([v,t,dsc,r])=>`<button class="opt ${S.imgMode===v?'on':''}" data-act="imgMode" data-v="${v}"><span class="row g6" style="font-weight:600">${t}${r?'<span class="chip act">推荐</span>':''}</span><span class="muted">${dsc}</span></button>`).join('')}</div></div>
+      <div class="fixed">${I.info}<span>每张图文为一个分段，图中文字与画面描述合在同一分段内。</span></div>`;
+    preview=list.map(f=>{const s=f.segs[0];return `<div class="pv"><span class="muted">${esc(f.name)}</span><div class="thumb">${f.svg}</div>${S.imgMode!=='desc'?`<span class="muted">图中文字</span><p>${esc(s.ocr)}</p>`:''}${S.imgMode!=='ocr'?`<span class="muted">画面描述</span><p>${esc(s.desc)}</p>`:''}</div>`}).join('');
+  } else {
+    const modes=[['semantic','按语义段落','一段讲清一件事',1],['speaker','按说话人切换','适合访谈、问答'],['duration','按固定时长','适合讲座、长录音']];
+    settings=`<div class="col g12"><b>识别语言</b><div class="row g8 wrapflex">${pill('lang','zh','中文普通话',S.lang)}${pill('lang','en','英文',S.lang)}${pill('lang','mix','中英混合',S.lang)}${pill('lang','auto','自动识别',S.lang)}</div></div>
+      <div class="col g12"><b>识别增强</b><div class="cardb">${tg('diarize','区分说话人','按「说话人 1 / 2 / 3」标注，处理完成后可在编辑分段里改')}${tg('clean','去除口语冗余','删除「嗯、啊、那个」等语气词')}<div class="set col" style="align-items:stretch;gap:8px"><label for="hot" style="font-weight:600">专业术语 / 热词</label><textarea class="edtx" id="hot" rows="2" style="min-height:60px;font-size:14px">${esc(S.hotwords)}</textarea></div></div></div>
+      <div class="col g12"><b>分段方式</b><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px">${modes.map(([v,t,dsc,r])=>`<button class="opt ${S.segMode===v?'on':''}" data-act="segMode" data-v="${v}"><span class="row g6" style="font-weight:600">${t}${r?'<span class="chip act">推荐</span>':''}</span><span class="muted">${dsc}</span></button>`).join('')}</div>
+      ${S.segMode==='duration'?`<div class="row g8">${[3,5,10].map(n=>pill('dur',n,n+' 分钟',S.dur)).join('')}</div>`:''}<div class="cardb">${tg('keepTs','分段保留时间戳','检索命中后可跳到原音视频对应位置播放')}</div></div>`;
+    const f=list[0]; preview=f.segs.slice(0,2).map((s,i)=>{const t=S.clean?s.text:(s.raw||s.text);return `<div class="pv"><div class="row g8 wrapflex"><span class="muted">${esc(f.name)} · #${i+1}</span>${S.keepTs?`<span class="chip">${fmt(s.start)} – ${fmt(s.end)}</span>`:''}${S.diarize?`<span class="sp sp${s.sp}">说话人 ${s.sp}</span>`:''}</div><p>${hl(t)}</p></div>`}).join('');
+  }
+  return `<section class="col g24"><div class="col g4"><h2 style="font-size:16px">按文件类型设置解析与分段</h2><span class="muted">本批 ${validFiles().length} 个文件，已按类型自动分组。分段完成后会自动提取知识点建议。</span></div>
+    <div class="tabs">${kinds.map(x=>`<button class="tab ${x===k?'on':''}" data-act="wtab" data-v="${x}">${KIND_LABEL[x]}<span class="cnt">${ofKind(x).length}</span></button>`).join('')}</div>
+    <div class="row g24 wrapflex" style="align-items:flex-start"><div class="col g24" style="flex:999 1 480px;min-width:0">${settings}</div><aside class="pvside"><b>分段预览</b>${preview}</aside></div>
+    <div class="row g12"><button class="btn" data-act="wgo" data-v="1">上一步</button><button class="btn pri" data-act="process">保存并处理</button></div></section>`;
+}
+function stagesFor(f,pct){
+  let names;
+  if(f.kind==='text') names=['上传',f.scanned&&S.ocrScan?'OCR 识别':'文本解析','分段','向量索引','知识点提取'];
+  else if(f.kind==='image') names=['上传',...(S.imgMode!=='desc'?['文字识别']:[]),...(S.imgMode!=='ocr'?['画面描述']:[]),'向量索引','知识点提取'];
+  else names=f.media==='video'?['上传','提取音轨','语音转写','智能分段','向量索引','知识点提取']:['上传','语音转写','智能分段','向量索引','知识点提取'];
+  const step=100/names.length; let cur=Math.floor(pct/step); if(pct>=100) cur=names.length; return {names,cur};
+}
+function wStep3(){
+  let all=true, segT=0, sgT=0;
+  const rows=validFiles().map(f=>{const pct=S.progress[f.id]||0, done=pct>=100; if(!done) all=false;
+    const skip=f.kind==='text'&&f.scanned&&!S.ocrScan; const ns=skip?0:f.segs.length, ng=skip?0:f.segs.reduce((a,s)=>a+s.sugg.filter(g=>!(S.imgMode==='ocr'&&g.fromDesc)).length,0);
+    if(done){segT+=ns;sgT+=ng;} const sg=stagesFor(f,pct);
+    return `<li class="proc"><div class="row g12"><span class="row g8" style="flex:1;min-width:0">${fileIcon(f,18)}<span class="fname">${esc(f.name)}</span></span><span style="font-size:13px;font-weight:600;color:${skip&&done?'#B54708':done?'#067647':'#4038c0'}">${skip&&done?'已跳过（无文字层）':done?'已完成':sg.names[sg.cur]+'中 '+Math.floor(pct)+'%'}</span></div>
+      <div class="track"><div class="${done?'ok':''}" style="width:${pct}%"></div></div>
+      <div class="row g6 wrapflex">${sg.names.map((n,i)=>`<span class="chip ${i<sg.cur?'done':i===sg.cur?'act':''}">${n}</span>`).join('')}<span class="muted" style="margin-left:auto">${done?`${ns} 个分段 · ${ng} 条知识点建议`:''}</span></div></li>`;}).join('');
+  return `<section class="col g16" style="max-width:820px"><div class="col g6"><h2 style="font-size:20px">${all?'全部文件处理完成':'正在处理文件'}</h2>
+    <span class="muted" style="font-size:14px">${all?`生成 ${segT} 个分段，提出 ${sgT} 条知识点建议，到文档里逐段确认或一键通过高置信关联。`:'处理在后台进行，可以离开此页面。'}</span></div>
+    <ul class="col g10">${rows}</ul><div class="row g12"><button class="btn pri" data-act="finish" ${all?'':'disabled'}>前往文档</button></div></section>`;
+}
+function viewWizard(){return stepper()+[null,wStep1,wStep2,wStep3][S.step]();}
+
+/* =====================================================================
+   渲染
+   ===================================================================== */
+function render(){
+  const y=window.scrollY, act=document.activeElement, keep=act&&act.id&&['pk-q','f-q','q'].includes(act.id)?{id:act.id,pos:act.selectionStart}:null;
+  const inner=S.view==='list'?viewList():S.view==='doc'?viewDoc():S.view==='recall'?viewRecall():viewWizard();
+  $('#app').innerHTML=shell(inner)+(S.view==='doc'?viewDrawer():'')+viewModal();
+  window.scrollTo(0,y);
+  if(keep){const el=document.getElementById(keep.id); if(el){el.focus(); try{el.setSelectionRange(keep.pos,keep.pos);}catch(e){}}}
+  bind();
+}
+function bind(){
+  document.querySelectorAll('[data-fld]').forEach(el=>{el.oninput=el.onchange=()=>{const f=el.dataset.fld;S.drawer[f]=f==='sp'?+el.value:el.value; if(f!=='sp'&&!S.drawer.dirty){S.drawer.dirty=true;render();const n=document.querySelector(`[data-fld="${f}"]`);if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length);}}};});
+  const pq=$('#pk-q'); if(pq) pq.oninput=()=>{S.picker.q=pq.value;render();};
+  const fe=$('#f-en'); if(fe) fe.onchange=()=>{S.segFilter=fe.value;render();};
+  const fk=$('#f-kp'); if(fk) fk.onchange=()=>{S.kpFilter=fk.value;render();};
+  const fq=$('#f-q'); if(fq) fq.oninput=()=>{S.segQ=fq.value;render();};
+  const qf=$('#qform'); if(qf) qf.onsubmit=e=>{e.preventDefault();S.query=$('#q').value;S.hits=doSearch(S.query);render();};
+  const hot=$('#hot'); if(hot) hot.oninput=()=>{S.hotwords=hot.value;};
+  const pk=$('#picker'); if(pk) pk.onchange=()=>addFiles([...pk.files].map(fromReal));
+  const dp=$('#drop'); if(dp){dp.ondragover=e=>{e.preventDefault();dp.classList.add('drag')};dp.ondragleave=()=>dp.classList.remove('drag');dp.ondrop=e=>{e.preventDefault();addFiles([...e.dataTransfer.files].map(fromReal));};}
+  ['se-name','se-def'].forEach(id=>{const el=$('#'+id); if(el) el.oninput=()=>{const g=findSugg(S.editSugg); g.edit[id==='se-name'?'name':'def']=el.value;};});
+  const sm=$('#se-mount'); if(sm) sm.onchange=()=>{findSugg(S.editSugg).edit.mount=SKILL_PATHS[+sm.value];};
+}
+function findSugg(id){const d=docById(S.activeDoc);for(const s of d.segs)for(const g of s.sugg)if(g.id===id)return g;}
+function segOfSugg(id){const d=docById(S.activeDoc);return d.segs.find(s=>s.sugg.some(g=>g.id===id));}
+function addFiles(list){const room=LIMIT.perBatch-S.files.length; if(list.length>room) toast(`每批最多 ${LIMIT.perBatch} 个文件`); list.slice(0,Math.max(room,0)).forEach(f=>S.files.push(f)); render();}
+function fromReal(file){
+  const ext=file.name.split('.').pop().toLowerCase(), kind=Object.keys(EXT).find(k=>EXT[k].includes(ext));
+  const tpl=IMPORT_FILES.find(m=>m.kind===(kind||'text')&&!m.error); const r=clone(tpl); if(tpl.svg) r.svg=tpl.svg;
+  Object.assign(r,{id:'u'+(uid++),name:file.name,ext,kind:kind||'text',scanned:false,sheet:['xlsx','xls','csv'].includes(ext),size:file.size>1024**3?(file.size/1024**3).toFixed(1)+' GB':(file.size/1024**2).toFixed(1)+' MB'});
+  if(kind==='av') r.media=['mp4','mov','mkv','webm'].includes(ext)?'video':'audio';
+  if(!kind) r.error='格式不支持'; else if(file.size>LIMIT[kind]) r.error={text:'文件超过 100 MB',image:'图文超过 20 MB',av:'文件超过 2 GB'}[kind];
+  return r;
+}
+function startProcessing(){
+  clearInterval(procTimer); S.progress={}; validFiles().forEach(f=>S.progress[f.id]=0); S.step=3; render();
+  const base={text:9,image:7,av:3.4}; const sp={}; validFiles().forEach((f,i)=>sp[f.id]=base[f.kind]*(0.8+((i*37)%10)/25));
+  procTimer=setInterval(()=>{let all=true;for(const k in S.progress){S.progress[k]=Math.min(100,S.progress[k]+sp[k]);if(S.progress[k]<100)all=false;} if(S.view==='wizard'&&S.step===3) render(); if(all) clearInterval(procTimer);},260);
+}
+function setPlaying(on){
+  clearInterval(playTimer); S.playing=on;
+  if(on) playTimer=setInterval(()=>{ if(!S.modal||S.modal.kind!=='preview'){setPlaying(false);return;} const d=docById(S.activeDoc); S.modal.t+=1; if(S.modal.t>=d.sec){S.modal.t=d.sec;setPlaying(false);return;} render(); },250);
+  render();
+}
+function closeDrawer(){ if(S.drawer&&S.drawer.dirty&&!confirmLeave()) return; S.drawer=null; S.wide=false; render(); }
+function confirmLeave(){ return window.confirm('分段内容已修改，确定放弃修改吗？'); }
+function saveDrawer(){
+  const d=docById(S.activeDoc), s=segById(d,S.drawer.segId), dr=S.drawer;
+  s.kps=[...dr.kps];
+  if(dr.dirty){ if(d.kind==='image'){s.ocr=dr.ocr;s.desc=dr.desc;} else {s.text=dr.text; if(d.kind==='text') s.heading=dr.heading;}
+    s.sugg.forEach(g=>{if(g.status==='pending'){g.status='rejected';g.reason='分段已修改，建议作废';}}); }
+  if(d.kind==='av') s.sp=dr.sp;
+  S.drawer=null; S.wide=false; S.hl=s.id;
+  toast(dr.dirty?'已保存。分段将重新索引并重新提取知识点':'已保存');
+  render(); setTimeout(()=>{S.hl=null;},1700);
+}
+function gotoSeg(docId,segId,t){
+  S.view='doc'; S.activeDoc=docId; S.drawer=null; S.segFilter='all'; S.kpFilter='all'; S.segQ=''; S.hl=segId; S.tocOn=segId;
+  const d=docById(docId);
+  if(d.kind==='av'){ S.modal={kind:'preview',t:+t}; }
+  else if(d.kind==='image'){ S.modal={kind:'preview',t:0}; }
+  else S.modal=null;
+  render(); const el=document.getElementById(segId); if(el) el.scrollIntoView({block:'center'}); setTimeout(()=>{S.hl=null;},1700);
+}
+
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]'); if(!el) return;
+  const a=el.dataset.act, v=el.dataset.v;
+  if(a==='edit'&&e.target.closest('button,input')) return;
+  const d=S.activeDoc?docById(S.activeDoc):null;
+  switch(a){
+    case 'nav': if(S.view==='doc'&&S.drawer&&S.drawer.dirty&&!confirmLeave()) return; S.drawer=null; S.view=v; if(v==='wizard'){S.step=1;S.files=[];S.progress={};} break;
+    case 'open': S.view='doc'; S.activeDoc=v; S.drawer=null; S.segFilter='all'; S.kpFilter='all'; S.segQ=''; S.tocOn=null; window.scrollTo(0,0); break;
+    case 'toc': S.tocOn=v||null; if(v){render(); const t=document.getElementById(v); if(t) t.scrollIntoView({block:'center'}); return;} break;
+    case 'edit': if(S.drawer&&S.drawer.dirty&&S.drawer.segId!==v&&!confirmLeave()) return; openDrawer(v); break;
+    case 'dr-close': closeDrawer(); return;
+    case 'dr-wide': S.wide=!S.wide; break;
+    case 'dr-save': saveDrawer(); return;
+    case 'dr-unlink': S.drawer.kps=S.drawer.kps.filter(x=>x!==v); break;
+    case 'pk-open': S.picker.open=!S.picker.open; render(); {const q=$('#pk-q'); if(q) q.focus();} return;
+    case 'pk-close': S.picker.open=false; break;
+    case 'pk-toggle': e.preventDefault(); S.drawer.kps=S.drawer.kps.includes(v)?S.drawer.kps.filter(x=>x!==v):[...S.drawer.kps,v]; break;
+    case 'sg-ok': { const s=segOfSugg(v), g=findSugg(v); approve(d,s,g); toast(g.type==='A'?'已通过，关联已写入知识图谱':'已通过，新知识点已写入知识图谱'); break; }
+    case 'sg-merge': { const s=segOfSugg(v), g=findSugg(v); approve(d,s,g,'merge'); toast('已合并到已有知识点并关联'); break; }
+    case 'sg-asnew': { const g=findSugg(v); g.edit={name:g.name,def:g.def,mount:g.mount[0]}; S.editSugg=v; break; }
+    case 'sg-edit': { const g=findSugg(v); g.edit={name:g.name,def:g.def,mount:g.mount[0]}; S.editSugg=v; S.rejecting=null; break; }
+    case 'sg-edit-ok': { const s=segOfSugg(v), g=findSugg(v); if(!g.edit.name.trim()){toast('请填写知识点名称');return;} approve(d,s,g,'new'); S.editSugg=null; toast('已修改并通过，新知识点已写入知识图谱'); break; }
+    case 'sg-reject': S.rejecting=v; S.editSugg=null; break;
+    case 'sg-reject-ok': { const g=findSugg(v); g.status='rejected'; g.reason=$('#rj-reason').value; S.rejecting=null; toast('已驳回，同类建议不再重复推送'); break; }
+    case 'sg-cancel': S.rejecting=null; S.editSugg=null; break;
+    case 'oneclick': S.modal={kind:'oneclick'}; break;
+    case 'oneclick-ok': doOneClick(); break;
+    case 'onlypending': S.kpFilter='pending'; break;
+    case 'preview': S.modal={kind:'preview',t:+(el.dataset.t||0)}; if(d&&d.kind==='av') { render(); setPlaying(true); return; } break;
+    case 'm-close': setPlaying(false); S.modal=null; break;
+    case 'm-play': setPlaying(!S.playing); return;
+    case 'm-seek': { const r=el.getBoundingClientRect(); S.modal.t=Math.round((e.clientX-r.left)/r.width*d.sec); break; }
+    case 'goto': gotoSeg(el.dataset.d,el.dataset.s,el.dataset.t); return;
+    // wizard
+    case 'source': S.source=v; break;
+    case 'pick': $('#picker').click(); return;
+    case 'mock': if(S.files.some(f=>IMPORT_FILES.some(m=>m.id===f.id))){toast('示例文件已载入');return;} if(S.docs.some(x=>IMPORT_FILES.some(m=>m.id===x.id))){toast('示例文件已导入过，可直接查看文档列表');return;} addFiles(IMPORT_FILES.map(f=>{const c=clone(f);if(f.svg)c.svg=f.svg;return c;})); return;
+    case 'remove': S.files=S.files.filter(f=>f.id!==v); break;
+    case 'wgo': S.step=+v; break;
+    case 'wtab': S.tab=v; break;
+    case 'toggle': S[v]=!S[v]; break;
+    case 'imgMode': S.imgMode=v; break;
+    case 'segMode': S.segMode=v; break;
+    case 'lang': S.lang=v; break;
+    case 'dur': S.dur=+v; break;
+    case 'process': startProcessing(); return;
+    case 'finish': validFiles().forEach(f=>S.docs.unshift(toDoc(f,{imgMode:S.imgMode,ocrScan:S.ocrScan,clean:S.clean}))); S.files=[]; S.view='list'; toast('已导入，AI 已提出知识点建议，点开文档逐段确认'); break;
+  }
+  render();
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){ if(S.modal){setPlaying(false);S.modal=null;render();} else if(S.picker.open){S.picker.open=false;render();} else if(S.drawer) closeDrawer(); }
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='s'&&S.drawer){ e.preventDefault(); saveDrawer(); }
+});
+render();
+</script>
+</body>
+</html>

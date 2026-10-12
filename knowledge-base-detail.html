@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>知识库详情｜专业图谱平台</title>
+<link rel="stylesheet" href="mapping-review.css" />
+<link rel="stylesheet" href="mapping-polish.css" />
+<link rel="stylesheet" href="mapping-compact.css" />
+<link rel="stylesheet" href="mapping-reference.css" />
+<style>
+/* ---------- 布局 ---------- */
+.kbd-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:24px 4px 6px;}
+.kbd-back{color:#5149e9;text-decoration:none;font-size:14px;white-space:nowrap;}
+.kbd-title{font-size:18px;font-weight:700;color:#2f405d;margin:0;}
+.kbd-meta{font-size:12px;color:#8b99ac;}
+.kbd-head-actions{margin-left:auto;display:flex;align-items:center;gap:8px;}
+
+/* ---------- Tabs ---------- */
+.kbd-tabs{display:flex;gap:24px;border-bottom:1px solid #e8e8e8;margin-top:14px;}
+.kbd-tab{position:relative;padding:10px 2px;font-size:14px;color:#8b99ac;background:none;border:none;cursor:pointer;font-weight:500;}
+.kbd-tab:hover{color:#5149e9;}
+.kbd-tab.active{color:#5149e9;font-weight:600;}
+.kbd-tab.active::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:#5149e9;}
+
+/* ---------- 工具条 ---------- */
+.kbd-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:16px 0;}
+.kbd-toolbar select,.kbd-toolbar input{height:32px;padding:0 10px;border:1px solid #dfe6ef;border-radius:6px;font-size:13px;background:#fff;color:#41536f;}
+.kbd-toolbar select{min-width:110px;}
+.kbd-toolbar input{width:200px;}
+.kbd-toolbar .spacer{flex:1;}
+.kbd-primary{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 16px;border-radius:8px;border:1px solid #5149e9;background:#5149e9;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.kbd-primary:hover{background:#4038c0;border-color:#4038c0;}
+.kbd-ghost{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid #dfe6ef;background:#fff;color:#41536f;font-size:13px;cursor:pointer;}
+.kbd-ghost:hover{border-color:#5149e9;color:#5149e9;}
+.kbd-ghost.danger:hover{border-color:#f5222d;color:#f5222d;}
+
+/* ---------- 批量条 ---------- */
+.kbd-batch{display:none;align-items:center;gap:12px;padding:8px 14px;background:#eef0ff;border:1px solid #d6d2f2;border-radius:8px;margin-bottom:12px;font-size:13px;color:#5149e9;}
+.kbd-batch.show{display:flex;}
+
+/* ---------- 表格 ---------- */
+.kbd-table{border:1px solid #e8e8e8;border-radius:10px;overflow:hidden;background:#fff;}
+.kbd-thead,.kbd-row{display:grid;grid-template-columns:40px minmax(220px,1fr) 80px 80px 110px 100px 150px 60px;align-items:center;}
+.kbd-thead{background:#f7f9fc;border-bottom:1px solid #e8e8e8;font-size:12px;color:#8b99ac;font-weight:600;}
+.kbd-thead>span{padding:11px 12px;white-space:nowrap;}
+.kbd-row{border-bottom:1px solid #f0f0f0;font-size:13px;color:#41536f;transition:background .12s;}
+.kbd-row:last-child{border-bottom:none;}
+.kbd-row:hover{background:#fafbfd;}
+.kbd-row>div{padding:11px 12px;min-width:0;}
+.kbd-cell-check{display:flex;align-items:center;}
+.kbd-check{width:15px;height:15px;accent-color:#5149e9;cursor:pointer;}
+.kbd-doc{display:flex;align-items:center;gap:10px;min-width:0;}
+.kbd-doc-icon{width:34px;height:34px;flex-shrink:0;border-radius:7px;display:flex;align-items:center;justify-content:center;background:#f5f7fa;border:1px solid #eef0f2;}
+.kbd-doc-name{font-weight:600;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;}
+.kbd-doc-name:hover{color:#5149e9;}
+.kbd-doc-sub{font-size:11px;color:#aaa;margin-top:1px;}
+.kbd-type-badge{flex-shrink:0;font-size:11px;font-weight:600;padding:1px 6px;border-radius:4px;}
+
+/* 状态 / 索引方式徽标 */
+.kbd-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:2px 9px;border-radius:10px;white-space:nowrap;}
+.kbd-badge .dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+.kbd-idx{display:inline-flex;font-size:12px;padding:2px 9px;border-radius:10px;white-space:nowrap;}
+
+/* ---------- 分页 ---------- */
+.kbd-pagination{display:flex;align-items:center;justify-content:space-between;padding:14px 2px 0;font-size:13px;color:#8b99ac;flex-wrap:wrap;gap:10px;}
+.kbd-pages{display:flex;gap:6px;align-items:center;}
+.kbd-page-btn{min-width:28px;height:28px;padding:0 8px;border:1px solid #dfe6ef;border-radius:6px;background:#fff;font-size:13px;color:#41536f;cursor:pointer;}
+.kbd-page-btn:hover{border-color:#5149e9;color:#5149e9;}
+.kbd-page-btn.active{background:#5149e9;border-color:#5149e9;color:#fff;}
+.kbd-page-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ---------- 行操作菜单 ---------- */
+.kbd-menu{position:fixed;z-index:60;background:#fff;border:1px solid #e8e8e8;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.12);padding:4px 0;min-width:160px;display:none;}
+.kbd-menu.show{display:block;}
+.kbd-menu-item{display:flex;align-items:center;gap:8px;padding:8px 16px;font-size:13px;color:#333;cursor:pointer;white-space:nowrap;}
+.kbd-menu-item:hover{background:#f5f3fa;color:#5149e9;}
+.kbd-menu-item.danger{color:#f5222d;}
+.kbd-menu-item.danger:hover{background:#fff1f0;color:#f5222d;}
+.kbd-menu-divider{height:1px;background:#f0f0f0;margin:4px 0;}
+.kbd-more{border:none;background:none;cursor:pointer;color:#aaa;font-size:16px;line-height:1;padding:4px 6px;border-radius:6px;}
+.kbd-more:hover{background:#f0f2f5;color:#5149e9;}
+
+/* ---------- 召回测试 ---------- */
+.kbd-hit{display:flex;flex-direction:column;gap:12px;max-width:880px;}
+.kbd-hit-form{display:flex;gap:8px;flex-wrap:wrap;}
+.kbd-hit-form input{flex:1;min-width:260px;height:42px;border:1px solid #dfe6ef;border-radius:8px;padding:0 14px;font-size:14px;font-family:inherit;}
+.kbd-hit-form input:focus{outline:none;border-color:#5149e9;}
+.kbd-hit-result{display:flex;flex-direction:column;gap:10px;}
+.kbd-hit-item{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border:1px solid #e8e8e8;border-radius:10px;background:#fff;}
+.kbd-hit-item .kbd-doc-icon{margin-top:1px;}
+.kbd-hit-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;}
+.kbd-hit-name{font-size:14px;font-weight:600;color:#333;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.kbd-hit-snippet{font-size:13px;color:#41536f;line-height:1.7;white-space:pre-line;}
+.kbd-hit-score{font-size:12px;font-weight:600;color:#5149e9;flex-shrink:0;}
+.kbd-hit-empty{color:#8b99ac;font-size:13px;padding:20px 0;text-align:center;}
+
+/* ---------- 设置 / API ---------- */
+.kbd-panel{max-width:760px;}
+.kbd-section-title{font-size:13px;font-weight:700;color:#2f405d;margin:22px 0 10px;}
+.kbd-section-title:first-child{margin-top:4px;}
+.kbd-set-row{display:flex;align-items:center;gap:16px;padding:14px 16px;border:1px solid #e8e8e8;border-bottom:none;background:#fff;}
+.kbd-set-row:first-of-type{border-radius:10px 10px 0 0;}
+.kbd-set-row:last-of-type{border-bottom:1px solid #e8e8e8;border-radius:0 0 10px 10px;}
+.kbd-set-row:only-of-type{border:1px solid #e8e8e8;border-radius:10px;}
+.kbd-set-label{flex:1;min-width:0;}
+.kbd-set-label b{font-size:14px;color:#333;font-weight:600;display:block;}
+.kbd-set-label span{font-size:12px;color:#8b99ac;}
+.kbd-set-row select,.kbd-set-row input{height:32px;padding:0 10px;border:1px solid #dfe6ef;border-radius:6px;font-size:13px;background:#fff;color:#41536f;}
+.kbd-api-key{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:#41536f;background:#f7f9fc;border:1px solid #e8e8e8;border-radius:6px;padding:6px 10px;word-break:break-all;}
+.kbd-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:#d6dee9;background:#1d2333;border-radius:8px;padding:14px 16px;line-height:1.7;overflow-x:auto;white-space:pre;}
+
+/* ---------- 弹窗 ---------- */
+.kbd-modal{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:80;display:none;align-items:center;justify-content:center;padding:20px;}
+.kbd-modal.show{display:flex;}
+.kbd-dialog{background:#fff;border-radius:14px;width:620px;max-width:96vw;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.kbd-dialog-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #eef0f2;gap:12px;}
+.kbd-dialog-head h2{font-size:16px;font-weight:700;color:#2f405d;margin:0;display:flex;align-items:center;gap:10px;min-width:0;}
+.kbd-close{border:none;background:none;font-size:20px;color:#aaa;cursor:pointer;line-height:1;padding:4px;flex-shrink:0;}
+.kbd-close:hover{color:#333;}
+.kbd-dialog-body{padding:20px;overflow-y:auto;flex:1;min-height:0;}
+.kbd-dialog-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid #eef0f2;}
+
+/* 添加文件弹窗 */
+.kbd-add-types{display:flex;gap:8px;margin-bottom:16px;}
+.kbd-add-type{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 10px;border:1px solid #e8e8e8;border-radius:10px;background:#fff;cursor:pointer;font-size:13px;color:#41536f;}
+.kbd-add-type:hover{border-color:#5149e9;}
+.kbd-add-type.active{border:1.5px solid #5149e9;background:#f7f6ff;color:#5149e9;font-weight:600;}
+.kbd-drop{border:1px dashed #c9c2ef;border-radius:10px;background:#f7f6ff;padding:28px 16px;text-align:center;font-size:13px;color:#8b99ac;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.kbd-drop b{color:#5149e9;}
+.kbd-add-note{font-size:12px;color:#8b99ac;line-height:1.7;margin:12px 0 0;}
+
+/* ---------- 文档详情 ---------- */
+.dd-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:18px;}
+.dd-stat{display:flex;flex-direction:column;gap:2px;padding:11px 13px;border-radius:10px;background:#f7f9fc;}
+.dd-stat b{font-size:17px;color:#2f405d;}
+.dd-stat span{font-size:12px;color:#8b99ac;}
+.dd-sub{font-size:13px;font-weight:700;color:#2f405d;margin:16px 0 8px;}
+.dd-seg{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:1px solid #e8e8e8;border-radius:10px;margin-bottom:8px;}
+.dd-seg.on{border:1.5px solid #5149e9;background:#fafaff;}
+.dd-seg-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:#8b99ac;}
+.dd-seg-text{font-size:13px;color:#41536f;line-height:1.8;white-space:pre-line;}
+.dd-seg-text[contenteditable="true"]{outline:1px dashed #5149e9;border-radius:4px;padding:4px 6px;background:#fff;}
+.dd-img{border:1px solid #e8e8e8;border-radius:12px;overflow:hidden;line-height:0;margin-bottom:16px;background:#f7f9fc;}
+.dd-img svg{width:100%;height:auto;display:block;}
+.dd-tag{font-size:11px;font-weight:600;padding:1px 7px;border-radius:5px;}
+.dd-mini{min-height:30px;padding:0 12px;border-radius:8px;border:1px solid #dfe6ef;background:#fff;font-size:12px;color:#41536f;cursor:pointer;}
+.dd-mini:hover{border-color:#5149e9;color:#5149e9;}
+.dd-mini.pri{background:#5149e9;border-color:#5149e9;color:#fff;}
+.dd-mini.pri:hover{background:#4038c0;color:#fff;}
+
+/* 播放器 */
+.player{border:1px solid #e8e8e8;border-radius:12px;overflow:hidden;margin-bottom:14px;}
+.video{position:relative;aspect-ratio:16/8;background:#101828;display:flex;align-items:center;justify-content:center;color:#98A2B3;font-size:13px;}
+.subtitle{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);max-width:86%;padding:6px 12px;border-radius:6px;background:rgba(0,0,0,.6);color:#fff;font-size:13px;line-height:1.6;text-align:center;}
+.wave{height:110px;padding:0 18px;background:#f7f9fc;display:flex;align-items:center;gap:3px;overflow:hidden;cursor:pointer;}
+.bar{width:4px;border-radius:2px;background:#dfe6ef;flex:none;}
+.bar.p{background:#5149e9;}
+.ctrl{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;border-top:1px solid #f0f0f0;}
+.play{width:40px;height:40px;border-radius:50%;border:0;background:#5149e9;display:flex;align-items:center;justify-content:center;flex:none;cursor:pointer;}
+.play:hover{background:#4038c0;}
+.seek{flex:1;height:6px;border-radius:3px;background:#eef0f2;overflow:hidden;cursor:pointer;}
+.seek>div{height:100%;background:#5149e9;}
+.sp-tag{font-size:11px;font-weight:600;padding:1px 7px;border-radius:5px;}
+.sp1{background:#eef0ff;color:#5149e9}.sp2{background:#FEF0C7;color:#93370D}.sp3{background:#F4F3FF;color:#5925DC}
+.sp-rename{min-height:28px;padding:0 10px;border:1px solid #dfe6ef;border-radius:7px;background:#fff;font-size:12px;color:#41536f;cursor:pointer;}
+.sp-rename:hover{border-color:#5149e9;color:#5149e9;}
+
+.kbd-footnote{font-size:12px;color:#b4bdcb;padding:10px 0 0;}
+
+@keyframes kbdPulse{0%,100%{opacity:1}50%{opacity:.55}}
+.kbd-pulse{animation:kbdPulse 1.2s ease-in-out infinite;}
+</style>
+</head>
+<body>
+<aside class="platform-sidebar" aria-label="图谱平台导航">
+  <div class="platform-brand">
+    <span class="platform-brand-mark">图</span>
+    <div><strong>专业图谱平台</strong><small>知识与能力管理</small></div>
+  </div>
+  <nav class="platform-nav">
+    <div class="nav-section-title">图谱建设</div>
+    <a href="knowledge-graph.html" class="platform-nav-item"><span class="nav-icon">图</span><span>知识图谱</span></a>
+    <a href="knowledge-system.html" class="platform-nav-item"><span class="nav-icon">系</span><span>知识体系</span></a>
+    <a href="knowledge-base.html" class="platform-nav-item active" aria-current="page"><span class="nav-icon">库</span><span>知识库</span></a>
+    <a href="ability-graph.html" class="platform-nav-item"><span class="nav-icon">能</span><span>能力图谱</span></a>
+    <a href="mapping-review.html" class="platform-nav-item"><span class="nav-icon">映</span><span>图谱映射审核台</span></a>
+  </nav>
+  <div class="platform-sidebar-footer"><span class="platform-avatar">秦</span><span>平台管理员</span><span class="sidebar-more">···</span></div>
+</aside>
+<div class="platform-page">
+<main class="app-shell">
+
+  <div class="kbd-head">
+    <a class="kbd-back" href="knowledge-base.html">← 知识库</a>
+    <h1 class="kbd-title" id="kbTitle">旅游管理专业教学资源库</h1>
+    <span class="kbd-meta" id="kbMeta">admin · 更新于 3 周前</span>
+    <div class="kbd-head-actions">
+      <button class="kbd-ghost" onclick="toast('同步数据源')">↻ 同步</button>
+      <button class="kbd-primary" onclick="openAdd()">＋ 添加文件</button>
+    </div>
+  </div>
+
+  <div class="kbd-tabs" role="tablist">
+    <button class="kbd-tab active" data-tab="doc" onclick="switchTab('doc')">文档</button>
+    <button class="kbd-tab" data-tab="recall" onclick="switchTab('recall')">召回测试</button>
+    <button class="kbd-tab" data-tab="settings" onclick="switchTab('settings')">设置</button>
+    <button class="kbd-tab" data-tab="api" onclick="switchTab('api')">API 访问</button>
+  </div>
+
+  <!-- 文档 -->
+  <div id="panel-doc">
+    <div class="kbd-toolbar">
+      <select id="typeFilter" onchange="renderTable()">
+        <option value="all">全部类型</option>
+        <option value="text">文本</option>
+        <option value="image">图文</option>
+        <option value="av">音视频</option>
+      </select>
+      <select id="statusFilter" onchange="renderTable()">
+        <option value="all">全部状态</option>
+        <option value="available">可用</option>
+        <option value="indexing">索引中</option>
+        <option value="queuing">排队中</option>
+        <option value="waiting">待处理</option>
+        <option value="unavailable">不可用</option>
+        <option value="error">错误</option>
+      </select>
+      <select id="sourceFilter" onchange="renderTable()">
+        <option value="all">全部来源</option>
+        <option value="local">本地文件</option>
+        <option value="web">从网页导入</option>
+        <option value="notion">从 Notion 导入</option>
+      </select>
+      <input type="text" id="docSearch" placeholder="搜索文档名称" onkeydown="if(event.key==='Enter')renderTable()" />
+      <div class="spacer"></div>
+      <button class="kbd-primary" onclick="openAdd()">＋ 添加文件</button>
+    </div>
+
+    <div class="kbd-batch" id="batchBar">
+      <span id="batchCount">已选 0 项</span>
+      <button class="kbd-ghost" onclick="clearSelection()">取消选择</button>
+      <button class="kbd-ghost danger" onclick="batchDelete()">删除</button>
+    </div>
+
+    <div class="kbd-table">
+      <div class="kbd-thead">
+        <span class="kbd-cell-check"><input type="checkbox" class="kbd-check" id="selectAll" onchange="toggleSelectAll()" aria-label="全选"></span>
+        <span>文档</span><span>分段</span><span>命中</span><span>状态</span><span>索引方式</span><span>上传时间</span><span></span>
+      </div>
+      <div id="docRows"></div>
+    </div>
+
+    <div class="kbd-pagination">
+      <span id="pageSummary">共 128 条文档</span>
+      <div class="kbd-pages">
+        <button class="kbd-page-btn" disabled>‹</button>
+        <button class="kbd-page-btn active">1</button>
+        <button class="kbd-page-btn">2</button>
+        <button class="kbd-page-btn">3</button>
+        <span style="color:#b4bdcb">…</span>
+        <button class="kbd-page-btn">13</button>
+        <button class="kbd-page-btn">›</button>
+      </div>
+    </div>
+    <p class="kbd-footnote">点击文档名可查看分段详情；当前为示例数据，仅展示部分文档。</p>
+  </div>
+
+  <!-- 召回测试 -->
+  <div id="panel-recall" style="display:none;">
+    <div class="kbd-panel">
+      <p class="kbd-footnote" style="padding-top:6px">在「旅游管理专业教学资源库」中检索，文本、图文、音视频分段一起召回。</p>
+      <div class="kbd-hit">
+        <div class="kbd-hit-form">
+          <input id="recallInput" placeholder="输入问题，例如：VD 房是什么意思" value="客人要求提前入住怎么处理" />
+          <button class="kbd-primary" onclick="doRecall()">测试</button>
+        </div>
+        <div class="kbd-hit-result" id="recallResult"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 设置 -->
+  <div id="panel-settings" style="display:none;">
+    <div class="kbd-panel">
+      <div class="kbd-section-title">索引与检索</div>
+      <div class="kbd-set-row"><div class="kbd-set-label"><b>索引方式</b><span>高质量消耗更多资源，检索精度更高</span></div><select><option>高质量</option><option>经济</option></select></div>
+      <div class="kbd-set-row"><div class="kbd-set-label"><b>检索设置</b><span>用于召回测试与知识库问答</span></div><select><option>向量检索</option><option>全文检索</option><option>混合检索</option></select></div>
+      <div class="kbd-set-row"><div class="kbd-set-label"><b>嵌入模型</b><span>生成向量所用模型</span></div><select><option>text-embedding-v3</option></select></div>
+      <div class="kbd-section-title">分段规则</div>
+      <div class="kbd-set-row"><div class="kbd-set-label"><b>分段模式</b><span>通用知识、多路分段</span></div><select><option>自动分段与清洗</option><option>自定义分段</option></select></div>
+      <div class="kbd-set-row"><div class="kbd-set-label"><b>分段最大长度</b><span>单位 tokens</span></div><input value="500" style="width:120px"></div>
+      <div class="kbd-set-row"><div class="kbd-set-label"><b>扫描件 OCR</b><span>无文字层页面自动识别文字</span></div><select><option>开启</option><option>关闭</option></select></div>
+    </div>
+  </div>
+
+  <!-- API 访问 -->
+  <div id="panel-api" style="display:none;">
+    <div class="kbd-panel">
+      <div class="kbd-section-title">知识库 API</div>
+      <div class="kbd-set-row"><div class="kbd-set-label"><b>API Key</b><span>调用检索接口使用，请妥善保管</span></div><button class="kbd-ghost" onclick="toast('已复制 API Key')">复制</button></div>
+      <div class="kbd-set-row"><div class="kbd-set-label"><b>知识库 ID</b></div><span class="kbd-api-key" id="apiId">9a87bbc1-9075-4b61-aaf0-0658ed9cc568</span></div>
+      <div class="kbd-section-title">调用示例</div>
+      <div class="kbd-code" id="apiCode"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+</main>
+</div>
+
+<!-- 行操作菜单 -->
+<div class="kbd-menu" id="rowMenu">
+  <div class="kbd-menu-item" data-act="preview">👁 预览</div>
+  <div class="kbd-menu-item" data-act="reparse">⟳ 重新解析</div>
+  <div class="kbd-menu-item" data-act="rename">✎ 重命名</div>
+  <div class="kbd-menu-item" data-act="download">↓ 下载</div>
+  <div class="kbd-menu-item" data-act="toggle">⏸ 停用 / 启用</div>
+  <div class="kbd-menu-divider"></div>
+  <div class="kbd-menu-item danger" data-act="delete">🗑 删除</div>
+</div>
+
+<!-- 添加文件弹窗 -->
+<div class="kbd-modal" id="addModal">
+  <div class="kbd-dialog">
+    <div class="kbd-dialog-head"><h2>添加文件</h2><button class="kbd-close" onclick="closeAdd()">×</button></div>
+    <div class="kbd-dialog-body">
+      <div class="kbd-add-types" id="addTypes">
+        <div class="kbd-add-type active" data-type="text" onclick="pickType('text')"><span id="t_icon_text"></span>文本</div>
+        <div class="kbd-add-type" data-type="image" onclick="pickType('image')"><span id="t_icon_image"></span>图文</div>
+        <div class="kbd-add-type" data-type="av" onclick="pickType('av')"><span id="t_icon_av"></span>音视频</div>
+      </div>
+      <div class="kbd-drop" onclick="toast('拖拽或选择文件')">
+        <span id="dropIcon"></span>
+        <div>拖拽文件至此，或 <b>选择文件</b></div>
+        <span id="dropHint" style="font-size:12px"></span>
+      </div>
+      <p class="kbd-add-note" id="addNote">文本：DOCX / PDF / TXT / MD 等；图文：JPG / PNG / WEBP 等；音视频：MP3 / M4A / MP4 / MOV 等。单个文件不超过对应类型大小限制。</p>
+    </div>
+    <div class="kbd-dialog-foot">
+      <button class="kbd-ghost" onclick="closeAdd()">取消</button>
+      <button class="kbd-primary" onclick="confirmAdd()">开始处理</button>
+    </div>
+  </div>
+</div>
+
+<!-- 文档详情弹窗 -->
+<div class="kbd-modal" id="docModal">
+  <div class="kbd-dialog" style="width:880px">
+    <div class="kbd-dialog-head">
+      <h2 id="docTitle"></h2>
+      <button class="kbd-close" onclick="closeDoc()">×</button>
+    </div>
+    <div class="kbd-dialog-body" id="docBody"></div>
+    <div class="kbd-dialog-foot" id="docFoot">
+      <button class="kbd-ghost" id="docReparseBtn" onclick="reparseActive()">⟳ 重新解析</button>
+      <button class="kbd-ghost" onclick="toast('下载「'+activeDoc.name+'」')">↓ 下载</button>
+      <button class="kbd-primary" onclick="closeDoc()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= 数据 ================= */
+const KB_META = {
+  KB001:{name:'xhf_test_09_14',creator:'admin',editTime:'25 天前'},
+  KB002:{name:'知识工程与知识体系详解.docx',creator:'admin',editTime:'2 个月前'},
+  KB003:{name:'现代酒店管理',creator:'admin',editTime:'1 个月前'},
+  KB004:{name:'旅游管理专业教学资源库',creator:'admin',editTime:'3 周前',total:128},
+  KB005:{name:'导游实务案例集',creator:'admin',editTime:'1 周前',total:45},
+  KB006:{name:'景区开发与管理规范',creator:'admin',editTime:'2 周前',total:32}
+};
+
+const STATUS = {
+  available:{label:'可用',color:'#16a34a',bg:'#eaf6ec'},
+  indexing:{label:'索引中',color:'#5149e9',bg:'#eef0ff',pulse:true},
+  queuing:{label:'排队中',color:'#8b99ac',bg:'#f0f2f5'},
+  waiting:{label:'待处理',color:'#f59e0b',bg:'#fff7e6'},
+  unavailable:{label:'不可用',color:'#8b99ac',bg:'#f0f2f5'},
+  error:{label:'错误',color:'#f5222d',bg:'#fff1f0'}
+};
+const TYPE = { text:{label:'文本',color:'#5149e9'}, image:{label:'图文',color:'#0e9384'}, av:{label:'音视频',color:'#dc6803'} };
+const MEDIA_LABEL = {audio:'音频',video:'视频'};
+const SOURCE = {local:'本地文件',web:'网页导入',notion:'Notion 导入'};
+
+const IMG_BOARD = `<svg viewBox="0 0 480 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="白板手写房态表">
+  <rect width="480" height="320" fill="#DDE3EA"/><rect x="20" y="16" width="440" height="288" rx="6" fill="#FDFDFB" stroke="#AEB8C4" stroke-width="6"/>
+  <g font-family="Kaiti SC, STKaiti, KaiTi, serif" fill="#1F3A8A">
+    <text x="48" y="62" font-size="26" font-weight="700">房态表（8F）</text>
+    <line x1="46" y1="76" x2="430" y2="76" stroke="#1F3A8A" stroke-width="2"/>
+    <text x="52" y="110" font-size="20">801　VC　空房已清洁</text>
+    <text x="52" y="142" font-size="20">802　OC　住客房</text>
+    <text x="52" y="174" font-size="20">803　VD　空房未清洁</text>
+    <text x="52" y="206" font-size="20">804　OOO　维修房</text>
+    <text x="52" y="238" font-size="20">805　VC　空房已清洁</text>
+    <text x="52" y="282" font-size="17" fill="#B42318">备注：VD 清洁完 → 客房部通知前台改 VC</text>
+  </g></svg>`;
+const IMG_DESK = `<svg viewBox="0 0 480 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="酒店前台工作区照片">
+  <rect width="480" height="320" fill="#EFE7DC"/><rect y="250" width="480" height="70" fill="#D8CBB8"/>
+  <rect x="150" y="34" width="180" height="46" rx="6" fill="#3B2F25"/>
+  <text x="240" y="56" text-anchor="middle" font-size="14" fill="#E9D8B4" font-family="sans-serif" letter-spacing="3">RECEPTION</text>
+  <text x="240" y="73" text-anchor="middle" font-size="12" fill="#E9D8B4" font-family="sans-serif">前台接待</text>
+  <rect x="70" y="128" width="100" height="66" rx="4" fill="#1F2937"/><rect x="76" y="134" width="88" height="54" fill="#60A5FA" opacity=".55"/>
+  <rect x="112" y="194" width="16" height="16" fill="#374151"/><rect x="86" y="206" width="70" height="10" rx="2" fill="#4B5563"/>
+  <rect x="300" y="168" width="54" height="40" rx="4" fill="#E5E7EB" stroke="#9CA3AF"/><rect x="310" y="160" width="34" height="10" rx="2" fill="#CBD5E1"/>
+  <rect x="372" y="176" width="34" height="34" rx="5" fill="#111827"/><rect x="378" y="182" width="22" height="10" fill="#34D399"/>
+  <rect x="30" y="214" width="420" height="16" rx="3" fill="#C9A27C"/><rect x="40" y="230" width="400" height="70" fill="#8B6B4A"/>
+  </svg>`;
+
+let DOCS = [
+  /* ---- 文本 ---- */
+  {id:'d1', cat:'text', name:'前厅服务规范.docx', ext:'DOCX', size:'1.2 MB', status:'available', index:'high', source:'local', time:'2026-09-18 14:22', hits:12,
+    segs:[
+      '第一章 总则：前厅部是酒店对客服务的第一窗口，员工须统一着装、佩戴工牌，站立服务，主动问候。',
+      '第二章 入住登记：核验有效证件，确认预订信息与房型、房价、离店日期，收取押金后制作房卡并告知早餐时间。',
+      '第三章 提前入住与延迟退房：提前入住视当日可售房态安排；延迟退房至 14:00 不另收费，14:00–18:00 加收半日房费，18:00 后按全日房费计。',
+      '第四章 交接班：每班结束前核对房态、备用金和未完成事项，填写交接班记录本并双方签字。'
+    ]},
+  {id:'d2', cat:'text', name:'夜审操作手册（扫描件）.pdf', ext:'PDF', size:'8.6 MB', status:'available', index:'high', source:'local', time:'2026-09-17 09:05', hits:5, scanned:true,
+    segs:[
+      '夜审时间一般为每日 0:00 至 3:00，夜审员需核对当日所有入住、退房及在住房间的房价与账务。',
+      '完成核对后执行日结，生成营业日报，并将系统营业日期滚动至次日。'
+    ]},
+  {id:'d3', cat:'text', name:'客房部服务标准.docx', ext:'DOCX', size:'3.4 MB', status:'available', index:'high', source:'local', time:'2026-09-16 16:40', hits:9,
+    segs:[
+      '客房清洁按「先住客房、后空房」顺序进行，退房房需在 15 分钟内完成查房并通知前台。',
+      '布草更换标准：床单、被套、枕套每客一换，续住客人按三天一换或按客人要求更换。'
+    ]},
+  {id:'d4', cat:'text', name:'餐饮服务流程.pdf', ext:'PDF', size:'5.1 MB', status:'available', index:'economy', source:'local', time:'2026-09-15 11:30', hits:2,
+    segs:['餐前准备：检查台面、餐具、菜单，确认预订信息。','席间服务：上菜报菜名、斟酒茶水、及时撤换骨碟。']},
+  {id:'d5', cat:'text', name:'酒店英语情景对话.txt', ext:'TXT', size:'64 KB', status:'available', index:'economy', source:'web', time:'2026-09-14 20:11', hits:15,
+    segs:['Receptionist: Good afternoon, welcome to our hotel. May I help you with check-in?','Guest: I have a reservation under the name of Li. A double room for two nights.']},
+  {id:'d6', cat:'text', name:'旅游管理专业人才培养方案.docx', ext:'DOCX', size:'2.8 MB', status:'indexing', index:'high', source:'local', time:'2026-09-20 10:02', hits:0, segs:[]},
+  {id:'d7', cat:'text', name:'导游资格考试大纲.pdf', ext:'PDF', size:'6.2 MB', status:'error', index:'high', source:'local', time:'2026-09-13 08:45', hits:0, segs:[]},
+  {id:'d8', cat:'text', name:'2024级学生名单.xlsx', ext:'XLSX', size:'210 KB', status:'waiting', index:'economy', source:'local', time:'2026-09-20 11:20', hits:0, segs:[]},
+  {id:'d9', cat:'text', name:'实习基地汇总表.csv', ext:'CSV', size:'88 KB', status:'unavailable', index:'economy', source:'notion', time:'2026-09-12 15:00', hits:0, segs:[]},
+
+  /* ---- 图文 ---- */
+  {id:'d10', cat:'image', name:'房态表板书.jpg', ext:'JPG', size:'2.4 MB', status:'available', index:'high', source:'local', time:'2026-09-18 14:30', hits:4, svg:IMG_BOARD,
+    ocr:'房态表（8F）\n801 VC 空房已清洁\n802 OC 住客房\n803 VD 空房未清洁\n804 OOO 维修房\n805 VC 空房已清洁\n备注：VD 清洁完 → 客房部通知前台改 VC',
+    desc:'白板上手写的 8 楼房态表，按房号列出 5 个房间的房态代码与含义，底部有一条红色交接备注，说明 VD 房清洁完成后的改态流程。'},
+  {id:'d11', cat:'image', name:'前台工作区照片.jpg', ext:'JPG', size:'3.1 MB', status:'available', index:'high', source:'local', time:'2026-09-18 14:32', hits:3, svg:IMG_DESK,
+    ocr:'RECEPTION\n前台接待',
+    desc:'酒店前台工作区。台面左侧是电脑显示器和键盘，右侧是房卡制卡机和 POS 机，后方墙上挂着「前台接待」标识，台面整洁，画面中没有客人。'},
+  {id:'d12', cat:'image', name:'中餐摆台示意图.jpg', ext:'JPG', size:'1.6 MB', status:'indexing', index:'high', source:'local', time:'2026-09-20 10:05', hits:0, svg:null, ocr:'', desc:''},
+
+  /* ---- 音视频 ---- */
+  {id:'d13', cat:'av', media:'video', name:'前厅接待实训课录像.mp4', ext:'MP4', size:'162.4 MB', status:'available', index:'high', source:'local', time:'2026-09-17 10:18', hits:6, sec:1100,
+    speakers:{1:'说话人 1',2:'说话人 2',3:'说话人 3'},
+    segs:[
+      [0,156,1,'同学们好，今天这节实训课我们练习前厅散客入住登记的完整流程。先回顾上节课讲的五个环节：问候、确认预订、核验证件、收取押金、发放房卡。'],
+      [156,370,1,'核验证件这一步要同时核对系统里的预订姓名和证件姓名，不一致时先问清楚是不是代订，再按酒店规定处理。'],
+      [370,522,2,'老师，如果客人是通过 OTA 平台预订的，押金也要在前台另外收吗？'],
+      [522,725,1,'要看预订类型。预付房型通常只收杂费押金，现付房型收房费加杂费。另外常遇到客人要求提前入住，先查当前可售房态，有已清洁的同类型房就可以安排，没有的话请客人寄存行李，并告知预计可入住时间。'],
+      [725,930,3,'我来演示一遍。您好，欢迎光临，请问有预订吗？好的，麻烦出示一下您的身份证，我为您办理入住登记。'],
+      [930,1100,1,'刚才的演示流程是对的，有两个细节：递还证件要双手，并且要复述房号和早餐时间。']
+    ]},
+  {id:'d14', cat:'av', media:'audio', name:'导游讲解示范_故宫中轴线.m4a', ext:'M4A', size:'38.6 MB', status:'available', index:'high', source:'local', time:'2026-09-17 10:20', hits:5, sec:960,
+    speakers:{1:'说话人 1'},
+    segs:[
+      [0,200,1,'各位游客朋友，大家好。我们现在站在午门前，午门是紫禁城的正门，平面呈凹字形，俗称五凤楼。'],
+      [200,465,1,'穿过午门，眼前这条金水河自西向东流过，河上五座汉白玉石桥就是内金水桥，中间一座是皇帝专用的御路桥。'],
+      [465,730,1,'接下来看到的是太和殿，也就是俗称的金銮殿，是紫禁城中规格最高的建筑，明清两代的重大典礼都在这里举行。'],
+      [730,960,1,'讲解时要注意节奏，每个点位控制在三到五分钟，并提醒游客注意台阶和人流。']
+    ]},
+  {id:'d15', cat:'av', media:'audio', name:'企业师傅访谈-酒店前台.mp3', ext:'MP3', size:'21.7 MB', status:'available', index:'high', source:'local', time:'2026-09-16 13:55', hits:8, sec:1125,
+    speakers:{1:'说话人 1',2:'说话人 2'},
+    segs:[
+      [0,110,1,'王经理您好，想请您谈谈新员工到前台岗位后，最常见的问题是什么？'],
+      [110,390,2,'最常见的是房态不熟。新人上岗前两周，我们要求每天交接班时手工核对一次房态表，熟了以后系统操作才不容易出错。'],
+      [390,615,2,'第二是处理投诉时急于解释。我们教的是先倾听、再致歉、最后给方案，而且方案要给客人选择。'],
+      [615,820,1,'那您觉得学校在实训课里应该加强哪方面？'],
+      [820,1125,2,'多练夜审和交接班。学校实训一般练入住退房比较多，夜审很少涉及，但上岗后每个人都要轮。']
+    ]},
+  {id:'d16', cat:'av', media:'video', name:'研学活动全程记录.mov', ext:'MOV', size:'1.8 GB', status:'error', index:'high', source:'local', time:'2026-09-11 09:00', hits:0, sec:13330, speakers:{}, segs:[]}
+];
+
+let selected = new Set();
+let menuDocId = null;
+let addType = 'text';
+let addCounter = 0;
+let activeDoc = null;
+let curTime = 0, playing = false, playTimer = null, editing = null, renames = {};
+
+/* ================= 工具 ================= */
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');clearTimeout(window.__t);window.__t=setTimeout(()=>el.classList.remove('show'),2200);}
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=s=>{s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60,p=n=>(n<10?'0':'')+n;return h?h+':'+p(m)+':'+p(x):p(m)+':'+p(x)};
+const segCount=f=>f.cat==='image'?1:f.segs.length;
+const charCount=f=>{if(f.cat==='image')return (f.ocr||'').length+(f.desc||'').length;return f.segs.reduce((a,s)=>a+(s[3]||s).length,0);};
+const spName=(f,n)=>renames[f.id+'-'+n]||f.speakers[n]||('说话人 '+n);
+
+/* ================= 图标 ================= */
+const IC={
+  doc:(c,w=20)=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round"><path d="M6 2.5h8l5 5V20a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V4A1.5 1.5 0 0 1 6.5 2.5z"/><path d="M14 2.5V8h5M8.5 13h7M8.5 16.5h5"/></svg>`,
+  image:(c,w=20)=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-9 9"/></svg>`,
+  audio:(c,w=20)=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round"><path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/></svg>`,
+  video:(c,w=20)=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round"><rect x="2.5" y="5" width="13" height="14" rx="2.5"/><path d="M15.5 10l5-3v10l-5-3"/></svg>`,
+  play:'<svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M8 5.5v13l10.5-6.5z"/></svg>',
+  pause:'<svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
+};
+function docIcon(d,w=20){
+  const c=TYPE[d.cat].color;
+  if(d.cat==='text') return IC.doc(c,w);
+  if(d.cat==='image') return IC.image(c,w);
+  return d.media==='video'?IC.video(c,w):IC.audio(c,w);
+}
+function typeBadge(d){
+  const c=TYPE[d.cat].color;
+  const label=d.cat==='av'?MEDIA_LABEL[d.media]:TYPE[d.cat].label;
+  return `<span class="kbd-type-badge" style="color:${c};background:${c}14">${d.ext} · ${label}</span>`;
+}
+function statusBadge(d){
+  const s=STATUS[d.status];
+  return `<span class="kbd-badge ${s.pulse?'kbd-pulse':''}" style="color:${s.color};background:${s.bg}"><span class="dot"></span>${s.label}</span>`;
+}
+function idxBadge(d){
+  return d.index==='high'
+    ? `<span class="kbd-idx" style="color:#5149e9;background:#eef0ff">高质量</span>`
+    : `<span class="kbd-idx" style="color:#8b99ac;background:#f0f2f5">经济</span>`;
+}
+
+/* ================= 表格 ================= */
+function filtered(){
+  const q=document.getElementById('docSearch').value.trim().toLowerCase();
+  const ty=document.getElementById('typeFilter').value;
+  const st=document.getElementById('statusFilter').value;
+  const so=document.getElementById('sourceFilter').value;
+  return DOCS.filter(d=>
+    (!q||d.name.toLowerCase().includes(q)) &&
+    (ty==='all'||d.cat===ty) &&
+    (st==='all'||d.status===st) &&
+    (so==='all'||d.source===so)
+  );
+}
+function renderTable(){
+  const rows=filtered();
+  const box=document.getElementById('docRows');
+  document.getElementById('selectAll').checked = rows.length>0 && rows.every(d=>selected.has(d.id));
+  if(!rows.length){box.innerHTML='<div style="padding:40px;text-align:center;color:#8b99ac;font-size:13px">没有匹配的文档</div>';updateBatch();return;}
+  box.innerHTML=rows.map(d=>`<div class="kbd-row">
+    <div class="kbd-cell-check"><input type="checkbox" class="kbd-check" ${selected.has(d.id)?'checked':''} onchange="toggleSelect('${d.id}')" aria-label="选择"></div>
+    <div class="kbd-doc">
+      <span class="kbd-doc-icon">${docIcon(d)}</span>
+      <div style="min-width:0">
+        <div class="kbd-doc-name" onclick="openDoc('${d.id}')" title="${esc(d.name)}">${esc(d.name)}</div>
+        <div class="kbd-doc-sub">${typeBadge(d)} · ${d.size}</div>
+      </div>
+    </div>
+    <div>${segCount(d)||'—'}</div>
+    <div>${d.hits||'—'}</div>
+    <div>${statusBadge(d)}</div>
+    <div>${idxBadge(d)}</div>
+    <div style="color:#8b99ac;white-space:nowrap">${d.time}</div>
+    <div><button class="kbd-more" onclick="openMenu(event,'${d.id}')" aria-label="操作">⋯</button></div>
+  </div>`).join('');
+  updateBatch();
+}
+function updateBatch(){
+  const n=selected.size;
+  document.getElementById('batchBar').classList.toggle('show',n>0);
+  document.getElementById('batchCount').textContent='已选 '+n+' 项';
+}
+function toggleSelect(id){selected.has(id)?selected.delete(id):selected.add(id);renderTable();}
+function toggleSelectAll(){
+  const rows=filtered();
+  if(rows.every(d=>selected.has(d.id))) rows.forEach(d=>selected.delete(d.id));
+  else rows.forEach(d=>selected.add(d.id));
+  renderTable();
+}
+function clearSelection(){selected.clear();renderTable();}
+function batchDelete(){
+  const n=selected.size; if(!n) return;
+  DOCS=DOCS.filter(d=>!selected.has(d.id)); selected.clear(); renderTable();
+  toast('已删除 '+n+' 个文档');
+}
+
+/* ================= 行操作 ================= */
+function openMenu(e,id){
+  e.stopPropagation();
+  menuDocId=id;
+  const m=document.getElementById('rowMenu');
+  m.classList.add('show');
+  m.style.left=Math.min(e.clientX,window.innerWidth-180)+'px';
+  m.style.top=Math.min(e.clientY,window.innerHeight-240)+'px';
+}
+function hideMenu(){document.getElementById('rowMenu').classList.remove('show');}
+document.addEventListener('click',e=>{ if(!e.target.closest('.kbd-menu') && !e.target.closest('.kbd-more')) hideMenu(); });
+function reparse(d){
+  d.status='indexing'; renderTable(); if(activeDoc&&activeDoc.id===d.id) refreshDoc();
+  toast('已重新提交解析「'+d.name+'」');
+  setTimeout(()=>{ d.status='available'; if(activeDoc&&activeDoc.id===d.id) refreshDoc(); renderTable(); },2400);
+}
+document.getElementById('rowMenu').addEventListener('click',e=>{
+  const item=e.target.closest('.kbd-menu-item'); if(!item) return;
+  const act=item.dataset.act, d=DOCS.find(x=>x.id===menuDocId); hideMenu();
+  if(!d) return;
+  if(act==='preview') openDoc(d.id);
+  else if(act==='reparse') reparse(d);
+  else if(act==='rename'){const n=prompt('重命名文档',d.name);if(n&&n.trim()){d.name=n.trim();renderTable();toast('已重命名');}}
+  else if(act==='download') toast('下载「'+d.name+'」');
+  else if(act==='toggle'){ if(d.status==='unavailable'){d.status='available';toast('已启用「'+d.name+'」');} else {d.status='unavailable';toast('已停用「'+d.name+'」');} renderTable(); }
+  else if(act==='delete'){DOCS=DOCS.filter(x=>x.id!==d.id);renderTable();toast('已删除「'+d.name+'」');}
+});
+
+/* ================= Tab ================= */
+function switchTab(t){
+  ['doc','recall','settings','api'].forEach(k=>{
+    document.getElementById('panel-'+k).style.display = k===t?'':'none';
+  });
+  document.querySelectorAll('.kbd-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+}
+
+/* ================= 召回测试 ================= */
+function corpus(){
+  const out=[];
+  DOCS.forEach(f=>{
+    if(f.cat==='text'){ f.segs.forEach((s,i)=>out.push({f,i,text:s})); }
+    else if(f.cat==='image'){ out.push({f,i:0,text:[f.ocr,f.desc].filter(Boolean).join('\n')}); }
+    else f.segs.forEach((s,i)=>out.push({f,i,text:s[3],t:s[0]}));
+  });
+  return out;
+}
+function doRecall(){
+  const q=document.getElementById('recallInput').value.trim();
+  const box=document.getElementById('recallResult');
+  if(!q){box.innerHTML='';return;}
+  const toks=[...new Set(q.replace(/[？?。，,！!\s]/g,'').match(/.{2}/g)||[])];
+  const hits=corpus().map(c=>{const hit=toks.filter(t=>c.text.includes(t)).length;return {...c,score:hit?Math.min(0.95,0.52+hit/toks.length*0.44):0}})
+    .filter(c=>c.score>0).sort((a,b)=>b.score-a.score).slice(0,5);
+  if(!hits.length){box.innerHTML='<div class="kbd-hit-empty">没有命中的文档，换个说法试试。</div>';return;}
+  box.innerHTML=hits.map(({f,text,score,i,t})=>`<div class="kbd-hit-item">
+    <span class="kbd-doc-icon">${docIcon(f)}</span>
+    <div class="kbd-hit-body">
+      <div class="kbd-hit-name">${esc(f.name)} ${typeBadge(f)} ${statusBadge(f)}</div>
+      <div class="kbd-hit-snippet">${esc(text.length>120?text.slice(0,120)+'…':text)}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+      <span class="kbd-hit-score">相似度 ${score.toFixed(2)}</span>
+      <button class="dd-mini" onclick="openDoc('${f.id}')">查看详情</button>
+    </div>
+  </div>`).join('');
+}
+
+/* ================= 添加文件 ================= */
+function pickType(t){
+  addType=t;
+  document.querySelectorAll('.kbd-add-type').forEach(x=>x.classList.toggle('active',x.dataset.type===t));
+  const hint={text:'DOCX / PDF / TXT / MD / XLSX / CSV 等',image:'JPG / JPEG / PNG / WEBP / BMP 等',av:'MP3 / M4A / WAV / MP4 / MOV / MKV 等'}[t];
+  const icon={text:IC.doc('#5149e9'),image:IC.image('#0e9384'),av:IC.video('#dc6803')}[t];
+  document.getElementById('dropHint').textContent='支持 '+hint;
+  document.getElementById('dropIcon').innerHTML=icon;
+}
+function openAdd(){pickType(addType);document.getElementById('addModal').classList.add('show');}
+function closeAdd(){document.getElementById('addModal').classList.remove('show');}
+function confirmAdd(){
+  addCounter++;
+  const tpl={text:{name:'新上传文档',ext:'DOCX',size:'1.0 MB',cat:'text'},image:{name:'新上传图文',ext:'PNG',size:'2.0 MB',cat:'image'},av:{name:'新上传音视频',ext:'MP4',size:'50.0 MB',cat:'av'}}[addType];
+  const d={id:'new'+Date.now(), name:tpl.name+addCounter+'.'+tpl.ext.toLowerCase(), cat:addType, ext:tpl.ext, size:tpl.size,
+    status:'indexing', index:'high', source:'local', time:'2026-10-10 '+new Date().toTimeString().slice(0,5), hits:0,
+    media:addType==='av'?'video':null, sec:addType==='av'?90:null, speakers:{}, segs:[], svg:null, ocr:'', desc:''};
+  DOCS.unshift(d);
+  closeAdd(); renderTable(); toast('已开始处理「'+d.name+'」');
+  setTimeout(()=>{ d.status='available'; if(d.cat==='image'){d.svg=IMG_BOARD;d.ocr='示例图文文字';d.desc='示例图文画面描述';} else if(d.cat==='av'){d.segs=[[0,30,1,'这是新上传音视频的示例转写分段。'],[30,90,1,'点击分段可跳转播放对应位置。']];} else {d.segs=['这是新上传文本的示例分段内容。','第二段内容，用于演示。'];} renderTable(); if(activeDoc&&activeDoc.id===d.id) refreshDoc(); },2400);
+}
+
+/* ================= 文档详情 ================= */
+function openDoc(id){
+  stopPlay();
+  activeDoc=DOCS.find(x=>x.id===id); if(!activeDoc) return;
+  curTime=0; editing=null;
+  document.getElementById('docTitle').innerHTML=docIcon(activeDoc,22)+'<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(activeDoc.name)+'</span>';
+  document.getElementById('docReparseBtn').style.display = activeDoc.status==='available'||activeDoc.status==='error' ? '' : 'none';
+  refreshDoc();
+  document.getElementById('docModal').classList.add('show');
+}
+function closeDoc(){ stopPlay(); activeDoc=null; document.getElementById('docModal').classList.remove('show'); }
+function refreshDoc(){
+  if(!activeDoc) return;
+  const body=document.getElementById('docBody');
+  const y=body.scrollTop;
+  body.innerHTML = activeDoc.cat==='text' ? docText(activeDoc) : activeDoc.cat==='image' ? docImage(activeDoc) : docAV(activeDoc);
+  body.scrollTop=y;
+}
+function reparseActive(){ if(activeDoc) reparse(activeDoc); }
+
+function statRow(items){ return `<div class="dd-stats">${items.map(([b,s])=>`<div class="dd-stat"><b>${b}</b><span>${s}</span></div>`).join('')}</div>`; }
+function segActions(key){ return editing===key
+  ? `<button class="dd-mini pri" data-act="save" data-k="${key}">保存</button><button class="dd-mini" data-act="cancel">取消</button>`
+  : `<button class="dd-mini" data-act="edit" data-k="${key}">编辑</button>`; }
+const editable=(key,text)=>`<span class="dd-seg-text" ${editing===key?'contenteditable="true" id="edtx"':''}>${esc(text)}</span>`;
+
+function docText(f){
+  if(f.status!=='available') return processingNote(f);
+  let segs='';
+  if(f.segs.length){
+    segs=`<div class="dd-sub">分段（${f.segs.length}）</div>`+f.segs.map((s,i)=>{const key=f.id+'-'+i;return `<div class="dd-seg">
+      <div class="dd-seg-head"><span style="font-weight:600">#${i+1}</span>${f.scanned?'<span class="dd-tag" style="color:#5149e9;background:#eef0ff">OCR</span>':''}
+        <span style="margin-left:auto">${s.length} 字</span>${segActions(key)}</div>
+      ${editable(key,s)}</div>`;}).join('');
+  } else segs=`<div class="kbd-hit-empty">该文档暂无分段内容。</div>`;
+  return statRow([[f.ext+(f.scanned?' · 扫描件':''),'类型'],[f.segs.length,'分段数'],[charCount(f),'字数']])+segs;
+}
+function docImage(f){
+  if(f.status!=='available') return processingNote(f);
+  const keyO=f.id+'-ocr', keyD=f.id+'-desc';
+  return `<div class="dd-img">${f.svg||placeholder('图片处理中')}</div>
+    ${statRow([[f.ext,'类型'],[1,'分段数'],[charCount(f),'识别字数']])}
+    ${f.ocr?`<div class="dd-sub">图中文字</div><div class="dd-seg"><div class="dd-seg-head"><span style="margin-left:auto">${f.ocr.length} 字</span>${segActions(keyO)}</div>${editable(keyO,f.ocr)}</div>`:''}
+    ${f.desc?`<div class="dd-sub">画面描述</div><div class="dd-seg"><div class="dd-seg-head"><span style="margin-left:auto">${f.desc.length} 字</span>${segActions(keyD)}</div>${editable(keyD,f.desc)}</div>`:''}`;
+}
+function docAV(f){
+  if(f.status!=='available') return processingNote(f);
+  const ratio=Math.min(1,curTime/f.sec), N=72, seed=f.id.charCodeAt(f.id.length-1);
+  const bars=Array.from({length:N},(_,i)=>`<span class="bar ${i/N<ratio?'p':''}" style="height:${Math.round(12+Math.abs(Math.sin(i*1.7+seed)*Math.cos(i*.37+seed))*68)}px"></span>`).join('');
+  let ai=f.segs.findIndex(s=>curTime>=s[0]&&curTime<s[1]); if(ai<0) ai=f.segs.length-1;
+  const st=f.segs[ai]?f.segs[ai][3]:'';
+  const spk=Object.keys(f.speakers);
+  const player=`<div class="player">
+    ${f.media==='video'
+      ? `<div class="video">视频画面（mock）${st?`<div class="subtitle">${esc(st.slice(0,44))}${st.length>44?'…':''}</div>`:''}</div>`
+      : `<div class="wave" data-act="seek">${bars}</div>`}
+    <div class="ctrl"><button class="play" data-act="play" aria-label="${playing?'暂停':'播放'}">${playing?IC.pause:IC.play}</button>
+      <div class="seek" data-act="seek"><div style="width:${(ratio*100).toFixed(1)}%"></div></div>
+      <span style="font-size:12px;color:#8b99ac;font-variant-numeric:tabular-nums;white-space:nowrap">${fmt(curTime)} / ${fmt(f.sec)}</span></div></div>`;
+  const stats=statRow([[fmt(f.sec),'时长'],[f.segs.length,'分段数'],[charCount(f),'转写字数'],[spk.length,'说话人']]);
+  const speakers=`<div class="dd-sub">说话人</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+    ${spk.map(n=>`<button class="sp-rename" data-act="sprename" data-v="${n}"><span class="sp-tag sp${n}">${esc(spName(f,n))}</span> 改名</button>`).join('')}</div>`;
+  const segs=`<div class="dd-sub">转写分段（点击跳转播放）</div>`+f.segs.map((s,i)=>{const key=f.id+'-'+i;return `<div class="dd-seg ${i===ai?'on':''}" data-act="segjump" data-t="${s[0]}" style="cursor:pointer">
+    <div class="dd-seg-head"><span style="font-weight:600">#${i+1}</span><span class="dd-tag" style="color:#8b99ac;background:#f0f2f5">${fmt(s[0])} – ${fmt(s[1])}</span>
+      <span class="sp-tag sp${s[2]}">${esc(spName(f,s[2]))}</span><span style="margin-left:auto">${s[3].length} 字</span>${segActions(key)}</div>
+    ${editable(key,s[3])}</div>`;}).join('');
+  return player+stats+speakers+segs;
+}
+function placeholder(t){ return `<div style="padding:40px;text-align:center;color:#8b99ac;font-size:13px">${t}</div>`; }
+function processingNote(f){
+  const s=STATUS[f.status];
+  return statRow([[f.ext,'类型'],[f.size,'大小'],[SOURCE[f.source],'来源'],[f.time,'上传时间']])
+    +`<div class="kbd-hit-empty" style="padding:30px 0">${s.pulse?'文件正在解析与向量索引中，完成后可查看分段详情。':s.label+'，暂无可用分段。'}</div>`;
+}
+
+/* ---------- 播放 / 编辑 ---------- */
+function stopPlay(){ playing=false; clearInterval(playTimer); }
+function togglePlay(){
+  if(playing){stopPlay();refreshDoc();return;}
+  playing=true;
+  playTimer=setInterval(()=>{ curTime+=1; if(curTime>=activeDoc.sec){curTime=activeDoc.sec;stopPlay();} refreshDoc(); },250);
+  refreshDoc();
+}
+function seek(e){ if(!activeDoc||!activeDoc.sec) return; const r=e.currentTarget.getBoundingClientRect(); curTime=Math.round((e.clientX-r.left)/r.width*activeDoc.sec); refreshDoc(); }
+
+/* ---------- 详情弹窗内的点击委托 ---------- */
+document.getElementById('docBody').addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]'); if(!el) return;
+  const a=el.dataset.act;
+  if(a==='play') togglePlay();
+  else if(a==='seek') seek(e);
+  else if(a==='segjump'){ if(e.target.closest('button,[contenteditable="true"]')) return; curTime=+el.dataset.t; refreshDoc(); }
+  else if(a==='sprename'){ const n=prompt('重命名说话人',spName(activeDoc,el.dataset.v)); if(n&&n.trim()) renames[activeDoc.id+'-'+el.dataset.v]=n.trim(); refreshDoc(); }
+  else if(a==='edit'){ editing=el.dataset.k; refreshDoc(); const t=document.getElementById('edtx'); if(t) t.focus(); }
+  else if(a==='cancel'){ editing=null; refreshDoc(); }
+  else if(a==='save'){
+    const key=el.dataset.k, t=document.getElementById('edtx').innerText.trim();
+    if(t){
+      if(key.endsWith('-ocr')) activeDoc.ocr=t;
+      else if(key.endsWith('-desc')) activeDoc.desc=t;
+      else { const i=+key.split('-').pop(); if(activeDoc.cat==='text') activeDoc.segs[i]=t; else activeDoc.segs[i][3]=t; }
+    }
+    editing=null; refreshDoc(); toast('已保存，该分段将重新索引');
+  }
+});
+
+/* ================= 初始化 ================= */
+(function init(){
+  const id=new URLSearchParams(location.search).get('id')||'KB004';
+  const meta=KB_META[id]||KB_META.KB004;
+  document.title=meta.name+'｜专业图谱平台';
+  document.getElementById('kbTitle').textContent=meta.name;
+  document.getElementById('kbMeta').textContent=meta.creator+' · 更新于 '+(meta.editTime||'3 周前');
+  document.getElementById('pageSummary').textContent='共 '+(meta.total||DOCS.length)+' 条文档';
+  document.getElementById('apiId').textContent=id==='KB004'?'9a87bbc1-9075-4b61-aaf0-0658ed9cc568':('kb-'+id.toLowerCase()+'-'+Math.random().toString(16).slice(2,10));
+  document.getElementById('apiCode').textContent=`curl --location --request POST 'http://<your-host>/v1/knowledge-bases/{id}/retrieval' \\
+  --header 'Authorization: Bearer <api-key>' \\
+  --header 'Content-Type: application/json' \\
+  --data-raw '{
+    "query": "客人要求提前入住怎么处理",
+    "retrieval_model": { "search_method": "hybrid_search", "top_k": 5 }
+  }'`;
+  renderTable();
+})();
+</script>
+</body>
+</html>

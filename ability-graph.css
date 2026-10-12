@@ -35,7 +35,7 @@ input,select,textarea,button{font-family:inherit}
 .graph-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
 .graph-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);cursor:pointer;transition:.2s;position:relative}
 .graph-card:hover{box-shadow:0 6px 20px rgba(30,49,82,.1);border-color:#c7d2fe;transform:translateY(-1px)}
-.graph-card-name{font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px}
+.graph-card-name{font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px;padding-right:44px}
 .graph-card-status{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;margin-bottom:12px}
 .graph-card-status.built{background:#edf9f5;color:#12946f}
 .graph-card-status.building{background:#fff8e6;color:#b7791f}
@@ -45,6 +45,7 @@ input,select,textarea,button{font-family:inherit}
 .graph-card-stats div{display:flex;flex-direction:column;gap:2px}
 .graph-card-stats span{font-size:10px;color:var(--text3)}
 .graph-card-stats strong{font-size:15px;color:var(--text)}
+.graph-card-meta{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;font-size:11px;color:var(--text3);flex-wrap:wrap}
 .graph-card-actions{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border2)}
 .graph-card-actions button{flex:1;height:30px;border:1px solid var(--border2);border-radius:7px;background:#fff;color:var(--text2);font-size:12px;cursor:pointer;transition:.15s}
 .graph-card-actions button:hover{background:var(--bg);border-color:var(--brand);color:var(--brand)}
@@ -165,11 +166,18 @@ input,select,textarea,button{font-family:inherit}
 
 
 /* 卡片右上角操作按钮 */
-.graph-card-corner{position:absolute;top:12px;right:12px;display:flex;gap:4px;z-index:3;opacity:0;transition:opacity .15s}
-.graph-card:hover .graph-card-corner{opacity:1}
+.graph-card-corner{position:absolute;top:12px;right:12px;display:flex;gap:4px;z-index:3}
 .corner-btn{height:24px;padding:0 10px;border:1px solid var(--border2);border-radius:6px;background:#fff;color:var(--text2);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.12s;box-shadow:0 1px 4px rgba(30,49,82,.06)}
 .corner-btn:hover{background:var(--bg);border-color:var(--brand);color:var(--brand)}
 .corner-btn.danger:hover{border-color:#c72c2a;color:#c72c2a}
+.corner-btn.corner-more{font-size:15px;letter-spacing:1px;line-height:1}
+
+/* 卡片操作下拉菜单 */
+.card-action-menu{position:fixed;z-index:80;min-width:112px;background:#fff;border:1px solid var(--border2);border-radius:8px;box-shadow:0 10px 30px rgba(30,49,82,.18);padding:4px 0}
+.card-action-item{padding:7px 14px;font-size:12px;color:var(--text2);cursor:pointer;white-space:nowrap}
+.card-action-item:hover{background:var(--bg);color:var(--brand)}
+.card-action-item.danger:hover{background:#fff1f0;color:#c72c2a}
+.card-action-divider{height:1px;background:var(--border2);margin:4px 0}
 
 /* 设置弹窗 */
 .settings-status{display:block;margin-top:7px;font-size:13px;color:var(--text);background:#f5f7fa;border-radius:6px;padding:6px 10px}
@@ -189,6 +197,27 @@ input,select,textarea,button{font-family:inherit}
 .checkbox-group.compact{max-height:none;padding:6px 10px;gap:4px}
 .checkbox-group.compact label{font-size:12px}
 
+
+/* 权限：组织树 */
+.perm-summary{display:flex;align-items:center;justify-content:space-between;margin-top:7px;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;background:#fff;font-size:13px;color:var(--text);cursor:pointer}
+.perm-summary:hover{border-color:#c7d2fe}
+.perm-caret{color:var(--text3);font-size:11px;transition:transform .15s}
+.perm-summary.open .perm-caret{transform:rotate(180deg)}
+.org-tree{display:none;margin-top:8px;border:1px solid var(--border2);border-radius:8px;background:#fbfcfe;padding:6px 10px;max-height:300px;overflow-y:auto}
+.org-tree.open{display:block}
+.org-node{margin:1px 0}
+.org-row{display:flex;align-items:center;gap:6px;padding:3px 0}
+.org-toggle{width:18px;height:18px;border:none;background:none;color:var(--text3);cursor:pointer;font-size:10px;line-height:1;flex:none;padding:0;transition:transform .12s}
+.org-toggle.empty{visibility:hidden}
+.org-check{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text);font-weight:600;cursor:pointer}
+.org-type{font-size:10px;font-weight:500;color:var(--text3);background:#eef1f6;padding:1px 6px;border-radius:4px;margin-left:2px}
+.org-check input[type=checkbox],.org-member input[type=checkbox]{width:15px;height:15px;accent-color:var(--brand)}
+.org-body{margin-left:20px;border-left:1px dashed var(--border2);padding-left:8px}
+.org-members{display:flex;flex-direction:column;gap:2px;padding:2px 0}
+.org-member{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;padding:3px 0}
+.org-member-title{font-size:11px;color:var(--text3)}
+.org-node.collapsed > .org-body{display:none}
+.org-node.collapsed > .org-row .org-toggle{transform:rotate(-90deg)}
 
 /* 图谱容器右上角悬浮按钮 */
 .tree-corner-actions{display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px}

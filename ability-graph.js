@@ -343,6 +343,96 @@ const LEVELS = [
 
 function toast(text){const t=$('#toast');t.textContent=text;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.classList.remove('show'),2400)}
 
+// 组织树（院校 → 校区 → 学院/部门 → 系 → 教研室，叶子节点挂成员）
+const ORG_TREE = [
+  { id:'root', name:'某职业技术学院', type:'院校', children:[
+    { id:'east', name:'东校区', type:'校区', children:[
+      { id:'east-tourism', name:'旅游学院', type:'学院', children:[
+        { id:'east-tourism-mgmt', name:'旅游管理系', type:'系', children:[
+          { id:'east-tourism-guide', name:'导游教研室', type:'教研室', members:[
+            {id:'m01', name:'张伟', title:'教研室主任'},
+            {id:'m02', name:'李娜', title:'专任教师'},
+            {id:'m03', name:'王强', title:'专任教师'},
+            {id:'m04', name:'刘敏', title:'专任教师'}
+          ]}
+        ]}
+      ]},
+      { id:'east-hotel', name:'酒店学院', type:'学院', members:[
+        {id:'m05', name:'赵磊', title:'副院长'},
+        {id:'m06', name:'孙悦', title:'专任教师'},
+        {id:'m07', name:'周明', title:'专任教师'}
+      ]}
+    ]},
+    { id:'west', name:'西校区', type:'校区', children:[
+      { id:'west-voc', name:'中职部', type:'部门', children:[
+        { id:'west-voc-tourism', name:'旅游专业部', type:'专业部', members:[
+          {id:'m08', name:'吴婷', title:'专业部长'},
+          {id:'m09', name:'郑浩', title:'专任教师'},
+          {id:'m10', name:'冯雪', title:'专任教师'}
+        ]}
+      ]},
+      { id:'west-cont', name:'继续教育部', type:'部门', members:[
+        {id:'m11', name:'陈晨', title:'主任'},
+        {id:'m12', name:'杨帆', title:'教务员'}
+      ]}
+    ]},
+    { id:'public-basic', name:'公共基础部', type:'部门', members:[
+      {id:'m13', name:'黄娟', title:'副主任'},
+      {id:'m14', name:'林涛', title:'专任教师'},
+      {id:'m15', name:'罗静', title:'专任教师'}
+    ]}
+  ]}
+];
+
+function collectMemberIds(node){
+  let ids = (node.members || []).map(m=>m.id);
+  (node.children || []).forEach(c=>{ ids = ids.concat(collectMemberIds(c)); });
+  return ids;
+}
+const ORG_MAP = {};
+(function buildOrgMap(nodes){ nodes.forEach(n=>{ ORG_MAP[n.id] = n; if(n.children) buildOrgMap(n.children); }); })(ORG_TREE);
+const ORG_TOTAL_MEMBERS = ORG_TREE.reduce((n,o)=>n + collectMemberIds(o).length, 0);
+
+// 权限文案（卡片元信息）
+function permText(g){
+  const members = (g.permissions && g.permissions.members) || [];
+  if(!members.length) return '权限：仅自己';
+  if(members.length >= ORG_TOTAL_MEMBERS) return '权限：公开';
+  return '权限：' + members.length + ' 个成员';
+}
+
+// 卡片操作菜单（··· 编辑 / 删除 / 设置）
+let cardMenuEl = null, cardMenuGid = null;
+function toggleCardMenu(e, gid){
+  e.stopPropagation();
+  if(cardMenuEl && cardMenuGid === gid){ hideCardMenu(); return; }
+  hideCardMenu();
+  cardMenuGid = gid;
+  cardMenuEl = document.createElement('div');
+  cardMenuEl.className = 'card-action-menu';
+  cardMenuEl.innerHTML = ''
+    + '<div class="card-action-item" data-act="edit">编辑</div>'
+    + '<div class="card-action-item" data-act="settings">设置</div>'
+    + '<div class="card-action-divider"></div>'
+    + '<div class="card-action-item danger" data-act="delete">删除</div>';
+  document.body.appendChild(cardMenuEl);
+  const rect = e.currentTarget.getBoundingClientRect();
+  cardMenuEl.style.top = (rect.bottom + 4) + 'px';
+  cardMenuEl.style.left = Math.min(rect.right - cardMenuEl.offsetWidth, window.innerWidth - cardMenuEl.offsetWidth - 8) + 'px';
+  cardMenuEl.addEventListener('click', ev => {
+    ev.stopPropagation();
+    const act = ev.target.closest('.card-action-item')?.dataset.act;
+    hideCardMenu();
+    if(act === 'edit') editGraph(gid);
+    else if(act === 'settings') openGraphSettings(gid);
+    else if(act === 'delete') deleteGraph(gid);
+  });
+}
+function hideCardMenu(){
+  if(cardMenuEl){ cardMenuEl.remove(); cardMenuEl = null; }
+  cardMenuGid = null;
+}
+
 // ========== 列表渲染 ==========
 function renderList(){
   if(!$('#graphList')) return;
@@ -355,28 +445,20 @@ function renderList(){
     let statusBadge, stats;
     if(isBuilding){
       statusBadge = '<span class="graph-card-status building">构建中</span>';
-      stats = `<div><span>状态</span><strong>AI 正在构建…</strong></div>`;
+      stats = `<div><span>节点数</span><strong>—</strong></div>`;
     } else if(isFailed){
       statusBadge = '<span class="graph-card-status failed">构建失败</span>';
-      stats = `<div><span>状态</span><strong style="color:#c72c2a">构建失败，请重试</strong></div>`;
-    } else if(isConfirmed){
-      statusBadge = '<span class="graph-card-status confirmed">已确认</span>';
-      stats = `
-        <div><span>子行业</span><strong>${g.stats.subIndustries}</strong></div>
-        <div><span>岗位</span><strong>${g.stats.positions}</strong></div>
-        <div><span>能力项</span><strong>${g.stats.abilities}</strong></div>`;
+      stats = `<div><span>节点数</span><strong>—</strong></div>`;
     } else {
-      statusBadge = '<span class="graph-card-status built">构建完成</span>';
-      stats = `
-        <div><span>子行业</span><strong>${g.stats.subIndustries}</strong></div>
-        <div><span>岗位</span><strong>${g.stats.positions}</strong></div>
-        <div><span>能力项</span><strong>${g.stats.abilities}</strong></div>`;
+      statusBadge = isConfirmed
+        ? '<span class="graph-card-status confirmed">已确认</span>'
+        : '<span class="graph-card-status built">构建完成</span>';
+      const nodeCount = (g.stats.subIndustries||0) + (g.stats.positions||0) + (g.stats.abilities||0);
+      stats = `<div><span>节点数</span><strong>${nodeCount}</strong></div>`;
     }
-    // 右上角操作按钮
+    // 右上角操作按钮（··· 菜单：编辑 / 删除 / 设置）
     const cardActions = `<div class="graph-card-corner" onclick="event.stopPropagation()">
-      <button class="corner-btn" onclick="editGraph('${g.id}')">编辑</button>
-
-      <button class="corner-btn danger" onclick="deleteGraph('${g.id}')">删除</button>
+      <button class="corner-btn corner-more" onclick="toggleCardMenu(event, '${g.id}')" aria-label="操作">···</button>
     </div>`;
     // 底部按钮：构建中不显示，构建失败显示"重新构建"，其他显示"进入图谱"
     let bottomBtn = '';
@@ -386,12 +468,14 @@ function renderList(){
       bottomBtn = `<div class="graph-card-actions" onclick="event.stopPropagation()"><button onclick="enterTree('${g.id}')" class="enter-btn">进入图谱</button></div>`;
     }
     const cardClick = (isBuilding || isFailed) ? '' : ` onclick="enterTree('${g.id}')"`;
+    const meta = `<div class="graph-card-meta"><span>${permText(g)}</span><span>${g.createdAt ? '创建于 ' + g.createdAt : ''}</span></div>`;
     return `<div class="graph-card" data-graph="${g.id}"${cardClick}>
       ${cardActions}
       <div class="graph-card-name">${g.name}</div>
       ${statusBadge}
       <div class="graph-card-desc">${g.describe||''}</div>
       <div class="graph-card-stats">${stats}</div>
+      ${meta}
       ${bottomBtn}
     </div>`;
   }).join('');
@@ -430,52 +514,90 @@ function editGraph(graphId){
 }
 
 let currentSettingsGraphId = null;
-function roleLabel(r){ return {admin:'管理员',expert:'专家',editor:'编辑者',viewer:'查看者'}[r] || r; }
+function renderOrgNode(node, selected){
+  const memberIds = collectMemberIds(node);
+  const allChecked = memberIds.length > 0 && memberIds.every(id=>selected.includes(id));
+  const kids = node.children || [];
+  const members = node.members || [];
+  const typeTag = node.type ? `<span class="org-type">${node.type}</span>` : '';
+  let html = `<div class="org-node" data-org="${node.id}">`;
+  html += `<div class="org-row">`;
+  html += (kids.length || members.length)
+    ? `<button type="button" class="org-toggle" onclick="toggleOrg(event)" aria-label="展开/收起">▾</button>`
+    : `<span class="org-toggle empty"></span>`;
+  html += `<label class="org-check"><input type="checkbox" class="org-select" value="${node.id}" ${allChecked?'checked':''}> <span class="org-name">${node.name}</span>${typeTag}</label>`;
+  html += `</div>`;
+  if(kids.length || members.length){
+    html += `<div class="org-body">`;
+    if(members.length){
+      html += `<div class="org-members">`;
+      members.forEach(m=>{
+        html += `<label class="org-member"><input type="checkbox" class="perm-member" value="${m.id}" ${selected.includes(m.id)?'checked':''}> <span class="org-member-name">${m.name}</span>${m.title?`<span class="org-member-title">${m.title}</span>`:''}</label>`;
+      });
+      html += `</div>`;
+    }
+    if(kids.length){
+      html += `<div class="org-children">`;
+      kids.forEach(c=>{ html += renderOrgNode(c, selected); });
+      html += `</div>`;
+    }
+    html += `</div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+function renderOrgTree(selected){
+  return ORG_TREE.map(n=>renderOrgNode(n, selected)).join('');
+}
+function refreshOrgTree(){
+  const selectedSet = new Set([...document.querySelectorAll('.perm-member:checked')].map(c=>c.value));
+  document.querySelectorAll('.org-select').forEach(cb=>{
+    const node = ORG_MAP[cb.value];
+    if(!node){ cb.checked = false; cb.indeterminate = false; return; }
+    const ids = collectMemberIds(node);
+    const sel = ids.filter(id=>selectedSet.has(id)).length;
+    cb.checked = ids.length > 0 && sel === ids.length;
+    cb.indeterminate = sel > 0 && sel < ids.length;
+  });
+  updatePermSummary();
+}
+function updatePermSummary(){
+  const members = [...document.querySelectorAll('.perm-member:checked')].map(c=>c.value);
+  const el = $('#permSummaryText');
+  if(el) el.textContent = members.length ? ('已选 ' + members.length + ' 个成员') : '仅自己';
+}
+function toggleOrg(e){
+  e.stopPropagation();
+  e.currentTarget.closest('.org-node').classList.toggle('collapsed');
+}
+function toggleOrgTree(){
+  $('#orgTree').classList.toggle('open');
+  $('#permSummary').classList.toggle('open');
+}
+function bindOrgTree(){
+  const tree = $('#orgTree');
+  tree.querySelectorAll('.org-select').forEach(cb=>{
+    cb.onchange = ()=>{
+      const node = ORG_MAP[cb.value];
+      const ids = node ? collectMemberIds(node) : [];
+      const check = cb.checked;
+      document.querySelectorAll('.perm-member').forEach(mc=>{ if(ids.includes(mc.value)) mc.checked = check; });
+      refreshOrgTree();
+    };
+  });
+  tree.querySelectorAll('.perm-member').forEach(cb=>{ cb.onchange = refreshOrgTree; });
+  refreshOrgTree();
+}
 function openGraphSettings(graphId){
   currentSettingsGraphId = graphId;
   const g = graphs.find(x=>x.id===graphId);
   if(!g) return;
-  // 显示当前状态
-  const statusText = g.status==='building'?'构建中':(g.status==='confirmed'||g.confirmed?'已确认':'构建完成');
-  let settingsHtml = `<label>图谱名称<input type="text" value="${esc(g.name)}" disabled /></label>`;
-  settingsHtml += `<label>当前状态<span class="settings-status">${statusText}</span></label>`;
-  settingsHtml += `<label>创建时间<span class="settings-status">${g.createdAt||'-'}</span></label>`;
-  settingsHtml += `<label>统计<span class="settings-status">子行业 ${g.stats.subIndustries} · 岗位 ${g.stats.positions} · 能力项 ${g.stats.abilities}</span></label>`;
-  // 状态切换
-  if(g.status === 'confirmed' || g.confirmed){
-    settingsHtml += `<label>撤回确认<div class="settings-tip">撤回后图谱回到"构建完成"状态，可继续编辑节点</div><button class="task-button" id="revokeConfirmBtn" type="button" style="width:100%">撤回确认状态</button></label>`;
-  } else if(g.status === 'built'){
-    settingsHtml += `<label>确认图谱<div class="settings-tip">确认后图谱不可再编辑节点，进入只读状态</div><button class="task-button" id="quickConfirmBtn" type="button" style="width:100%;background:#5149e9;color:#fff;border-color:#5149e9;">确认图谱</button></label>`;
-  }
-  // 权限设置
-  const perm = g.permissions || { view:['admin'], edit:['admin'], confirm:['admin'] };
-  const roleOptions = ['admin','expert','editor','viewer'];
-  settingsHtml += `<label>权限管理<div class="settings-tip">控制哪些角色可查看、编辑、确认该图谱</div>
-    <div class="perm-group"><span class="perm-label">查看权限</span>
-    <div class="checkbox-group compact">
-    ${roleOptions.map(r=>`<label><input type="checkbox" class="perm-view" value="${r}" ${perm.view.includes(r)?'checked':''}> ${roleLabel(r)}</label>`).join('')}
-    </div></div>
-    <div class="perm-group"><span class="perm-label">编辑权限</span>
-    <div class="checkbox-group compact">
-    ${roleOptions.map(r=>`<label><input type="checkbox" class="perm-edit" value="${r}" ${perm.edit.includes(r)?'checked':''}> ${roleLabel(r)}</label>`).join('')}
-    </div></div>
-    <div class="perm-group"><span class="perm-label">确认权限</span>
-    <div class="checkbox-group compact">
-    ${roleOptions.map(r=>`<label><input type="checkbox" class="perm-confirm" value="${r}" ${perm.confirm.includes(r)?'checked':''}> ${roleLabel(r)}</label>`).join('')}
-    </div></div>
+  const selected = (g.permissions && g.permissions.members) || [];
+  $('#settingsForm').innerHTML = `<label>权限<div class="settings-tip">选择可访问该图谱的组织与成员</div>
+    <div class="perm-summary" id="permSummary" onclick="toggleOrgTree()"><span id="permSummaryText"></span><span class="perm-caret">▾</span></div>
+    <div class="org-tree" id="orgTree">${renderOrgTree(selected)}</div>
   </label>`;
-  settingsHtml += `<label>描述<textarea id="settingsDesc" rows="3">${esc(g.describe||'')}</textarea></label>`;
-  $('#settingsForm').innerHTML = settingsHtml;
-  // 绑定按钮
-  $('#quickConfirmBtn')?.addEventListener('click', ()=>{
-    if(!g.tree || !g.tree.subIndustries || g.tree.subIndustries.length===0){ toast('图谱尚未构建任何节点，无法确认'); return; }
-    g.status = 'confirmed'; g.confirmed = true;
-    saveGraphs(); renderList(); closeModal('#graphSettingsModal'); toast('已确认图谱');
-  });
-  $('#revokeConfirmBtn')?.addEventListener('click', ()=>{
-    g.status = 'built'; g.confirmed = false;
-    saveGraphs(); renderList(); closeModal('#graphSettingsModal'); toast('已撤回确认');
-  });
+  bindOrgTree();
   openModal('#graphSettingsModal');
 }
 
@@ -1579,9 +1701,10 @@ function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').repla
 // 点击空白处关闭右键菜单
 document.addEventListener('click', e => {
   if(!e.target.closest('.context-menu') && !e.target.closest('g.gnode')) hideContextMenu();
+  if(!e.target.closest('.card-action-menu') && !e.target.closest('.corner-more')) hideCardMenu();
 });
-document.addEventListener('scroll', hideContextMenu, true);
-window.addEventListener('resize', hideContextMenu);
+document.addEventListener('scroll', ()=>{ hideContextMenu(); hideCardMenu(); }, true);
+window.addEventListener('resize', ()=>{ hideContextMenu(); hideCardMenu(); });
 
 // 编辑图谱弹窗事件（仅列表页）
 if($('#submitEditGraph')){
@@ -1606,14 +1729,7 @@ if($('#closeGraphSettings')){
   $('#submitGraphSettings').onclick = ()=>{
     const g = graphs.find(x=>x.id===currentSettingsGraphId);
     if(!g){ closeModal('#graphSettingsModal'); return; }
-    const desc = $('#settingsDesc')?.value?.trim();
-    if(desc !== undefined) g.describe = desc;
-    // 收集权限
-    g.permissions = {
-      view: [...document.querySelectorAll('.perm-view:checked')].map(c=>c.value),
-      edit: [...document.querySelectorAll('.perm-edit:checked')].map(c=>c.value),
-      confirm: [...document.querySelectorAll('.perm-confirm:checked')].map(c=>c.value),
-    };
+    g.permissions = { members: [...document.querySelectorAll('.perm-member:checked')].map(c=>c.value) };
     saveGraphs(); renderList(); closeModal('#graphSettingsModal'); toast('设置已保存');
   };
   $('#graphSettingsModal').onclick = e=>{ if(e.target.id==='graphSettingsModal') closeModal('#graphSettingsModal'); };

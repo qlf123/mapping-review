@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>知识体系详情｜专业图谱平台</title>
+    <link rel="stylesheet" href="mapping-review.css" />
+    <link rel="stylesheet" href="mapping-polish.css" />
+    <link rel="stylesheet" href="mapping-compact.css" />
+    <link rel="stylesheet" href="mapping-reference.css" />
+    <style>
+      *{box-sizing:border-box;}
+      .ksd-wrap{display:flex;height:calc(100vh - 0px);overflow:hidden;}
+      .ksd-side{width:220px;flex-shrink:0;background:#fff;border-right:1px solid #e8e8e8;padding:16px;overflow-y:auto;}
+      .ksd-side h3{font-size:13px;font-weight:600;color:#333;margin:0 0 12px 0;}
+      .ksd-legend-item{display:flex;align-items:center;gap:8px;font-size:12px;color:#666;padding:4px 0;cursor:pointer;}
+      .ksd-legend-item:hover{color:#5149e9;}
+      .ksd-legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+      .ksd-legend-count{margin-left:auto;color:#aaa;font-size:11px;}
+      .ksd-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+      .ksd-header{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid #e8e8e8;background:#fff;flex-shrink:0;}
+      .ksd-header a{color:#5149e9;text-decoration:none;font-size:14px;}
+      .ksd-header select{height:32px;padding:0 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;min-width:200px;}
+      .ksd-header input{height:32px;padding:0 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;width:180px;}
+      .ksd-canvas-wrap{flex:1;position:relative;overflow:hidden;background:#f5f3fa;}
+      .ksd-canvas-wrap svg{width:100%;height:100%;display:block;}
+      .ksd-zoom{position:absolute;bottom:12px;right:12px;display:flex;gap:4px;background:#fff;border:1px solid #e8e8e8;border-radius:6px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+      .ksd-zoom button{width:32px;height:28px;border:none;background:none;cursor:pointer;font-size:16px;color:#666;border-radius:4px;}
+      .ksd-zoom button:hover{background:#f5f3fa;color:#5149e9;}
+      .ksd-zoom-info{display:flex;align-items:center;padding:0 8px;font-size:12px;color:#aaa;}
+      .ksd-node-rect{fill:#fff;stroke:#d4d4d4;stroke-width:1.5;rx:6;ry:6;cursor:pointer;transition:all .15s;}
+      .ksd-node-rect:hover{stroke:#5149e9;}
+      .ksd-node-rect.root{fill:#5149e9;stroke:#5149e9;}
+      .ksd-node-rect.expanded{fill:#fff;stroke:#5149e9;}
+      .ksd-node-text{font-size:12px;pointer-events:none;user-select:none;}
+      .ksd-node-text.root{fill:#fff;font-weight:600;}
+      .ksd-node-text.normal{fill:#333;}
+      .ksd-link{fill:none;stroke:#c4b5fd;stroke-width:1.5;opacity:.6;}
+      .ksd-expand-icon{font-size:14px;fill:#5149e9;cursor:pointer;}
+      .ksd-edit-icon{font-size:12px;fill:#aaa;cursor:pointer;}
+      .ksd-edit-icon:hover{fill:#5149e9;}
+
+      .ksd-context-menu{position:fixed;z-index:50;background:#fff;border:1px solid #e8e8e8;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);padding:4px 0;min-width:160px;display:none;}
+      .ksd-context-menu.show{display:block;}
+      .ksd-context-menu-item{display:flex;align-items:center;gap:8px;padding:8px 16px;font-size:13px;color:#333;cursor:pointer;white-space:nowrap;}
+      .ksd-context-menu-item:hover{background:#f5f3fa;color:#5149e9;}
+      .ksd-context-menu-divider{height:1px;background:#f0f0f0;margin:4px 0;}
+      .ksd-context-menu-item.danger{color:#f5222d;}
+      .ksd-context-menu-item.danger:hover{background:#fff1f0;}
+      .ksd-context-menu-item .icon{width:16px;text-align:center;font-size:14px;}
+        </style>
+  </head>
+  <body>
+    <aside class="platform-sidebar" aria-label="图谱平台导航">
+      <div class="platform-brand">
+        <span class="platform-brand-mark">图</span>
+        <div><strong>专业图谱平台</strong><small>知识与能力管理</small></div>
+      </div>
+      <nav class="platform-nav">
+        <div class="nav-section-title">图谱建设</div>
+        <a href="knowledge-graph.html" class="platform-nav-item"><span class="nav-icon">图</span><span>知识图谱</span></a>
+        <a href="knowledge-system.html" class="platform-nav-item active" aria-current="page"><span class="nav-icon">系</span><span>知识体系</span></a>
+        <a href="knowledge-base.html" class="platform-nav-item"><span class="nav-icon">库</span><span>知识库</span></a>
+        <a href="ability-graph.html" class="platform-nav-item"><span class="nav-icon">能</span><span>能力图谱</span></a>
+        <a href="mapping-review.html" class="platform-nav-item"><span class="nav-icon">映</span><span>图谱映射审核台</span></a>
+      </nav>
+      <div class="platform-sidebar-footer"><span class="platform-avatar">秦</span><span>平台管理员</span><span class="sidebar-more">···</span></div>
+    </aside>
+    <div class="platform-page">
+    <main class="app-shell" style="padding:0;">
+      <div class="ksd-wrap">
+        <div class="ksd-side">
+          <h3>图例</h3>
+          <div class="ksd-legend-item"><span class="ksd-legend-dot" style="background:#f59e0b"></span>专业大类<span class="ksd-legend-count">1</span></div>
+          <div class="ksd-legend-item"><span class="ksd-legend-dot" style="background:#f59e0b"></span>专业<span class="ksd-legend-count">1</span></div>
+          <div class="ksd-legend-item"><span class="ksd-legend-dot" style="background:#22c55e"></span>课程分类<span class="ksd-legend-count">3</span></div>
+          <div class="ksd-legend-item"><span class="ksd-legend-dot" style="background:#3b82f6"></span>课程<span class="ksd-legend-count">9</span></div>
+          <div class="ksd-legend-item"><span class="ksd-legend-dot" style="background:#8b5cf6"></span>任务<span class="ksd-legend-count">0/9</span></div>
+          <div class="ksd-legend-item"><span class="ksd-legend-dot" style="background:#06b6d4"></span>操作流程<span class="ksd-legend-count">0/9</span></div>
+          <div class="ksd-legend-item"><span class="ksd-legend-dot" style="background:#14b8a6"></span>技能规范<span class="ksd-legend-count">0/9</span></div>
+          <div class="ksd-legend-item"><span class="ksd-legend-dot" style="background:#8b5cf6"></span>知识点<span class="ksd-legend-count">3/17</span></div>
+          <div class="ksd-legend-item"><span class="ksd-legend-dot" style="background:#3b82f6"></span>操作步骤<span class="ksd-legend-count">0/9</span></div>
+          <div class="ksd-legend-item"><span class="ksd-legend-dot" style="background:#8b5cf6"></span>标准<span class="ksd-legend-count">0/2</span></div>
+          <div class="ksd-legend-item"><span class="ksd-legend-dot" style="background:#8b5cf6"></span>案例<span class="ksd-legend-count">0/3</span></div>
+        </div>
+        <div class="ksd-main">
+          <div class="ksd-header">
+            <a href="knowledge-system.html">← 知识体系</a>
+            <select id="ksSelect">
+              <option value="wine">旅游类-葡萄酒文化与营销</option>
+              <option value="tourism">旅游类-旅游管理</option>
+              <option value="hotel">旅游类-酒店管理与数字化运营</option>
+              <option value="guide">旅游类-导游</option>
+            </select>
+            <input type="text" id="ksSearchInput" placeholder="搜索节点..." />
+          </div>
+          <div class="ksd-canvas-wrap" id="canvasWrap">
+            <svg id="ksSvg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet"></svg>
+            <div class="ksd-zoom">
+              <button onclick="zoomOut()">−</button>
+              <span class="ksd-zoom-info" id="zoomInfo">100%</span>
+              <button onclick="zoomIn()">+</button>
+              <button onclick="resetZoom()" title="重置">⟳</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="toast" class="toast" role="status"></div>
+    </main>
+    </div>
+
+    <div class="ksd-context-menu" id="ctxMenu">
+      <div class="ksd-context-menu-item" onclick="ctxAction('add')"><span class="icon">+</span>新增子节点</div>
+      <div class="ksd-context-menu-item" onclick="ctxAction('edit')"><span class="icon">✎</span>编辑节点</div>
+      <div class="ksd-context-menu-item" onclick="ctxAction('copy')"><span class="icon">⎘</span>复制节点</div>
+      <div class="ksd-context-menu-divider"></div>
+      <div class="ksd-context-menu-item" onclick="ctxAction('expand')"><span class="icon">▾</span>展开/折叠</div>
+      <div class="ksd-context-menu-item" onclick="ctxAction('link')"><span class="icon">🔗</span>关联知识库</div>
+      <div class="ksd-context-menu-divider"></div>
+      <div class="ksd-context-menu-item danger" onclick="ctxAction('delete')"><span class="icon">🗑</span>删除节点</div>
+    </div>
+    <script>
+      function toast(text){var t=document.getElementById('toast');t.textContent=text;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(function(){t.classList.remove('show')},2200)}
+
+      // Knowledge tree data
+      var treeData = {
+        name:'旅游类-葡萄酒文化与营销',type:'root',color:'#5149e9',expanded:true,children:[
+          {name:'葡萄酒文化与营销 (540108)',type:'major',color:'#f59e0b',expanded:true,children:[
+            {name:'专业基础课程',type:'category',color:'#22c55e',expanded:true,children:[
+              {name:'管理学基础',type:'course',color:'#3b82f6',expanded:true,children:[
+                {name:'运用管理职能分析组织管理活动',type:'task',color:'#8b5cf6',expanded:true,children:[
+                  {name:'情境拆解',type:'process',color:'#06b6d4'},
+                  {name:'职能归类',type:'process',color:'#06b6d4'},
+                  {name:'逻辑构建',type:'process',color:'#06b6d4'},
+                  {name:'职能界定准确性标准',type:'standard',color:'#8b5cf6'},
+                  {name:'某初创科技公司的混乱一周',type:'case',color:'#8b5cf6'}
+                ]},
+                {name:'应用经典管理理论解读现代管理现象',type:'task',color:'#8b5cf6',expanded:false},
+                {name:'诊断组织环境并制定应对策略',type:'task',color:'#8b5cf6',expanded:false}
+              ]},
+              {name:'旅游概论',type:'course',color:'#3b82f6',expanded:false},
+              {name:'数字化营销',type:'course',color:'#3b82f6',expanded:false},
+              {name:'休闲文化概论',type:'course',color:'#3b82f6',expanded:false},
+              {name:'消费心理学',type:'course',color:'#3b82f6',expanded:false},
+              {name:'葡萄酒基础',type:'course',color:'#3b82f6',expanded:false}
+            ]},
+            {name:'专业核心课程',type:'category',color:'#22c55e',expanded:false},
+            {name:'专业拓展课程',type:'category',color:'#22c55e',expanded:false}
+          ]}
+        ]
+      };
+
+      var svg=document.getElementById('ksSvg');
+      var zoomLevel=1;
+
+      var NS='http://www.w3.org/2000/svg';
+      function el(tag,attrs){
+        var e=document.createElementNS(NS,tag);
+        for(var k in attrs)e.setAttribute(k,attrs[k]);
+        return e;
+      }
+
+      function renderTree(){
+        while(svg.firstChild)svg.removeChild(svg.firstChild);
+        var nodes=[],links=[];
+        function calc(node,depth){
+          node._depth=depth;
+          node._x=40+depth*200;
+          if(!node.children||!node.expanded){node._height=30;return 1;}
+          var childCount=0;
+          node.children.forEach(function(c){childCount+=calc(c,depth+1);});
+          node._height=childCount*32;
+          return childCount;
+        }
+        function layout(node,depth,startY){
+          node._y=startY+node._height/2;
+          if(node.children&&node.expanded){
+            var y=startY;
+            node.children.forEach(function(c){layout(c,depth+1,y);y+=c._height;});
+          }
+        }
+        calc(treeData,0,0);
+        layout(treeData,0,20);
+        function collect(node){
+          nodes.push(node);
+          if(node.children&&node.expanded){
+            node.children.forEach(function(c){links.push({from:node,to:c});collect(c);});
+          }
+        }
+        collect(treeData);
+        var maxX=0,maxY=0;
+        nodes.forEach(function(n){if(n._x>maxX)maxX=n._x;if(n._y>maxY)maxY=n._y;});
+        var svgW=Math.max(1200,maxX+220);
+        var svgH=Math.max(800,maxY+80);
+        svg.setAttribute('viewBox','0 0 '+svgW+' '+svgH);
+        links.forEach(function(l){
+          var x1=l.from._x+160,y1=l.from._y;
+          var x2=l.to._x,y2=l.to._y;
+          var cx=(x1+x2)/2;
+          svg.appendChild(el('path',{class:'ksd-link',d:'M'+x1+','+y1+' C'+cx+','+y1+' '+cx+','+y2+' '+x2+','+y2}));
+        });
+        nodes.forEach(function(n){
+          var isRoot=n.type==='root';
+          var w=isRoot?180:160,h=28;
+          var x=n._x,y=n._y-h/2;
+          var rect=el('rect',{
+            class:isRoot?'ksd-node-rect root':(n.expanded?'ksd-node-rect expanded':'ksd-node-rect'),
+            x:x,y:y,width:w,height:h,rx:6,ry:6,
+            fill:isRoot?'#5149e9':'#fff',
+            stroke:isRoot?'#5149e9':(n.expanded?'#5149e9':'#d4d4d4'),
+            'stroke-width':1.5
+          });
+          rect.addEventListener('click',function(){toggleNode(n._id);});
+          (function(ref){rect.addEventListener('contextmenu',function(e){showContextMenu(e,n._id,ref);});})(n);
+          svg.appendChild(rect);
+          var text=n.name;
+          if(text.length>12&&!isRoot)text=text.substring(0,11)+'...';
+          var txt=el('text',{class:isRoot?'ksd-node-text root':'ksd-node-text normal',x:x+w/2,y:n._y+4,'text-anchor':'middle'});
+          txt.textContent=text;
+          svg.appendChild(txt);
+          if(n.children&&n.children.length){
+            var icon=el('text',{class:'ksd-expand-icon',x:x+w+4,y:n._y+4});
+            icon.textContent=n.expanded?'−':'+';
+            icon.addEventListener('click',function(){toggleNode(n._id);});
+            svg.appendChild(icon);
+          }
+          if(!n.children||!n.children.length){
+            var edit=el('text',{class:'ksd-edit-icon',x:x+w-16,y:n._y+4});
+            edit.textContent='✎';
+            svg.appendChild(edit);
+          }
+        });
+        document.getElementById('zoomInfo').textContent=Math.round(zoomLevel*100)+'%';
+      }
+
+      // Assign IDs
+      var nodeId=0;
+      function assignIds(node){
+        node._id='n'+(nodeId++);
+        if(node.children)node.children.forEach(assignIds);
+      }
+      assignIds(treeData);
+
+      function toggleNode(idStr){
+        function find(node){
+          if(node._id===idStr)return node;
+          if(node.children)for(var i=0;i<node.children.length;i++){
+            var r=find(node.children[i]);if(r)return r;
+          }
+        }
+        var n=find(treeData);
+        if(n&&n.children){n.expanded=!n.expanded;renderTree();}
+      }
+
+      function zoomIn(){zoomLevel=Math.min(3,zoomLevel+0.1);applyZoom();}
+      function zoomOut(){zoomLevel=Math.max(0.3,zoomLevel-0.1);applyZoom();}
+      function resetZoom(){zoomLevel=1;applyZoom();}
+      function applyZoom(){
+        svg.style.transform='scale('+zoomLevel+')';
+        svg.style.transformOrigin='center center';
+        document.getElementById('zoomInfo').textContent=Math.round(zoomLevel*100)+'%';
+      }
+
+      document.getElementById('ksSelect').onchange=function(){toast('切换知识体系');};
+      document.getElementById('ksSearchInput').onkeydown=function(e){if(e.key==='Enter'){toast('搜索：'+e.target.value);}};
+
+
+      var ctxNodeId=null,ctxNodeRef=null;
+      var ctxMenu=document.getElementById('ctxMenu');
+
+      function showContextMenu(e,nodeId,nodeRef){
+        e.preventDefault();
+        ctxNodeId=nodeId;
+        ctxNodeRef=nodeRef;
+        ctxMenu.style.left=Math.min(e.clientX,window.innerWidth-180)+'px';
+        ctxMenu.style.top=Math.min(e.clientY,window.innerHeight-240)+'px';
+        ctxMenu.classList.add('show');
+      }
+
+      function hideCtxMenu(){ctxMenu.classList.remove('show');}
+
+      function ctxAction(action){
+        if(!ctxNodeRef)return;
+        var name=ctxNodeRef.name||'节点';
+        if(action==='add')toast('新增子节点（'+name+'）');
+        else if(action==='edit')toast('编辑节点（'+name+'）');
+        else if(action==='copy')toast('复制节点（'+name+'）');
+        else if(action==='expand'){if(ctxNodeRef.children&&ctxNodeRef.children.length){ctxNodeRef.expanded=!ctxNodeRef.expanded;renderTree();}}
+        else if(action==='link')toast('关联知识库（'+name+'）');
+        else if(action==='delete')toast('删除节点（'+name+'）');
+        hideCtxMenu();
+      }
+
+      document.addEventListener('click',hideCtxMenu);
+      document.addEventListener('contextmenu',function(e){
+        if(!e.target.closest('.ksd-node-rect')&&!e.target.closest('rect')) {
+          if(e.target.closest('.ksd-canvas-wrap'))e.preventDefault();
+        }
+      });
+
+      renderTree();
+    </script>
+  </body>
+</html>
