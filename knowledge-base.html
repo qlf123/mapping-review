@@ -10,29 +10,40 @@
     <link rel="stylesheet" href="mapping-reference.css" />
     <style>
       .kb-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:20px;flex-wrap:wrap;}
-      .kb-toolbar select,.kb-toolbar input{height:32px;padding:0 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;}
+      .kb-toolbar select,.kb-toolbar input{height:32px;padding:0 10px;border:1px solid #dfe6ef;border-radius:6px;font-size:13px;}
       .kb-toolbar input{min-width:200px;}
       .kb-toolbar select{min-width:120px;}
       .kb-create-btn{display:flex;align-items:center;gap:6px;height:36px;padding:0 16px;border:1px solid #5149e9;border-radius:8px;background:#fff;color:#5149e9;font-size:14px;cursor:pointer;transition:all .15s;margin-bottom:16px;}
       .kb-create-btn:hover{background:#5149e9;color:#fff;}
       .kb-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;}
-      .kb-card{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:18px;transition:box-shadow .2s,border-color .2s;cursor:pointer;display:flex;flex-direction:column;}
-      .kb-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);border-color:#d4d4d4;}
+      .kb-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px;transition:box-shadow .2s,border-color .2s;cursor:pointer;position:relative;display:flex;flex-direction:column;}
+      .kb-card:hover{box-shadow:0 6px 20px rgba(30,49,82,.1);border-color:#c7d2fe;transform:translateY(-1px);}
       .kb-card-head{display:flex;gap:12px;margin-bottom:12px;}
-      .kb-card-icon{width:40px;height:40px;border-radius:8px;background:#e6f0ff;display:flex;align-items:center;justify-content:center;font-size:20px;color:#5149e9;flex-shrink:0;overflow:hidden;}
+      .kb-card-icon{width:40px;height:40px;border-radius:8px;background:#eef0ff;display:flex;align-items:center;justify-content:center;font-size:20px;color:#5149e9;flex-shrink:0;overflow:hidden;}
       .kb-card-icon img{width:100%;height:100%;object-fit:cover;border-radius:8px;}
       .kb-card-info{flex:1;min-width:0;}
-      .kb-card-title{font-size:15px;font-weight:600;color:#333;line-height:1.4;word-break:break-all;margin-bottom:4px;}
-      .kb-card-meta{font-size:12px;color:#aaa;}
+      .kb-card-title{font-size:16px;font-weight:600;color:#31425e;line-height:1.4;word-break:break-all;margin-bottom:4px;padding-right:44px;}
+      .kb-card-meta{font-size:12px;color:#8b99ac;}
       .kb-card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
-      .kb-tag{padding:2px 8px;border-radius:4px;font-size:11px;background:#e6f0ff;color:#5149e9;}
-      .kb-card-desc{font-size:13px;color:#8b99ac;line-height:1.5;flex:1;margin-bottom:10px;}
-      .kb-card-footer{display:flex;gap:16px;align-items:center;padding-top:8px;border-top:1px solid #f0f0f0;font-size:12px;color:#aaa;}
+      .kb-tag{padding:2px 8px;border-radius:4px;font-size:11px;background:#eef0ff;color:#5149e9;}
+      .kb-card-desc{font-size:12px;color:#60718a;line-height:1.7;flex:1;margin-bottom:14px;}
+      .kb-card-footer{display:flex;gap:16px;align-items:center;padding-top:12px;border-top:1px solid #dfe6ef;font-size:12px;color:#8b99ac;}
       .kb-stat{display:flex;align-items:center;gap:4px;}
-      .kb-stat svg{width:14px;height:14px;stroke:#bbb;}
+      .kb-stat svg{width:14px;height:14px;stroke:#b6c1d2;}
+      .kb-card-corner{position:absolute;top:12px;right:12px;display:flex;gap:4px;z-index:3;}
+      .kb-corner-btn{height:24px;padding:0 10px;border:1px solid #dfe6ef;border-radius:6px;background:#fff;color:#60718a;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.12s;box-shadow:0 1px 4px rgba(30,49,82,.06);}
+      .kb-corner-btn:hover{background:#f5f7fa;border-color:#5149e9;color:#5149e9;}
+      .kb-corner-btn.danger:hover{border-color:#c72c2a;color:#c72c2a;}
+      .kb-corner-btn.kb-corner-more{font-size:15px;letter-spacing:1px;line-height:1;}
+      .kb-action-menu{position:fixed;z-index:80;min-width:112px;background:#fff;border:1px solid #dfe6ef;border-radius:8px;box-shadow:0 10px 30px rgba(30,49,82,.18);padding:4px 0;}
+      .kb-action-item{padding:7px 14px;font-size:12px;color:#60718a;cursor:pointer;white-space:nowrap;}
+      .kb-action-item:hover{background:#f5f7fa;color:#5149e9;}
+      .kb-action-item.danger:hover{background:#fff1f0;color:#c72c2a;}
+      .kb-action-divider{height:1px;background:#dfe6ef;margin:4px 0;}
       .kb-empty{text-align:center;color:#8b99ac;padding:40px 0;font-size:14px;}
     </style>
-  </head>
+    <link rel="stylesheet" href="design-tokens.css" />
+</head>
   <body>
     <aside class="platform-sidebar" aria-label="图谱平台导航">
       <div class="platform-brand">
@@ -100,6 +111,9 @@
           var iconHtml=k.icon==='img'?'<img src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 40 40\'%3E%3Crect width=\'40\' height=\'40\' rx=\'8\' fill=\'%23e6f0ff\'/%3E%3Ctext x=\'20\' y=\'26\' text-anchor=\'middle\' font-size=\'16\' fill=\'%235149e9\'%3E酒%3C/text%3E%3C/svg%3E" alt="" />':'<span>'+(k.name.charAt(0)||'?')+'</span>';
           var tagsHtml=k.tags.map(function(t){return '<span class="kb-tag">'+(tagMap[t]||t)+'</span>';}).join('');
           return '<div class="kb-card" onclick="viewKb(\''+k.id+'\')">'
+            +'<div class="kb-card-corner" onclick="event.stopPropagation()">'
+              +'<button class="kb-corner-btn kb-corner-more" onclick="toggleKbMenu(event, \''+k.id+'\')" aria-label="操作">···</button>'
+            +'</div>'
             +'<div class="kb-card-head">'
               +'<div class="kb-card-icon">'+iconHtml+'</div>'
               +'<div class="kb-card-info">'
@@ -119,6 +133,44 @@
       }
 
       function viewKb(id){location.href='knowledge-base-detail.html?id='+id;}
+      function editKb(id){toast('编辑知识库（开发中）');}
+      function shareKb(id){toast('分享知识库（开发中）');}
+      function deleteKb(id){if(confirm('确认删除该知识库？此操作不可撤销。')){toast('已删除知识库');}}
+
+      // 卡片操作菜单（··· 编辑 / 删除 / 分享）
+      var kbMenuEl=null, kbMenuId=null;
+      function toggleKbMenu(e, id){
+        e.stopPropagation();
+        if(kbMenuEl && kbMenuId===id){ hideKbMenu(); return; }
+        hideKbMenu();
+        kbMenuId=id;
+        kbMenuEl=document.createElement('div');
+        kbMenuEl.className='kb-action-menu';
+        kbMenuEl.innerHTML=''
+          +'<div class="kb-action-item" data-act="edit">编辑</div>'
+          +'<div class="kb-action-item danger" data-act="delete">删除</div>'
+          +'<div class="kb-action-item" data-act="share">分享</div>';
+        document.body.appendChild(kbMenuEl);
+        var rect=e.currentTarget.getBoundingClientRect();
+        kbMenuEl.style.top=(rect.bottom+4)+'px';
+        kbMenuEl.style.left=Math.min(rect.right-kbMenuEl.offsetWidth, window.innerWidth-kbMenuEl.offsetWidth-8)+'px';
+        kbMenuEl.addEventListener('click', function(ev){
+          ev.stopPropagation();
+          var it=ev.target.closest('.kb-action-item');
+          var act=it?it.getAttribute('data-act'):null;
+          hideKbMenu();
+          if(act==='edit') editKb(id);
+          else if(act==='share') shareKb(id);
+          else if(act==='delete') deleteKb(id);
+        });
+      }
+      function hideKbMenu(){
+        if(kbMenuEl){ kbMenuEl.remove(); kbMenuEl=null; }
+        kbMenuId=null;
+      }
+      document.addEventListener('click', function(e){
+        if(!e.target.closest('.kb-action-menu') && !e.target.closest('.kb-corner-more')) hideKbMenu();
+      });
 
       document.getElementById('kbSearchInput').onkeydown=function(e){if(e.key==='Enter')renderKbCards();};
       document.getElementById('kbSearchBtn').onclick=renderKbCards;

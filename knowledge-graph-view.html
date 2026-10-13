@@ -10,7 +10,7 @@
 <style>
   .graph-canvas-wrap{position:relative;width:100%;height:calc(100vh - 60px);overflow:hidden;background:#f5f3fa;}
   .graph-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
-  .graph-toolbar button{height:32px;padding:0 14px;border:1px solid #d4d4d4;border-radius:6px;background:#fff;font-size:13px;cursor:pointer;transition:all .15s;}
+  .graph-toolbar button{height:32px;padding:0 14px;border:1px solid #dfe6ef;border-radius:6px;background:#fff;font-size:13px;cursor:pointer;transition:all .15s;}
   .graph-toolbar button:hover{border-color:#5149e9;color:#5149e9;}
   .graph-legend{position:absolute;bottom:12px;left:12px;z-index:10;display:flex;gap:16px;padding:10px 16px;background:rgba(255,255,255,.92);border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.06);font-size:12px;}
   .graph-legend-item{display:flex;align-items:center;gap:6px;}
@@ -18,74 +18,75 @@
   .graph-info{position:absolute;top:12px;left:12px;z-index:10;display:flex;align-items:center;gap:8px;}
   .graph-info a{color:#5149e9;text-decoration:none;font-size:13px;}
   .graph-info a:hover{text-decoration:underline;}
-  .graph-info h1{font-size:16px;font-weight:600;margin:0;color:#333;}
+  .graph-info h1{font-size:16px;font-weight:600;margin:0;color:#31425e;}
   svg.graph-svg{display:block;width:100%;height:100%;cursor:grab;}
   svg.graph-svg:active{cursor:grabbing;}
   .graph-node{cursor:pointer;transition:opacity .2s;}
   .graph-node:hover circle{stroke-width:2.5;}
-  .graph-node text{font-size:11px;fill:#333;pointer-events:none;user-select:none;text-anchor:middle;}
+  .graph-node text{font-size:11px;fill:#31425e;pointer-events:none;user-select:none;text-anchor:middle;}
   .graph-link{stroke:#ccc;stroke-width:1;fill:none;transition:stroke-width .2s,stroke .2s;}
   .graph-node.dimmed{opacity:.15;}
   .graph-link.dimmed{opacity:.08;}
   .graph-link.highlighted{stroke:#5149e9;stroke-width:2;}
   .graph-node-label{font-size:10px;fill:#555;pointer-events:none;user-select:none;text-anchor:middle;}
   .graph-tooltip{position:absolute;z-index:20;background:rgba(33,33,33,.92);color:#fff;padding:6px 10px;border-radius:6px;font-size:12px;pointer-events:none;white-space:nowrap;display:none;line-height:1.5;}
-  .graph-search{height:32px;padding:0 12px;border:1px solid #ddd;border-radius:6px;font-size:13px;width:180px;}
-.graph-search-panel{background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:10px 14px;box-shadow:0 1px 4px rgba(0,0,0,.04);margin-bottom:6px;}
-.graph-search-panel h3{font-size:13px;font-weight:600;margin:0 0 12px 0;color:#333;}
+  .graph-search{height:32px;padding:0 12px;border:1px solid #dfe6ef;border-radius:6px;font-size:13px;width:180px;}
+.graph-search-panel{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;box-shadow:0 1px 4px rgba(0,0,0,.04);margin-bottom:6px;}
+.graph-search-panel h3{font-size:13px;font-weight:600;margin:0 0 12px 0;color:#31425e;}
 .graph-search-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
-.graph-search-row label{font-size:12px;color:#999;width:50px;flex-shrink:0;text-align:right;}
-.graph-search-row select,.graph-search-row input{height:28px;padding:0 8px;border:1px solid #ddd;border-radius:5px;font-size:12px;flex:1;min-width:0;}
+.graph-search-row label{font-size:12px;color:#8b99ac;width:50px;flex-shrink:0;text-align:right;}
+.graph-search-row select,.graph-search-row input{height:28px;padding:0 8px;border:1px solid #dfe6ef;border-radius:5px;font-size:12px;flex:1;min-width:0;}
 .graph-search-btn{height:30px;padding:0 14px;border:none;border-radius:5px;background:#5149e9;color:#fff;font-size:12px;cursor:pointer;}
 .graph-search-btn:hover{background:#4038c0;}
-.graph-search-btn.gray{background:#f0f0f0;color:#666;}
-  .graph-icon-btn{width:30px;height:28px;padding:0;border:1px solid #d4d4d4;border-radius:5px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.graph-search-btn.gray{background:#f0f0f0;color:#60718a;}
+  .graph-icon-btn{width:30px;height:28px;padding:0;border:1px solid #dfe6ef;border-radius:5px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
   .graph-icon-btn:hover{border-color:#5149e9;}
-  .graph-icon-btn.gray:hover{border-color:#f5222d;}
-  .graph-icon-btn.gray svg path{stroke:#999;}
+  .graph-icon-btn.gray:hover{border-color:#c72c2a;}
+  .graph-icon-btn.gray svg path{stroke:#8b99ac;}
 .graph-search-btn.gray:hover{background:#e0e0e0;}
 .graph-path-result{margin-top:8px;padding:8px 10px;background:#f5f3fa;border-radius:6px;font-size:12px;color:#555;display:none;line-height:1.6;}
 .graph-path-result .path-node{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:#fff;border-radius:4px;margin:2px 0;}
 .graph-path-result .path-arrow{color:#5149e9;margin:0 4px;font-weight:bold;}
 .graph-quick-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
-.graph-quick-tag{padding:3px 10px;border-radius:12px;font-size:12px;cursor:pointer;border:1px solid #e8e8e8;background:#fff;color:#666;transition:all .15s;}
+.graph-quick-tag{padding:3px 10px;border-radius:12px;font-size:12px;cursor:pointer;border:1px solid #e2e8f0;background:#fff;color:#60718a;transition:all .15s;}
 .graph-quick-tag:hover,.graph-quick-tag.active{background:#5149e9;color:#fff;border-color:#5149e9;}
 .graph-search-panel.collapsed{padding:8px 14px;}
 .graph-search-panel.collapsed .graph-search-body{display:none;}
-  .graph-detail-panel{position:absolute;top:12px;right:12px;z-index:12;width:260px;background:#fff;border:1px solid #e8e8e8;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08);padding:14px 16px;display:none;}
+  .graph-detail-panel{position:absolute;top:12px;right:12px;z-index:12;width:260px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08);padding:14px 16px;display:none;}
   .graph-detail-panel.show{display:block;}
-  .graph-detail-panel h4{font-size:14px;font-weight:600;margin:0 0 10px 0;color:#333;}
+  .graph-detail-panel h4{font-size:14px;font-weight:600;margin:0 0 10px 0;color:#31425e;}
   .graph-detail-row{display:flex;gap:6px;font-size:12px;margin-bottom:6px;line-height:1.5;}
-  .graph-detail-row span:first-child{color:#999;min-width:56px;}
-  .graph-detail-row span:last-child{color:#333;}
+  .graph-detail-row span:first-child{color:#8b99ac;min-width:56px;}
+  .graph-detail-row span:last-child{color:#31425e;}
   .graph-detail-connected{margin-top:8px;border-top:1px solid #f0f0f0;padding-top:8px;}
-  .graph-detail-connected-title{font-size:12px;color:#999;margin-bottom:6px;}
+  .graph-detail-connected-title{font-size:12px;color:#8b99ac;margin-bottom:6px;}
   .graph-detail-connected-item{display:inline-block;padding:2px 8px;margin:2px;border-radius:4px;font-size:11px;background:#f5f3fa;color:#555;cursor:pointer;}
   .graph-detail-connected-item:hover{background:#5149e9;color:#fff;}
-  .graph-detail-close{position:absolute;top:8px;right:12px;cursor:pointer;color:#999;font-size:18px;border:none;background:none;}
-  .graph-result-count{font-size:12px;color:#999;margin-left:8px;}
+  .graph-detail-close{position:absolute;top:8px;right:12px;cursor:pointer;color:#8b99ac;font-size:18px;border:none;background:none;}
+  .graph-result-count{font-size:12px;color:#8b99ac;margin-left:8px;}
   .graph-result-count strong{color:#5149e9;}
-  .graph-search-suggest{position:absolute;z-index:20;background:#fff;border:1px solid #e8e8e8;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.08);max-height:160px;overflow-y:auto;display:none;}
+  .graph-search-suggest{position:absolute;z-index:20;background:#fff;border:1px solid #e2e8f0;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.08);max-height:160px;overflow-y:auto;display:none;}
   .graph-search-suggest-item{padding:4px 10px;font-size:12px;cursor:pointer;color:#555;}
   .graph-search-suggest-item:hover{background:#f5f3fa;color:#5149e9;}
   .graph-hover-label{position:absolute;z-index:15;background:rgba(33,33,33,.9);color:#fff;padding:3px 8px;border-radius:4px;font-size:11px;pointer-events:none;white-space:nowrap;display:none;}
-  .graph-toolbar-btn{height:32px;padding:0 14px;border:1px solid #d4d4d4;border-radius:6px;background:#fff;font-size:13px;cursor:pointer;transition:all .15s;}
+  .graph-toolbar-btn{height:32px;padding:0 14px;border:1px solid #dfe6ef;border-radius:6px;background:#fff;font-size:13px;cursor:pointer;transition:all .15s;}
   .graph-toolbar-btn:hover{border-color:#5149e9;color:#5149e9;}
-  .graph-search-tabs{display:flex;gap:0;border-bottom:1px solid #e8e8e8;margin-bottom:8px;}
-  .graph-search-tab{padding:4px 16px;font-size:13px;color:#999;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:.15s;}
+  .graph-search-tabs{display:flex;gap:0;border-bottom:1px solid #e2e8f0;margin-bottom:8px;}
+  .graph-search-tab{padding:4px 16px;font-size:13px;color:#8b99ac;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:.15s;}
   .graph-search-tab.active{color:#5149e9;border-bottom-color:#5149e9;font-weight:600;}
   .graph-search-tab:hover{color:#5149e9;}
   .combo-select{position:relative;flex:1;min-width:80px;}
-  .combo-input{width:100%;height:28px;padding:0 24px 0 8px;border:1px solid #ddd;border-radius:5px;font-size:12px;outline:none;box-sizing:border-box;}
+  .combo-input{width:100%;height:28px;padding:0 24px 0 8px;border:1px solid #dfe6ef;border-radius:5px;font-size:12px;outline:none;box-sizing:border-box;}
   .combo-input:focus{border-color:#5149e9;}
-  .combo-arrow{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:10px;color:#999;pointer-events:none;}
-  .combo-dropdown{position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:30;background:#fff;border:1px solid #e8e8e8;border-radius:5px;box-shadow:0 2px 8px rgba(0,0,0,.08);max-height:140px;overflow-y:auto;display:none;}
+  .combo-arrow{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:10px;color:#8b99ac;pointer-events:none;}
+  .combo-dropdown{position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:30;background:#fff;border:1px solid #e2e8f0;border-radius:5px;box-shadow:0 2px 8px rgba(0,0,0,.08);max-height:140px;overflow-y:auto;display:none;}
   .combo-dropdown.open{display:block;}
   .combo-option{padding:4px 10px;font-size:12px;cursor:pointer;color:#555;}
   .combo-option:hover,.combo-option.selected{background:#f5f3fa;color:#5149e9;}
   .graph-search-content{display:none;}
   .graph-search-content.active{display:block;}
 </style>
+  <link rel="stylesheet" href="design-tokens.css" />
 </head>
 <body>
 <aside class="platform-sidebar" aria-label="图谱平台导航">
@@ -158,7 +159,7 @@
           <div class="graph-search-row">
             <select id="pathStartType"><option value="all">全部类型</option><option value="课程">课程</option><option value="章节">章节</option><option value="知识点">知识点</option><option value="技能规范">技能规范</option><option value="核心概念">核心概念</option></select>
             <input id="pathStart" placeholder="起点节点名称" style="flex:1;min-width:80px;" />
-            <span style="color:#999;font-size:13px;">→</span>
+            <span style="color:#8b99ac;font-size:13px;">→</span>
             <select id="pathEndType"><option value="all">全部类型</option><option value="课程">课程</option><option value="章节">章节</option><option value="知识点">知识点</option><option value="技能规范">技能规范</option><option value="核心概念">核心概念</option></select>
             <input id="pathEnd" placeholder="终点节点名称" style="flex:1;min-width:80px;" />
             <button class="graph-search-btn" id="pathSearchBtn" type="button">查找链路</button>
@@ -181,7 +182,7 @@
       <div class="graph-legend-item"><span class="graph-legend-dot" style="background:#1890ff;"></span>技能规范</div>
       <div class="graph-legend-item"><span class="graph-legend-dot" style="background:#722ed1;"></span>课程</div>
       <div class="graph-legend-item"><span class="graph-legend-dot" style="background:#fa8c16;"></span>章节</div>
-      <div class="graph-legend-item"><span class="graph-legend-dot" style="background:#f5222d;"></span>核心概念</div>
+      <div class="graph-legend-item"><span class="graph-legend-dot" style="background:#c72c2a;"></span>核心概念</div>
     </div>
     <div class="graph-tooltip" id="tooltip"></div>
     <svg class="graph-svg" id="graphSvg"></svg>
@@ -195,7 +196,7 @@
     if(t) t.textContent = taskName + ' · 全景图谱';
   }
 (function(){
-  var typeColors = {'知识点':'#52c41a','技能规范':'#1890ff','课程':'#722ed1','章节':'#fa8c16','核心概念':'#f5222d'};
+  var typeColors = {'知识点':'#52c41a','技能规范':'#1890ff','课程':'#722ed1','章节':'#fa8c16','核心概念':'#c72c2a'};
   var typeRadius = {'知识点':6,'技能规范':7,'课程':10,'章节':8,'核心概念':9};
 
   function generateData(){
@@ -253,7 +254,7 @@
     g.setAttribute('transform','translate('+panX+','+panY+') scale('+zoom+')');
     for(var l=0;l<links.length;l++){var s=nodes[links[l].source],t=nodes[links[l].target];var ln=document.createElementNS(SVGNS,'line');ln.setAttribute('x1',s.x);ln.setAttribute('y1',s.y);ln.setAttribute('x2',t.x);ln.setAttribute('y2',t.y);ln.setAttribute('class','graph-link');ln.setAttribute('data-source',links[l].source);ln.setAttribute('data-target',links[l].target);g.appendChild(ln)}
     for(var i=0;i<nodes.length;i++){var n=nodes[i];var ng=document.createElementNS(SVGNS,'g');ng.setAttribute('class','graph-node');ng.setAttribute('transform','translate('+n.x+','+n.y+')');ng.setAttribute('data-id',n.id);ng.setAttribute('data-name',n.name);ng.setAttribute('data-type',n.type);
-      var c=document.createElementNS(SVGNS,'circle');c.setAttribute('r',typeRadius[n.type]||6);c.setAttribute('fill',typeColors[n.type]||'#999');c.setAttribute('stroke','#fff');c.setAttribute('stroke-width','1.5');ng.appendChild(c);
+      var c=document.createElementNS(SVGNS,'circle');c.setAttribute('r',typeRadius[n.type]||6);c.setAttribute('fill',typeColors[n.type]||'#8b99ac');c.setAttribute('stroke','#fff');c.setAttribute('stroke-width','1.5');ng.appendChild(c);
       if(zoom>1.5||n.type==='课程'||n.type==='核心概念'){var tx=document.createElementNS(SVGNS,'text');tx.setAttribute('class','graph-node-label');tx.setAttribute('y',(typeRadius[n.type]||6)+12);tx.textContent=n.name;ng.appendChild(tx)}
       ng.addEventListener('mousedown',startDrag);
       ng.addEventListener('mouseenter',function(e){var nd=e.target.closest('.graph-node');if(!nd)return;var nm=nd.getAttribute('data-name'),tp=nd.getAttribute('data-type');tooltip.style.display='block';tooltip.innerHTML='<strong>'+nm+'</strong><br/>'+tp;var rect=wrap.getBoundingClientRect();tooltip.style.left=(e.clientX-rect.left+15)+'px';tooltip.style.top=(e.clientY-rect.top+15)+'px';var nid=Number(nd.getAttribute('data-id'));var conn={};conn[nid]=true;links.forEach(function(l){if(l.source===nid)conn[l.target]=true;if(l.target===nid)conn[l.source]=true});svg.querySelectorAll('.graph-node').forEach(function(nn){var id=Number(nn.getAttribute('data-id'));if(!conn[id])nn.classList.add('dimmed');else nn.classList.remove('dimmed')});svg.querySelectorAll('.graph-link').forEach(function(lk){var s2=Number(lk.getAttribute('data-source')),t2=Number(lk.getAttribute('data-target'));if(s2===nid||t2===nid){lk.classList.add('highlighted');lk.classList.remove('dimmed')}else{lk.classList.add('dimmed');lk.classList.remove('highlighted')}})});
@@ -347,7 +348,7 @@
     var eNode=nodes.find(function(n){var ok=n.name.toLowerCase()===eName.toLowerCase()||n.name.toLowerCase().indexOf(eName.toLowerCase())>=0;if(eType!=='all'&&n.type!==eType)ok=false;return ok});
     if(!sNode||!eNode){
       pathResult.style.display='block';
-      pathResult.innerHTML='<span style="color:#f5222d;">未找到节点「'+(!sNode?sName:eName)+'」</span>';
+      pathResult.innerHTML='<span style="color:#c72c2a;">未找到节点「'+(!sNode?sName:eName)+'」</span>';
       return;
     }
     var adj={};
@@ -355,14 +356,14 @@
     var visited={};visited[sNode.id]=true;
     var queue=[[sNode.id]];var found=null;
     while(queue.length){var path=queue.shift();var cur=path[path.length-1];if(cur===eNode.id){found=path;break}var nb=adj[cur]||[];for(var i=0;i<nb.length;i++){if(!visited[nb[i]]){visited[nb[i]]=true;queue.push(path.concat([nb[i]]))}}}
-    if(!found){pathResult.style.display='block';pathResult.innerHTML='<span style="color:#f5222d;">未找到从「'+sNode.name+'」到「'+eNode.name+'」的链路</span>';return}
+    if(!found){pathResult.style.display='block';pathResult.innerHTML='<span style="color:#c72c2a;">未找到从「'+sNode.name+'」到「'+eNode.name+'」的链路</span>';return}
     var ps={};found.forEach(function(id){ps[id]=true});
     svg.querySelectorAll('.graph-node').forEach(function(nn){var id=Number(nn.getAttribute('data-id'));if(ps[id]){nn.classList.remove('dimmed');nn.classList.add('highlighted')}else{nn.classList.add('dimmed');nn.classList.remove('highlighted')}});
     svg.querySelectorAll('.graph-link').forEach(function(lk){var s=Number(lk.getAttribute('data-source')),t=Number(lk.getAttribute('data-target'));var on=false;for(var i=0;i<found.length-1;i++){if((s===found[i]&&t===found[i+1])||(t===found[i]&&s===found[i+1])){on=true;break}}if(on){lk.classList.add('highlighted');lk.classList.remove('dimmed')}else{lk.classList.add('dimmed');lk.classList.remove('highlighted')}});
     pathResult.style.display='block';
-    var html='<span style="color:#999;">链路：</span>';
+    var html='<span style="color:#8b99ac;">链路：</span>';
     found.forEach(function(id,i){var n=nodes[id];html+='<span class="path-node"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+typeColors[n.type]+';"></span>'+n.name+'</span>';if(i<found.length-1)html+='<span class="path-arrow">→</span>'});
-    html+=' <span style="color:#999;margin-left:8px;">('+found.length+' 节点)</span>';
+    html+=' <span style="color:#8b99ac;margin-left:8px;">('+found.length+' 节点)</span>';
     pathResult.innerHTML=html;
     resultCount.innerHTML='链路 <strong>'+found.length+'</strong> 节点';
   }

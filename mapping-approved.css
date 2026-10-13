@@ -3,7 +3,7 @@
 .mapping-row.rejected .relation-select,.mapping-row.rejected .level-select{opacity:.65;cursor:not-allowed;background:#f5f7fa}
 .mapping-row.rejected .confirm-button,.mapping-row.rejected .reject-button{display:none}.mapping-row.rejected .row-actions:after{content:"已驳回";display:inline-flex;align-items:center;height:34px;padding:0 12px;border-radius:8px;background:#fff0f0;color:#c72c2a;font-size:12px;font-weight:600;white-space:nowrap;border:1px solid #ffd6d6}
 
-.add-resource-button{height:34px;padding:0 14px;border-radius:8px;background:#fff;border:1px solid #d0d7de;color:#334155;font-size:12px;font-weight:600;cursor:pointer}
+.add-resource-button{height:34px;padding:0 14px;border-radius:8px;background:#fff;border:1px solid #e2e8f0;color:#334155;font-size:12px;font-weight:600;cursor:pointer}
 .add-resource-button:hover{background:#f5f7fa}
 #addMappingButton{background:#5149e9;color:#fff}
 #addMappingButton:hover{background:#463bc9}

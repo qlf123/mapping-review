@@ -10,13 +10,13 @@
     <link rel="stylesheet" href="mapping-reference.css" />
     <style>
       .ks-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:20px;flex-wrap:wrap;}
-      .ks-toolbar select,.ks-toolbar input{height:32px;padding:0 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;}
+      .ks-toolbar select,.ks-toolbar input{height:32px;padding:0 10px;border:1px solid #dfe6ef;border-radius:6px;font-size:13px;}
       .ks-toolbar input{min-width:200px;}
       .ks-toolbar select{min-width:120px;}
-      .ks-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
-      .ks-create-card{border:2px dashed #d4d4d4;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;cursor:pointer;transition:all .2s;background:#fafafa;}
+      .ks-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;}
+      .ks-create-card{border:2px dashed #dfe6ef;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;cursor:pointer;transition:all .2s;background:#fafafa;}
       .ks-create-card:hover{border-color:#5149e9;background:#f5f3fa;}
-      .ks-create-card .plus{font-size:36px;color:#bbb;font-weight:300;line-height:1;}
+      .ks-create-card .plus{font-size:36px;color:#b6c1d2;font-weight:300;line-height:1;}
       .ks-create-card .label{font-size:14px;color:#8b99ac;margin-top:8px;}
       .ks-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px;box-shadow:0 2px 8px rgba(30,49,82,.06);cursor:pointer;transition:.2s;position:relative;min-height:180px;display:flex;flex-direction:column;}
       .ks-card:hover{box-shadow:0 6px 20px rgba(30,49,82,.1);border-color:#c7d2fe;transform:translateY(-1px);}
@@ -82,7 +82,8 @@
       .ks-org-node.collapsed > .ks-org-row .ks-org-toggle{transform:rotate(-90deg);}
       .ks-empty{text-align:center;color:#8b99ac;padding:40px 0;font-size:14px;}
     </style>
-  </head>
+    <link rel="stylesheet" href="design-tokens.css" />
+</head>
   <body>
     <aside class="platform-sidebar" aria-label="图谱平台导航">
       <div class="platform-brand">
@@ -266,7 +267,7 @@
       function editKs(id){toast('编辑知识体系（开发中）');}
       function deleteKs(id){if(confirm('确认删除该知识体系？此操作不可撤销。')){toast('已删除知识体系');}}
 
-      // 卡片操作菜单（··· 编辑 / 删除 / 设置）
+      // 卡片操作菜单（··· 编辑 / 删除 / 分享）
       var ksMenuEl=null, ksMenuId=null;
       function toggleKsMenu(e, id){
         e.stopPropagation();
@@ -277,9 +278,8 @@
         ksMenuEl.className='ks-action-menu';
         ksMenuEl.innerHTML=''
           +'<div class="ks-action-item" data-act="edit">编辑</div>'
-          +'<div class="ks-action-item" data-act="settings">设置</div>'
-          +'<div class="ks-action-divider"></div>'
-          +'<div class="ks-action-item danger" data-act="delete">删除</div>';
+          +'<div class="ks-action-item danger" data-act="delete">删除</div>'
+          +'<div class="ks-action-item" data-act="settings">分享</div>';
         document.body.appendChild(ksMenuEl);
         var rect=e.currentTarget.getBoundingClientRect();
         ksMenuEl.style.top=(rect.bottom+4)+'px';

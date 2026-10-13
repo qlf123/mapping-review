@@ -401,7 +401,7 @@ function permText(g){
   return '权限：' + members.length + ' 个成员';
 }
 
-// 卡片操作菜单（··· 编辑 / 删除 / 设置）
+// 卡片操作菜单（··· 编辑 / 删除 / 分享）
 let cardMenuEl = null, cardMenuGid = null;
 function toggleCardMenu(e, gid){
   e.stopPropagation();
@@ -412,9 +412,8 @@ function toggleCardMenu(e, gid){
   cardMenuEl.className = 'card-action-menu';
   cardMenuEl.innerHTML = ''
     + '<div class="card-action-item" data-act="edit">编辑</div>'
-    + '<div class="card-action-item" data-act="settings">设置</div>'
-    + '<div class="card-action-divider"></div>'
-    + '<div class="card-action-item danger" data-act="delete">删除</div>';
+    + '<div class="card-action-item danger" data-act="delete">删除</div>'
+    + '<div class="card-action-item" data-act="settings">分享</div>';
   document.body.appendChild(cardMenuEl);
   const rect = e.currentTarget.getBoundingClientRect();
   cardMenuEl.style.top = (rect.bottom + 4) + 'px';
@@ -456,7 +455,7 @@ function renderList(){
       const nodeCount = (g.stats.subIndustries||0) + (g.stats.positions||0) + (g.stats.abilities||0);
       stats = `<div><span>节点数</span><strong>${nodeCount}</strong></div>`;
     }
-    // 右上角操作按钮（··· 菜单：编辑 / 删除 / 设置）
+    // 右上角操作按钮（··· 菜单：编辑 / 删除 / 分享）
     const cardActions = `<div class="graph-card-corner" onclick="event.stopPropagation()">
       <button class="corner-btn corner-more" onclick="toggleCardMenu(event, '${g.id}')" aria-label="操作">···</button>
     </div>`;
