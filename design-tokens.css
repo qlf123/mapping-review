@@ -219,3 +219,29 @@ textarea:focus{border-color:var(--brand);outline:none;box-shadow:0 0 0 3px rgba(
   font-size:10px;font-weight:500;color:var(--text-3);background:#eef1f6;
   padding:1px 6px;border-radius:4px;
 }
+
+/* ============================================================
+   搜索项 / 通用按钮 统一
+   ============================================================ */
+
+/* --- 主/次通用按钮尺寸 --- */
+.primary-button,.ghost-button{
+  height:36px;padding:0 16px;font-size:13px;
+}
+
+/* --- 搜索输入框 & 同排筛选下拉 --- */
+.kb-toolbar select,.kb-toolbar input,
+.ks-toolbar select,.ks-toolbar input,
+.kbd-toolbar select,.kbd-toolbar input,
+.ksd-header select,.ksd-header input,
+.graph-search-row select,.graph-search-row input{
+  height:36px;padding:0 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;
+  background:#fff;color:var(--text);
+}
+.kb-toolbar input::placeholder,.ks-toolbar input::placeholder,
+.kbd-toolbar input::placeholder,.ksd-header input::placeholder,
+.graph-search-row input::placeholder{color:var(--text-3)}
+
+/* --- 映射审核台搜索盒 --- */
+.search{height:36px;border-color:var(--border);border-radius:8px}
+.search input{height:34px;font-size:13px}

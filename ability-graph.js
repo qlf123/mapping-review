@@ -255,8 +255,8 @@ let graphs = [
     id: 'g1',
     name: '旅游业',
     describe: '本图谱以旅游活动组织、目的地接待与游览服务为核心，按岗位能力体系相似性划定边界。纳入旅行社组团与地接、景区运营、研学定制、在线旅游平台及酒店前厅等直接面向游客的接待服务岗位。',
-    status: 'built',
-    createdAt: '2026-09-09',
+    buildStatus: 'built', syncStatus: 'synced',
+    createdAt: '2026-09-09', updatedAt: '2026-10-02',
     stats: { positions: 10, abilities: 28, subIndustries: 5 },
     tree: {
       id: 'n1', name: '旅游业', aliases: ['旅游产业','文旅产业'], describe: '以旅游活动组织、目的地接待与游览服务为核心',
@@ -313,9 +313,11 @@ let graphs = [
       ]
     }
   },
-  { id:'g2', name:'电商行业', describe:'以电子商务平台运营、网店管理、直播带货与供应链服务为核心能力体系。', status:'built', createdAt:'2026-09-08', stats:{positions:8,abilities:22,subIndustries:4}, tree:{id:'n20',name:'电商行业',aliases:['电子商务'],describe:'以电子商务平台运营为核心',info:{stats:{positions:8,distinctAbilities:22,subIndustries:4}},subIndustries:[]} },
-  { id:'g3', name:'酒店管理', describe:'以前厅接待、宾客关系与管家服务为核心，不覆盖客房工程与后厨岗位。', status:'building', createdAt:'2026-09-10', stats:{positions:0,abilities:0,subIndustries:0}, tree:null },
-  { id:'g4', name:'物流行业', describe:'以仓储管理、运输调度与供应链协同为核心能力体系。', status:'failed', createdAt:'2026-09-12', stats:{positions:0,abilities:0,subIndustries:0}, tree:null }
+  { id:'g2', name:'电商行业', describe:'以电子商务平台运营、网店管理、直播带货与供应链服务为核心能力体系。', buildStatus:'built', syncStatus:'syncing', createdAt:'2026-09-08', updatedAt:'2026-09-25', stats:{positions:8,abilities:22,subIndustries:4}, tree:{id:'n20',name:'电商行业',aliases:['电子商务'],describe:'以电子商务平台运营为核心',info:{stats:{positions:8,distinctAbilities:22,subIndustries:4}},subIndustries:[]} },
+  { id:'g3', name:'酒店管理', describe:'以前厅接待、宾客关系与管家服务为核心，不覆盖客房工程与后厨岗位。', buildStatus:'building', syncStatus:'', createdAt:'2026-09-10', stats:{positions:0,abilities:0,subIndustries:0}, tree:null },
+  { id:'g4', name:'物流行业', describe:'以仓储管理、运输调度与供应链协同为核心能力体系。', buildStatus:'build_failed', syncStatus:'', createdAt:'2026-09-12', stats:{positions:0,abilities:0,subIndustries:0}, tree:null },
+  { id:'g5', name:'文化创意产业', describe:'以内容创作、数字媒体与文创产品设计为核心能力体系。', buildStatus:'built', syncStatus:'sync_failed', createdAt:'2026-09-13', updatedAt:'2026-10-05', stats:{positions:6,abilities:16,subIndustries:3}, tree:{id:'n30',name:'文化创意产业',describe:'以内容创作、数字媒体与文创产品设计为核心',info:{stats:{positions:6,distinctAbilities:16,subIndustries:3}},subIndustries:[]} },
+  { id:'g6', name:'研学旅行', describe:'围绕研学课程设计、活动组织与安全管理构建岗位能力体系。', creator:'平台管理员', sharedTo:['张明'], buildStatus:'built', syncStatus:'synced', createdAt:'2026-09-15', stats:{positions:4,abilities:12,subIndustries:2}, tree:{id:'n31',name:'研学旅行',describe:'围绕研学课程设计、活动组织与安全管理',info:{stats:{positions:4,distinctAbilities:12,subIndustries:2}},subIndustries:[]} }
 ];
 
 // 当前状态
@@ -324,12 +326,26 @@ let expandedNodes = new Set();
 
 // sessionStorage 数据同步
 function saveGraphs(){
-  try { sessionStorage.setItem('ability_graphs', JSON.stringify(graphs)); } catch(e) {}
+  try { sessionStorage.setItem('ability_graphs_v3', JSON.stringify(graphs)); } catch(e) {}
+}
+// 状态字段归一化：兼容旧单一 status，迁移为「构建状态 + 同步状态」两维
+function normalizeGraphs(){
+  graphs.forEach(g=>{
+    if(g.status){
+      const st = g.status;
+      if(st==='failed') g.buildStatus='build_failed';
+      else if(st==='confirmed'){ g.buildStatus='built'; g.confirmed=true; }
+      else g.buildStatus=st; // building / built
+      delete g.status;
+    }
+    if(!g.buildStatus) g.buildStatus='built';
+    if(g.syncStatus===undefined) g.syncStatus='';
+  });
 }
 function loadGraphs(){
   try {
-    const stored = sessionStorage.getItem('ability_graphs');
-    if(stored){ graphs = JSON.parse(stored); return true; }
+    const stored = sessionStorage.getItem('ability_graphs_v3');
+    if(stored){ graphs = JSON.parse(stored); normalizeGraphs(); return true; }
   } catch(e) {}
   return false;
 }
@@ -392,13 +408,54 @@ function collectMemberIds(node){
 const ORG_MAP = {};
 (function buildOrgMap(nodes){ nodes.forEach(n=>{ ORG_MAP[n.id] = n; if(n.children) buildOrgMap(n.children); }); })(ORG_TREE);
 const ORG_TOTAL_MEMBERS = ORG_TREE.reduce((n,o)=>n + collectMemberIds(o).length, 0);
+const MEMBER_MAP = {};
+(function collectMembers(nodes){ nodes.forEach(n=>{ (n.members||[]).forEach(m=>{ MEMBER_MAP[m.id] = m; }); if(n.children) collectMembers(n.children); }); })(ORG_TREE);
+const ORG_PARENT = {};
+(function buildParent(nodes, pid){ nodes.forEach(n=>{ ORG_PARENT[n.id] = pid || null; if(n.children) buildParent(n.children, n.id); }); })(ORG_TREE, null);
 
+// 是否为「他人分享给我」的图谱：创建者非本人且共享名单含当前用户
+function isSharedGraph(g){
+  return !!(g.creator && g.creator !== CURRENT_USER.name && (g.sharedTo||[]).indexOf(CURRENT_USER.name) >= 0);
+}
+// 汇总勾选：顶层组织 + 未被组织覆盖的单独成员
+function collectSelectedPerm(tree){
+  const allOrgIds = [...tree.querySelectorAll('.org-select:checked')].map(cb=>cb.value);
+  const checkedOrg = {};
+  allOrgIds.forEach(oid=>{ checkedOrg[oid]=1; });
+  const orgs = allOrgIds.filter(oid=>!ORG_PARENT[oid] || !checkedOrg[ORG_PARENT[oid]]);
+  const covered = {};
+  allOrgIds.forEach(oid=>{ const n = ORG_MAP[oid]; if(!n) return; collectMemberIds(n).forEach(id=>{ covered[id]=1; }); });
+  const members = [...tree.querySelectorAll('.perm-member:checked')].map(c=>c.value).filter(id=>!covered[id]);
+  return { orgs, members };
+}
+// 权限覆盖的成员总数（组织展开 + 单独成员）
+function permCoveredCount(g){
+  const orgs = (g.permissions && g.permissions.orgs) || [];
+  const members = (g.permissions && g.permissions.members) || [];
+  const covered = {};
+  orgs.forEach(oid=>{ const n = ORG_MAP[oid]; if(n) collectMemberIds(n).forEach(id=>{ covered[id]=1; }); });
+  members.forEach(id=>{ covered[id]=1; });
+  return Object.keys(covered).length;
+}
+// 还原为扁平成员列表（用于回显组织树勾选）
+function permFlatMembers(g){
+  const orgs = (g.permissions && g.permissions.orgs) || [];
+  const members = (g.permissions && g.permissions.members) || [];
+  const ids = [];
+  orgs.forEach(oid=>{ const n = ORG_MAP[oid]; if(n) ids.push(...collectMemberIds(n)); });
+  return ids.concat(members);
+}
 // 权限文案（卡片元信息）
 function permText(g){
+  if(isSharedGraph(g)) return '分享给我';
+  const orgs = (g.permissions && g.permissions.orgs) || [];
   const members = (g.permissions && g.permissions.members) || [];
-  if(!members.length) return '权限：仅自己';
-  if(members.length >= ORG_TOTAL_MEMBERS) return '权限：公开';
-  return '权限：' + members.length + ' 个成员';
+  if(!orgs.length && !members.length) return '权限：仅自己';
+  if(permCoveredCount(g) >= ORG_TOTAL_MEMBERS) return '权限：公开';
+  const parts = [];
+  if(orgs.length) parts.push(orgs.length + '个组织');
+  if(members.length) parts.push(members.length + '个成员');
+  return '权限：' + parts.join('、');
 }
 
 // 卡片操作菜单（··· 编辑 / 删除 / 分享）
@@ -410,8 +467,10 @@ function toggleCardMenu(e, gid){
   cardMenuGid = gid;
   cardMenuEl = document.createElement('div');
   cardMenuEl.className = 'card-action-menu';
+  const menuGraph = graphs.find(x=>x.id===gid);
+  const menuBuilding = menuGraph && menuGraph.buildStatus==='building';
   cardMenuEl.innerHTML = ''
-    + '<div class="card-action-item" data-act="edit">编辑</div>'
+    + (menuBuilding ? '' : '<div class="card-action-item" data-act="edit">编辑</div>')
     + '<div class="card-action-item danger" data-act="delete">删除</div>'
     + '<div class="card-action-item" data-act="settings">分享</div>';
   document.body.appendChild(cardMenuEl);
@@ -432,48 +491,153 @@ function hideCardMenu(){
   cardMenuGid = null;
 }
 
+// ========== 范围（起建层级）==========
+function onGraphScopeChange(){
+  const scope = $('#newGraphScope') ? $('#newGraphScope').value : '行业';
+  const nameInput = $('#newGraphName');
+  if(!nameInput) return;
+  const placeholderMap = { '行业':'请输入行业名称', '子行业':'请输入子行业名称', '岗位':'请输入岗位名称' };
+  nameInput.placeholder = placeholderMap[scope] || '请输入名称';
+}
+function readGraphScope(){
+  const scopeLevel = $('#newGraphScope').value;
+  const name = $('#newGraphName') ? $('#newGraphName').value.trim() : '';
+  return {
+    scopeLevel,
+    industryName: scopeLevel==='行业' ? name : '',
+    subIndustryName: scopeLevel==='子行业' ? name : '',
+    positionName: scopeLevel==='岗位' ? name : '',
+    desc: $('#newGraphDesc').value.trim()
+  };
+}
+function graphScopeError(scope){
+  if(!scope.industryName && !scope.subIndustryName && !scope.positionName) return '请输入名称';
+  return '';
+}
+function graphScopeLevel(g){ return g.scopeLevel || '行业'; }
+function graphScopeObject(g){
+  if(g.scopeLevel==='子行业') return g.subIndustryName;
+  if(g.scopeLevel==='岗位') return g.positionName;
+  return g.name;
+}
+// 由 readGraphScope() 结果取「对象名」，作为图谱名称
+function graphScopeName(scope){
+  if(scope.scopeLevel==='子行业') return scope.subIndustryName;
+  if(scope.scopeLevel==='岗位') return scope.positionName;
+  return scope.industryName;
+}
+function graphScopeLabel(g){ return graphScopeLevel(g) + ' · ' + graphScopeObject(g); }
+// AI 构建：按起建层级生成树（当前 mock，真实 AI 见 data.js 注释）
+function buildGraphTree(scope){
+  const ind = INDUSTRY_LIST.find(i=>i.name===scope.industryName) || {};
+  const subs = ind.subIndustries || [];
+  const root = { id:uid(), name:graphScopeName(scope), aliases:[], describe:scope.desc, info:{stats:{}}, subIndustries:[] };
+  const makePositions = si => aiGeneratePositions(si).map(p=>({ id:uid(), name:p.name, careerLevel:p.level, describe:p.describe, abilities: aiGenerateAbilities(p.name) }));
+  if(scope.scopeLevel==='行业'){
+    const list = subs.length ? subs.slice(0,3) : [scope.industryName+'核心业务', scope.industryName+'运营管理', scope.industryName+'服务支持'];
+    list.forEach(si=>{ root.subIndustries.push({ id:uid(), name:si, describe:'', positions: makePositions(si) }); });
+  } else if(scope.scopeLevel==='子行业'){
+    root.subIndustries.push({ id:uid(), name:scope.subIndustryName, describe:'', positions: makePositions(scope.subIndustryName) });
+  } else {
+    const fallbackSub = subs[0] || '核心业务';
+    root.subIndustries.push({ id:uid(), name:fallbackSub, describe:'', positions:[ { id:uid(), name:scope.positionName, careerLevel:'', describe:'', abilities: aiGenerateAbilities(scope.positionName) } ] });
+  }
+  return root;
+}
+function graphStats(tree){
+  let positions=0; const ablSet=new Set();
+  (tree.subIndustries||[]).forEach(s=>{ positions+=(s.positions||[]).length; (s.positions||[]).forEach(p=>(p.abilities||[]).forEach(a=>ablSet.add(a.id))); });
+  return { subIndustries:(tree.subIndustries||[]).length, positions, abilities: ablSet.size };
+}
+
+// ========== 身份切换 ==========
+function onSwitchUser(key){
+  switchUser(key);   // data.js
+  renderList();
+}
+
 // ========== 列表渲染 ==========
+function matchGraphStatus(g, status){
+  if(status==='all') return true;
+  if(['building','built','build_failed'].includes(status)) return g.buildStatus===status;
+  return g.syncStatus===status;
+}
+// 日期字符串补充分秒；已含时分秒则原样返回
+function fmtDateTime(d){
+  if(!d) return '';
+  if(d.includes(':')) return d;
+  let h=0, m=0, s=0;
+  for(let i=0;i<d.length;i++){ const c=d.charCodeAt(i); h=(h*31+c)%24; m=(m*37+c)%60; s=(s*41+c)%60; }
+  const p = n => String(n).padStart(2,'0');
+  return d+' '+p(h)+':'+p(m)+':'+p(s);
+}
+// 当前本地时间（含时分秒）
+function nowDateTime(){
+  const d=new Date(), p=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
+}
+// 卡片右下角时间：更新过显示「更新于」，否则「创建于」
+function graphTimeText(g){
+  if(g.updatedAt && g.updatedAt !== g.createdAt) return '更新于 ' + fmtDateTime(g.updatedAt);
+  return g.createdAt ? ('创建于 ' + fmtDateTime(g.createdAt)) : '';
+}
+
 function renderList(){
   if(!$('#graphList')) return;
-  const html = graphs.map(g=>{
-    const isBuilding = g.status==='building';
-    const isFailed = g.status==='failed';
-    const isConfirmed = g.status==='confirmed' || g.confirmed;
-    const isBuilt = g.status==='built' && !isConfirmed;
-    // 状态文案与徽标
-    let statusBadge, stats;
+  const scopeFilter = $('#agScopeFilter') ? $('#agScopeFilter').value : 'all';
+  const statusFilter = $('#agStatusFilter') ? $('#agStatusFilter').value : 'all';
+  const ownerFilter = $('#agOwnerFilter') ? $('#agOwnerFilter').value : 'all';
+  const search = $('#agSearchInput') ? $('#agSearchInput').value.trim().toLowerCase() : '';
+  const list = graphs.filter(g => {
+    const matchSearch = !search || (g.name||'').toLowerCase().includes(search) || (g.describe||'').toLowerCase().includes(search);
+    const matchOwner = ownerFilter==='all' || (ownerFilter==='mine' ? (!g.creator || g.creator===CURRENT_USER.name) : isSharedGraph(g));
+    return matchSearch && matchOwner && (scopeFilter==='all' || graphScopeLevel(g)===scopeFilter) && matchGraphStatus(g, statusFilter);
+  });
+  const html = list.map(g=>{
+    const isBuilding = g.buildStatus==='building';
+    const isFailed = g.buildStatus==='build_failed';
+    // 状态文案与徽标；节点数弱化为 meta 行内文本（与知识体系卡片一致）
+    let statusBadge, nodeCountText, statsBox;
     if(isBuilding){
       statusBadge = '<span class="graph-card-status building">构建中</span>';
-      stats = `<div><span>节点数</span><strong>—</strong></div>`;
+      nodeCountText = '—';
+      statsBox = `<div class="graph-card-stats"><div><span>节点数</span><strong>—</strong></div></div>`;
     } else if(isFailed){
       statusBadge = '<span class="graph-card-status failed">构建失败</span>';
-      stats = `<div><span>节点数</span><strong>—</strong></div>`;
+      nodeCountText = '—';
+      statsBox = '';
     } else {
-      statusBadge = isConfirmed
-        ? '<span class="graph-card-status confirmed">已确认</span>'
-        : '<span class="graph-card-status built">构建完成</span>';
+      statusBadge = '<span class="graph-card-status built">构建完成</span>';
       const nodeCount = (g.stats.subIndustries||0) + (g.stats.positions||0) + (g.stats.abilities||0);
-      stats = `<div><span>节点数</span><strong>${nodeCount}</strong></div>`;
+      nodeCountText = String(nodeCount);
+      statsBox = '';
     }
-    // 右上角操作按钮（··· 菜单：编辑 / 删除 / 分享）
-    const cardActions = `<div class="graph-card-corner" onclick="event.stopPropagation()">
-      <button class="corner-btn corner-more" onclick="toggleCardMenu(event, '${g.id}')" aria-label="操作">···</button>
+    // 同步状态徽标（同步中 / 同步完成 / 同步失败）
+    const syncMap = {syncing:'同步中', synced:'同步完成', sync_failed:'同步失败'};
+    if(g.syncStatus){
+      const syncCls = g.syncStatus==='sync_failed' ? 'failed' : g.syncStatus;
+      statusBadge += '<span class="graph-card-status '+syncCls+'">'+(syncMap[g.syncStatus]||'')+'</span>';
+    }
+    const isShared = isSharedGraph(g);
+    // 右上角操作按钮（··· 菜单：编辑 / 删除 / 分享）；他人分享给我的不显示
+    const cardActions = isShared ? '' : `<div class="graph-card-corner" onclick="event.stopPropagation()">
+      <button class="corner-btn corner-more" onclick="toggleCardMenu(event, '${g.id}')" aria-label="操作">⋮</button>
     </div>`;
-    // 底部按钮：构建中不显示，构建失败显示"重新构建"，其他显示"进入图谱"
+    // 底部按钮：构建中不显示，构建失败显示"重新构建"，其他显示"进入图谱"；他人分享给我的仅可查看
     let bottomBtn = '';
     if(isFailed){
-      bottomBtn = `<div class="graph-card-actions" onclick="event.stopPropagation()"><button onclick="rebuildGraph('${g.id}')" class="rebuild-btn">重新构建</button></div>`;
+      bottomBtn = isShared ? '' : `<div class="graph-card-actions" onclick="event.stopPropagation()"><button onclick="rebuildGraph('${g.id}')" class="rebuild-btn">重新构建</button></div>`;
     } else if(!isBuilding){
       bottomBtn = `<div class="graph-card-actions" onclick="event.stopPropagation()"><button onclick="enterTree('${g.id}')" class="enter-btn">进入图谱</button></div>`;
     }
     const cardClick = (isBuilding || isFailed) ? '' : ` onclick="enterTree('${g.id}')"`;
-    const meta = `<div class="graph-card-meta"><span>${permText(g)}</span><span>${g.createdAt ? '创建于 ' + g.createdAt : ''}</span></div>`;
+    const meta = `<div class="graph-card-meta"><span>${permText(g)} · 节点数 ${nodeCountText}</span><span>${graphTimeText(g)}</span></div>`;
     return `<div class="graph-card" data-graph="${g.id}"${cardClick}>
       ${cardActions}
       <div class="graph-card-name">${g.name}</div>
-      ${statusBadge}
+      <div class="graph-card-tags"><span class="graph-card-tag">${graphScopeLevel(g)}</span>${statusBadge}</div>
       <div class="graph-card-desc">${g.describe||''}</div>
-      <div class="graph-card-stats">${stats}</div>
+      ${statsBox}
       ${meta}
       ${bottomBtn}
     </div>`;
@@ -488,7 +652,7 @@ function confirmGraph(graphId){
   if(!g.tree || !g.tree.subIndustries || g.tree.subIndustries.length===0){
     return toast('图谱尚未构建任何节点，无法确认');
   }
-  g.status = 'confirmed';
+  g.buildStatus = 'built';
   g.confirmed = true;
   toast('能力图谱已确认');
   // 刷新详情页状态徽标和按钮
@@ -558,20 +722,59 @@ function refreshOrgTree(){
     cb.checked = ids.length > 0 && sel === ids.length;
     cb.indeterminate = sel > 0 && sel < ids.length;
   });
-  updatePermSummary();
+  refreshPermEcho();
 }
-function updatePermSummary(){
-  const members = [...document.querySelectorAll('.perm-member:checked')].map(c=>c.value);
-  const el = $('#permSummaryText');
-  if(el) el.textContent = members.length ? ('已选 ' + members.length + ' 个成员') : '仅自己';
+function refreshPermEcho(){
+  const tree = $('#orgTree');
+  const echoEl = $('#permEcho');
+  const countEl = $('#permEchoCount');
+  if(!tree || !echoEl) return;
+  const { orgs: orgIds, members: memberIds } = collectSelectedPerm(tree);
+  const total = orgIds.length + memberIds.length;
+  if(countEl) countEl.textContent = total ? ('已选 ' + total + ' 项') : '当前勾选的组织与用户';
+  if(!total){
+    echoEl.innerHTML = '<div class="perm-echo-empty">未选择任何组织或成员，仅自己可见</div>';
+    return;
+  }
+  let html = '';
+  if(orgIds.length){
+    html += '<div class="perm-echo-group-title">组织（' + orgIds.length + '）</div>';
+    orgIds.forEach(oid=>{
+      const node = ORG_MAP[oid];
+      const name = node ? node.name : oid;
+      const typeTag = node && node.type ? '<span class="org-type">' + node.type + '</span>' : '';
+      html += '<div class="perm-echo-item">' + name + typeTag + '<button type="button" class="perm-echo-remove" onclick="removePermEchoItem(\'org\',\'' + oid + '\')" aria-label="移除">×</button></div>';
+    });
+  }
+  if(memberIds.length){
+    html += '<div class="perm-echo-group-title">成员（' + memberIds.length + '）</div>';
+    memberIds.forEach(mid=>{
+      const m = MEMBER_MAP[mid];
+      const name = m ? m.name : mid;
+      const title = m && m.title ? '<span class="org-member-title">' + m.title + '</span>' : '';
+      html += '<div class="perm-echo-item">' + name + title + '<button type="button" class="perm-echo-remove" onclick="removePermEchoItem(\'user\',\'' + mid + '\')" aria-label="移除">×</button></div>';
+    });
+  }
+  echoEl.innerHTML = html;
+}
+function removePermEchoItem(kind, id){
+  const tree = $('#orgTree');
+  if(!tree) return;
+  if(kind === 'org'){
+    const cb = tree.querySelector('.org-select[value="' + id + '"]');
+    if(cb) cb.checked = false;
+    const node = ORG_MAP[id];
+    const ids = node ? collectMemberIds(node) : [];
+    tree.querySelectorAll('.perm-member').forEach(mc=>{ if(ids.includes(mc.value)) mc.checked = false; });
+  } else {
+    const mc = tree.querySelector('.perm-member[value="' + id + '"]');
+    if(mc) mc.checked = false;
+  }
+  refreshOrgTree();
 }
 function toggleOrg(e){
   e.stopPropagation();
   e.currentTarget.closest('.org-node').classList.toggle('collapsed');
-}
-function toggleOrgTree(){
-  $('#orgTree').classList.toggle('open');
-  $('#permSummary').classList.toggle('open');
 }
 function bindOrgTree(){
   const tree = $('#orgTree');
@@ -591,11 +794,20 @@ function openGraphSettings(graphId){
   currentSettingsGraphId = graphId;
   const g = graphs.find(x=>x.id===graphId);
   if(!g) return;
-  const selected = (g.permissions && g.permissions.members) || [];
-  $('#settingsForm').innerHTML = `<label>权限<div class="settings-tip">选择可访问该图谱的组织与成员</div>
-    <div class="perm-summary" id="permSummary" onclick="toggleOrgTree()"><span id="permSummaryText"></span><span class="perm-caret">▾</span></div>
-    <div class="org-tree" id="orgTree">${renderOrgTree(selected)}</div>
-  </label>`;
+  const selected = permFlatMembers(g);
+  $('#settingsForm').innerHTML = `
+    <div class="perm-layout">
+      <div class="perm-pane">
+        <div class="perm-heading">选择组织与成员</div>
+        <div class="settings-tip">勾选可访问该图谱的组织与用户</div>
+        <div class="org-tree open" id="orgTree">${renderOrgTree(selected)}</div>
+      </div>
+      <div class="perm-pane perm-echo">
+        <div class="perm-heading">已选</div>
+        <div class="settings-tip" id="permEchoCount">当前勾选的组织与用户</div>
+        <div class="perm-echo-list" id="permEcho"></div>
+      </div>
+    </div>`;
   bindOrgTree();
   openModal('#graphSettingsModal');
 }
@@ -619,8 +831,8 @@ function initTreePage(){
   $('#treeTitle').textContent = g.name + ' · 能力图谱';
   // 渲染状态徽标
   const badge = $('#treeStatusBadge');
-  const isConfirmed = g.status === 'confirmed' || g.confirmed;
-  if(g.status === 'building'){
+  const isConfirmed = !!g.confirmed;
+  if(g.buildStatus === 'building'){
     badge.textContent = '构建中';
     badge.className = 'tree-status-badge building';
   } else if(isConfirmed){
@@ -631,7 +843,7 @@ function initTreePage(){
     badge.className = 'tree-status-badge built';
   }
   const confirmBtn = $('#confirmGraphBtn');
-  confirmBtn.style.display = (g.status === 'built' && !isConfirmed) ? '' : 'none';
+  confirmBtn.style.display = (g.buildStatus === 'built' && !isConfirmed) ? '' : 'none';
   renderTreeStats(g.tree);
   renderGraph(g.tree);
 }
@@ -789,7 +1001,7 @@ function renderGraph(tree){
     <text x="${XP[0]}" y="8" class="gch">岗位 ${positions.length}</text>
     <text x="${XA[0]}" y="8" class="gch">能力项 ${abilities.length}</text>`;
 
-  $('#treeContainer').innerHTML = `<div class="tree-svg-wrap">
+  $('#treeContainer').innerHTML = `<div class="tree-svg-wrap" style="min-width:${GW}px">
     <svg viewBox="0 0 ${GW} ${GH}" preserveAspectRatio="xMidYMin meet" role="img" aria-label="四层能力树形图">
       <g class="colhead">${colHeaders}</g>
       ${links}${nodes}
@@ -976,7 +1188,7 @@ function deleteNode(nodeId, level){
     setNodeChildren(result.parent, result.level-1, children);
     toast('已删除节点');
     const g = graphs.find(x=>x.id===currentGraphId);
-    renderTree(g.tree);
+    renderGraph(g.tree);
     renderTreeStats(g.tree);
     saveGraphs();
   }
@@ -1566,7 +1778,7 @@ if($('#submitAddChild')) $('#submitAddChild').onclick = ()=>{
   expandedNodes.add(node.id);
   closeModal('#addChildModal');
   toast('已添加' + (addChildLevel===0?'子行业':addChildLevel===1?'岗位':'能力项'));
-  renderTree(tree);
+  renderGraph(tree);
   renderTreeStats(tree);
   saveGraphs();
 };
@@ -1583,19 +1795,26 @@ if($('#editNodeModal')) $('#editNodeModal').onclick = e=>{if(e.target.id==='edit
 if($('#addChildModal')) $('#addChildModal').onclick = e=>{if(e.target.id==='addChildModal')closeModal('#addChildModal')};
 
 // ========== 新增能力图谱 ==========
-if($('#createGraphButton')) $('#createGraphButton').onclick = ()=>openModal('#createGraphModal');
+if($('#createGraphButton')) $('#createGraphButton').onclick = ()=>{
+  $('#newGraphScope').value = defaultAgScope();
+  $('#newGraphName').value = '';
+  $('#newGraphDesc').value = '';
+  onGraphScopeChange();
+  openModal('#createGraphModal');
+};
 if($('#closeCreateGraph')) $('#closeCreateGraph').onclick = ()=>closeModal('#createGraphModal');
 if($('#cancelCreateGraph')) $('#cancelCreateGraph').onclick = ()=>closeModal('#createGraphModal');
 
 if($('#manualCreateGraph')) $('#manualCreateGraph').onclick = ()=>{
-  const name = $('#newGraphName').value.trim();
-  const desc = $('#newGraphDesc').value.trim();
-  if(!name) return toast('请输入行业名称');
+  const scope = readGraphScope();
+  const err = graphScopeError(scope);
+  if(err) return toast(err);
   closeModal('#createGraphModal');
-  // 手动创建：直接生成空树骨架，不经过 AI 构建
+  // 手动创建：直接生成所选层级下的空树骨架，不经过 AI 构建
   const newId = uid();
-  const newTree = { id:uid(), name, aliases:[], describe:desc, info:{stats:{positions:0,distinctAbilities:0,subIndustries:0}}, subIndustries:[] };
-  graphs.push({ id:newId, name, describe:desc, status:'built', createdAt:new Date().toISOString().slice(0,10), stats:{positions:0,abilities:0,subIndustries:0}, tree:newTree });
+  const name = graphScopeName(scope);
+  const newTree = { id:uid(), name:name, aliases:[], describe:scope.desc, info:{stats:{positions:0,distinctAbilities:0,subIndustries:0}}, subIndustries:[] };
+  graphs.push({ id:newId, name, describe:scope.desc, scopeLevel:scope.scopeLevel, industryName:scope.industryName, subIndustryName:scope.subIndustryName, positionName:scope.positionName, buildStatus:'built', syncStatus:'', createdAt:nowDateTime(), stats:{positions:0,abilities:0,subIndustries:0}, tree:newTree });
   renderList();
   saveGraphs();
   toast('已创建空能力图谱，请手动添加节点');
@@ -1603,21 +1822,21 @@ if($('#manualCreateGraph')) $('#manualCreateGraph').onclick = ()=>{
 if($('#createGraphModal')) $('#createGraphModal').onclick = e=>{if(e.target.id==='createGraphModal')closeModal('#createGraphModal')};
 
 if($('#submitCreateGraph')) $('#submitCreateGraph').onclick = ()=>{
-  const name = $('#newGraphName').value.trim();
-  const desc = $('#newGraphDesc').value.trim();
-  if(!name) return toast('请输入行业名称');
-  
+  const scope = readGraphScope();
+  const err = graphScopeError(scope);
+  if(err) return toast(err);
   closeModal('#createGraphModal');
   // 显示AI构建中
-  showBuildingAnimation(name, desc);
+  showBuildingAnimation(scope);
 };
 
-function showBuildingAnimation(name, desc){
-  $('#treeView').style.display = 'none';
-  $('#listView').style.display = 'block';
+function showBuildingAnimation(scope){
+  if($('#treeView')) $('#treeView').style.display = 'none';
+  if($('#listView')) $('#listView').style.display = 'block';
   // 添加构建中的卡片
   const tempId = 'temp-' + uid();
-  graphs.push({ id:tempId, name, describe:desc, status:'building', createdAt:new Date().toISOString().slice(0,10), stats:{positions:0,abilities:0,subIndustries:0}, tree:null });
+  const name = graphScopeName(scope);
+  graphs.push({ id:tempId, name, describe:scope.desc, scopeLevel:scope.scopeLevel, industryName:scope.industryName, subIndustryName:scope.subIndustryName, positionName:scope.positionName, buildStatus:'building', syncStatus:'', createdAt:nowDateTime(), stats:{positions:0,abilities:0,subIndustries:0}, tree:null });
   renderList();
   // 模拟AI构建过程
   const card = document.querySelector(`[data-graph="${tempId}"]`);
@@ -1627,20 +1846,20 @@ function showBuildingAnimation(name, desc){
     if(idx===-1) return;
     // 模拟30%概率构建失败
     if(Math.random() < 0.3){
-      graphs[idx].status = 'failed';
+      graphs[idx].buildStatus = 'build_failed';
       renderList();
       saveGraphs();
       toast('AI 构建失败，请重新构建');
       return;
     }
-    // 构建完成，生成空树骨架
-    const newTree = { id:uid(), name, aliases:[], describe:desc, info:{stats:{positions:0,distinctAbilities:0,subIndustries:0}}, subIndustries:[] };
-    graphs[idx].status = 'built';
+    // 构建完成：按所选层级生成树
+    const newTree = buildGraphTree(scope);
+    graphs[idx].buildStatus = 'built';
     graphs[idx].tree = newTree;
-    graphs[idx].stats = { positions:0, abilities:0, subIndustries:0 };
+    graphs[idx].stats = graphStats(newTree);
     renderList();
     saveGraphs();
-    toast('AI 已完成能力图谱构建，请进入编辑');
+    toast('AI 已完成「'+name+'」能力图谱构建，请进入编辑');
   }, 3000);
 };
 
@@ -1648,7 +1867,9 @@ function showBuildingAnimation(name, desc){
 function rebuildGraph(graphId){
   const g = graphs.find(x=>x.id===graphId);
   if(!g) return;
-  g.status = 'building';
+  const scope = { scopeLevel: graphScopeLevel(g), industryName: g.industryName || g.name, subIndustryName: g.subIndustryName, positionName: g.positionName, desc: g.describe };
+  g.buildStatus = 'building';
+  g.syncStatus = '';
   g.tree = null;
   g.stats = { positions:0, abilities:0, subIndustries:0 };
   renderList();
@@ -1659,16 +1880,16 @@ function rebuildGraph(graphId){
     const idx = graphs.findIndex(x=>x.id===graphId);
     if(idx===-1) return;
     if(Math.random() < 0.3){
-      graphs[idx].status = 'failed';
+      graphs[idx].buildStatus = 'build_failed';
       renderList();
       saveGraphs();
       toast('AI 构建失败，请重新构建');
       return;
     }
-    const newTree = { id:uid(), name:g.name, aliases:[], describe:g.describe, info:{stats:{positions:0,distinctAbilities:0,subIndustries:0}}, subIndustries:[] };
-    graphs[idx].status = 'built';
+    const newTree = buildGraphTree(scope);
+    graphs[idx].buildStatus = 'built';
     graphs[idx].tree = newTree;
-    graphs[idx].stats = { positions:0, abilities:0, subIndustries:0 };
+    graphs[idx].stats = graphStats(newTree);
     renderList();
     saveGraphs();
     toast('AI 已完成能力图谱构建，请进入编辑');
@@ -1728,7 +1949,7 @@ if($('#closeGraphSettings')){
   $('#submitGraphSettings').onclick = ()=>{
     const g = graphs.find(x=>x.id===currentSettingsGraphId);
     if(!g){ closeModal('#graphSettingsModal'); return; }
-    g.permissions = { members: [...document.querySelectorAll('.perm-member:checked')].map(c=>c.value) };
+    g.permissions = collectSelectedPerm($('#orgTree'));
     saveGraphs(); renderList(); closeModal('#graphSettingsModal'); toast('设置已保存');
   };
   $('#graphSettingsModal').onclick = e=>{ if(e.target.id==='graphSettingsModal') closeModal('#graphSettingsModal'); };
@@ -1737,11 +1958,16 @@ if($('#closeGraphSettings')){
 // 页面初始化：根据当前页面元素决定执行列表页还是详情页
 if($('#graphList')){
   // 列表页
+  if($('#agScopeFilter')) $('#agScopeFilter').onchange = renderList;
+  if($('#agStatusFilter')) $('#agStatusFilter').onchange = renderList;
+  if($('#agOwnerFilter')) $('#agOwnerFilter').onchange = renderList;
+  if($('#agSearchInput')) $('#agSearchInput').onkeydown = e => { if(e.key==='Enter') renderList(); };
+  if($('#agSearchBtn')) $('#agSearchBtn').onclick = renderList;
   const hadData = loadGraphs();
   // 确保示例数据中的构建失败卡片存在
-  if(!graphs.find(g=>g.id==='g4' && g.status==='failed')){
+  if(!graphs.find(g=>g.id==='g4' && g.buildStatus==='build_failed')){
     graphs = graphs.filter(g=>g.id!=='g4');
-    graphs.push({ id:'g4', name:'物流行业', describe:'以仓储管理、运输调度与供应链协同为核心能力体系。', status:'failed', createdAt:'2026-09-12', stats:{positions:0,abilities:0,subIndustries:0}, tree:null });
+    graphs.push({ id:'g4', name:'物流行业', describe:'以仓储管理、运输调度与供应链协同为核心能力体系。', buildStatus:'build_failed', syncStatus:'', createdAt:'2026-09-12', stats:{positions:0,abilities:0,subIndustries:0}, tree:null });
     saveGraphs();
   }
   renderList();

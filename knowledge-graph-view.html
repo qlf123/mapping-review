@@ -36,14 +36,10 @@
 .graph-search-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
 .graph-search-row label{font-size:12px;color:#8b99ac;width:50px;flex-shrink:0;text-align:right;}
 .graph-search-row select,.graph-search-row input{height:28px;padding:0 8px;border:1px solid #dfe6ef;border-radius:5px;font-size:12px;flex:1;min-width:0;}
-.graph-search-btn{height:30px;padding:0 14px;border:none;border-radius:5px;background:#5149e9;color:#fff;font-size:12px;cursor:pointer;}
-.graph-search-btn:hover{background:#4038c0;}
-.graph-search-btn.gray{background:#f0f0f0;color:#60718a;}
   .graph-icon-btn{width:30px;height:28px;padding:0;border:1px solid #dfe6ef;border-radius:5px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
   .graph-icon-btn:hover{border-color:#5149e9;}
   .graph-icon-btn.gray:hover{border-color:#c72c2a;}
   .graph-icon-btn.gray svg path{stroke:#8b99ac;}
-.graph-search-btn.gray:hover{background:#e0e0e0;}
 .graph-path-result{margin-top:8px;padding:8px 10px;background:#f5f3fa;border-radius:6px;font-size:12px;color:#555;display:none;line-height:1.6;}
 .graph-path-result .path-node{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:#fff;border-radius:4px;margin:2px 0;}
 .graph-path-result .path-arrow{color:#5149e9;margin:0 4px;font-weight:bold;}
@@ -150,8 +146,8 @@
             </div>
             <select id="filterNodeType"><option value="all">全部类型</option><option value="课程">课程</option><option value="章节">章节</option><option value="知识点">知识点</option><option value="技能规范">技能规范</option><option value="核心概念">核心概念</option></select>
             <input id="quickSearchInput" placeholder="节点名称" style="flex:1;min-width:100px;" />
-            <button class="graph-search-btn" id="quickSearchBtn" type="button">搜索</button>
-            <button class="graph-search-btn gray" id="clearNodeBtn" type="button">清除</button>
+            <button class="primary-button" id="quickSearchBtn" type="button">搜索</button>
+            <button class="ghost-button" id="clearNodeBtn" type="button">清除</button>
             <span class="graph-result-count" id="resultCount"></span>
           </div>
         </div>
@@ -162,8 +158,8 @@
             <span style="color:#8b99ac;font-size:13px;">→</span>
             <select id="pathEndType"><option value="all">全部类型</option><option value="课程">课程</option><option value="章节">章节</option><option value="知识点">知识点</option><option value="技能规范">技能规范</option><option value="核心概念">核心概念</option></select>
             <input id="pathEnd" placeholder="终点节点名称" style="flex:1;min-width:80px;" />
-            <button class="graph-search-btn" id="pathSearchBtn" type="button">查找链路</button>
-            <button class="graph-search-btn gray" id="clearFilterBtn" type="button">清除</button>
+            <button class="primary-button" id="pathSearchBtn" type="button">查找链路</button>
+            <button class="ghost-button" id="clearFilterBtn" type="button">清除</button>
           </div>
           <div class="graph-path-result" id="pathResult"></div>
         </div>
