@@ -673,6 +673,8 @@ function editGraph(graphId){
   if(!g) return;
   $('#editGraphName').value = g.name || '';
   $('#editGraphDesc').value = g.describe || '';
+  const scopeSel = $('#editGraphScope');
+  if(scopeSel) scopeSel.value = graphScopeLevel(g);
   openModal('#editGraphModal');
 }
 
@@ -1897,6 +1899,86 @@ function rebuildGraph(graphId){
 }
 
 // ========== 详情页按钮 ==========
+// ========== 检查更新：按市场变化生成更新建议（mock，仅「旅游业」有示例数据） ==========
+function marketUpdateItems(g){
+  if(!g || g.id!=='g1' || !g.tree) return [];
+  const subs = g.tree.subIndustries||[];
+  const sub = name => subs.find(s=>s.name===name);
+  const pos = name => subs.flatMap(s=>s.positions||[]).find(p=>p.name===name);
+  const abl = (p,name) => p && (p.abilities||[]).find(a=>a.name===name);
+  const items = [];
+  const guide = pos('导游');
+  if(guide && !abl(guide,'短视频与直播讲解')) items.push({ id:'ag-live', kind:'add', title:'新增能力项「短视频与直播讲解」',
+    path:'旅游业 › 旅行社与组团地接服务 › 导游', editName:'短视频与直播讲解',
+    desc:'导游岗位 JD 中「短视频拍摄」「直播讲解」「账号运营」的要求快速增加，现有能力项未覆盖线上讲解场景。建议类型：技能 · 讲解服务与文化传播 · 要求等级 L2。',
+    metrics:[{v:'23%',label:'导游 JD 提及率（近 90 天）',trend:'14pt',dir:'up'},{v:'2,140',label:'导游岗位 JD 样本'},{v:'3 期',label:'连续上升'}],
+    links:['招聘平台 A：导游岗位 1,320 条（2026-07 至 2026-10）','招聘平台 B：导游岗位 820 条','行业报告：《2026 文旅从业者技能需求调研》'],
+    conf:.91, impact:'0 条映射（新增后需在知识体系补技能）' });
+  const op = pos('旅行社计调'), sys = abl(op,'计调操作系统与订单处理');
+  if(sys && sys.requiredLevel==='L2') items.push({ id:'ag-level', kind:'modify', title:'「计调操作系统与订单处理」要求等级提高',
+    path:'旅游业 › 旅行社与组团地接服务 › 旅行社计调', diff:{label:'要求等级 ',from:'L2',to:'L3'},
+    desc:'计调 JD 普遍要求同时处理 OTA 多平台订单与库存同步，超出 L2「熟练录入、改单与退单」的描述。',
+    metrics:[{v:'41%',label:'要求多平台订单对接',trend:'17pt',dir:'up'},{v:'960',label:'计调岗位 JD 样本'}],
+    links:['招聘平台 A：计调岗位 610 条','招聘平台 B：计调岗位 350 条'],
+    conf:.84, impact:'2 条映射需复核等级' });
+  const study = sub('研学旅行与定制旅游策划执行');
+  if(study && !(study.positions||[]).some(p=>p.name==='定制旅行师')) items.push({ id:'ag-pos', kind:'add', title:'新增岗位「定制旅行师」',
+    path:'旅游业 › 研学旅行与定制旅游策划执行', editName:'定制旅行师',
+    desc:'定制游需求增长，出现独立招聘的「定制旅行师」岗位。建议同时新增 2 个能力项：客户需求访谈与画像、定制行程方案设计与报价。',
+    metrics:[{v:'680',label:'定制旅行师 JD（近 90 天）',trend:'2.1 倍',dir:'up'},{v:'1',label:'相关新职业公告'}],
+    links:['人社部新职业信息公告（示例）','招聘平台 A：定制旅行师 420 条','招聘平台 B：定制旅行师 260 条'],
+    conf:.87, impact:'新增 1 个岗位、2 个能力项' });
+  const ai = abl(guide,'AI行程规划工具应用');
+  if(ai && ai.flag) items.push({ id:'ag-emerging', kind:'modify', title:'「AI行程规划工具应用」转为常规能力',
+    path:'旅游业 › 旅行社与组团地接服务 › 导游', diff:{label:'标记 ',from:ai.flag,to:'常规能力'},
+    desc:'该能力已连续 3 期在导游 JD 中稳定出现（提及率 > 15%），不再属于仅有市场来源的新兴能力。',
+    metrics:[{v:'18%',label:'导游 JD 提及率',trend:'2pt',dir:'up'},{v:'3 期',label:'稳定超过门槛 15%'}],
+    links:['招聘平台 A、B 导游岗位连续 3 期统计'],
+    conf:.79, impact:'1 个能力项标记变化' });
+  const applied = g.appliedUpdates || {};
+  return items.filter(x => !(x.id in applied));
+}
+function applyMarketUpdates(g, accepted){
+  g.appliedUpdates = g.appliedUpdates || {};
+  accepted.forEach(x => g.appliedUpdates[x.id] = x.name || x.title);
+  const subs = g.tree.subIndustries||[];
+  const pos = name => subs.flatMap(s=>s.positions||[]).find(p=>p.name===name);
+  accepted.forEach(x=>{
+    if(x.id==='ag-live') pos('导游').abilities.push({ id:uid(), name:x.name, type:'skill', domain:'讲解服务与文化传播', core:false, weight:0.2, requiredLevel:'L2',
+      behaviorDesc:'策划并完成短视频讲解或直播导览，内容准确、节奏适合线上观看', observablePoints:['产出 1–3 分钟讲解短视频','完成一场 30 分钟直播导览','回应直播间提问'], assessMethod:'作品评审', inferred:true, flag:'新兴能力：仅有市场来源' });
+    if(x.id==='ag-level'){ const a=(pos('旅行社计调').abilities||[]).find(a=>a.name==='计调操作系统与订单处理'); a.requiredLevel='L3'; a.behaviorDesc='熟练处理多平台（含 OTA）订单录入、改退与库存同步'; }
+    if(x.id==='ag-pos') subs.find(s=>s.name==='研学旅行与定制旅游策划执行').positions.push({ id:uid(), name:x.name, aliases:['定制师'], describe:'根据客户需求设计并落地个性化旅行方案', careerLevel:'中级',
+      abilities:[
+        { id:uid(), name:'客户需求访谈与画像', type:'skill', domain:'产品策划与行程设计', core:true, weight:0.4, requiredLevel:'L2', behaviorDesc:'通过访谈梳理客户偏好、预算与禁忌并形成画像', observablePoints:['输出客户需求画像','识别隐性需求'], assessMethod:'情景模拟', inferred:true, flag:'新兴能力：仅有市场来源' },
+        { id:uid(), name:'定制行程方案设计与报价', type:'skill', domain:'产品策划与行程设计', core:true, weight:0.6, requiredLevel:'L3', behaviorDesc:'独立完成定制行程方案、资源采购与报价', observablePoints:['产出含成本明细的定制方案','提供至少两套备选'], assessMethod:'方案评审', inferred:true, flag:'新兴能力：仅有市场来源' }
+      ]});
+    if(x.id==='ag-emerging'){ const a=(pos('导游').abilities||[]).find(a=>a.name==='AI行程规划工具应用'); a.flag=null; a.inferred=false; }
+  });
+  let posCount=0; const ablSet=new Set();
+  subs.forEach(s=>{ posCount+=(s.positions||[]).length; (s.positions||[]).forEach(p=>(p.abilities||[]).forEach(a=>ablSet.add(a.id))); });
+  g.stats = { subIndustries:subs.length, positions:posCount, abilities:ablSet.size };
+  const m = /^v(\d+)\.(\d+)$/.exec(g.version||'v1.0');
+  g.version = 'v'+m[1]+'.'+(+m[2]+1);
+  g.updatedAt = nowDateTime();
+  saveGraphs(); renderTreeStats(g.tree); renderGraph(g.tree);
+  return '已更新到 '+g.version+'：采纳 '+accepted.length+' 项市场变化';
+}
+function mountGraphUpdate(){
+  if(!$('#checkUpdateBtn') || !window.GraphUpdate) return;
+  const cur = () => graphs.find(x=>x.id===currentGraphId);
+  GraphUpdate.mount({
+    btn:'#checkUpdateBtn', title:'能力图谱更新报告', toast,
+    scope: (cur()?.name||'') + ' · 全国 · 近 90 天',
+    sources:['招聘 JD 12,480 条','新职业公告 1 条','行业报告 3 份'],
+    lastChecked:'2026-10-13（每周自动检查）',
+    steps:['拉取近 90 天招聘数据','识别岗位与能力要求','与当前图谱比对','生成更新建议'],
+    storeKey:'gu-ignored-ability-'+currentGraphId,
+    version: () => cur()?.version || 'v1.0',
+    disabled: () => cur()?.buildStatus==='building' ? '图谱构建中，暂不能检查更新' : false,
+    getItems: () => marketUpdateItems(cur()),
+    onApply: acc => applyMarketUpdates(cur(), acc)
+  });
+}
 if($('#confirmGraphBtn')) $('#confirmGraphBtn').onclick = ()=>{ if(currentGraphId) confirmGraph(currentGraphId); };
 if($('#saveGraphBtn')) $('#saveGraphBtn').onclick = ()=>{
   saveGraphs();
@@ -1974,4 +2056,5 @@ if($('#graphList')){
 } else if($('#treeContainer')){
   // 详情页
   initTreePage();
+  mountGraphUpdate();
 }

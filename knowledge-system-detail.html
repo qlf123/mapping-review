@@ -21,6 +21,9 @@
       .ksd-header{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid #e2e8f0;background:#fff;flex-shrink:0;}
       .ksd-header a{color:#5149e9;text-decoration:none;font-size:14px;}
       .ksd-header select{height:32px;padding:0 10px;border:1px solid #dfe6ef;border-radius:6px;font-size:13px;min-width:200px;}
+      .ksd-check-btn{margin-left:auto;height:32px;padding:0 14px;border:1px solid #dfe6ef;border-radius:6px;background:#fff;color:#2f405d;font-size:13px;cursor:pointer;}
+      .ksd-check-btn:hover{border-color:#5149e9;color:#5149e9;}
+      .ksd-check-btn:disabled{opacity:.6;cursor:default;}
       .ksd-header input{height:32px;padding:0 10px;border:1px solid #dfe6ef;border-radius:6px;font-size:13px;width:180px;}
       .ksd-canvas-wrap{flex:1;position:relative;overflow:hidden;background:#f5f3fa;}
       .ksd-canvas-wrap svg{width:100%;height:100%;display:block;}
@@ -50,6 +53,7 @@
       .ksd-context-menu-item .icon{width:16px;text-align:center;font-size:14px;}
         </style>
     <link rel="stylesheet" href="design-tokens.css" />
+  <link rel="stylesheet" href="graph-update.css" />
 </head>
   <body>
     <aside class="platform-sidebar" aria-label="图谱平台导航">
@@ -94,6 +98,7 @@
               <option value="guide">旅游类-导游</option>
             </select>
             <input type="text" id="ksSearchInput" placeholder="搜索节点..." />
+            <button type="button" class="ksd-check-btn" id="checkUpdateBtn">检查更新</button>
           </div>
           <div class="ksd-canvas-wrap" id="canvasWrap">
             <svg id="ksSvg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet"></svg>
@@ -120,6 +125,7 @@
       <div class="ksd-context-menu-divider"></div>
       <div class="ksd-context-menu-item danger" onclick="ctxAction('delete')"><span class="icon">🗑</span>删除节点</div>
     </div>
+    <script src="graph-update.js"></script>
     <script>
       function toast(text){var t=document.getElementById('toast');t.textContent=text;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(function(){t.classList.remove('show')},2200)}
 
@@ -208,8 +214,9 @@
             class:isRoot?'ksd-node-rect root':(n.expanded?'ksd-node-rect expanded':'ksd-node-rect'),
             x:x,y:y,width:w,height:h,rx:6,ry:6,
             fill:isRoot?'#5149e9':'#fff',
-            stroke:isRoot?'#5149e9':(n.expanded?'#5149e9':'#dfe6ef'),
-            'stroke-width':1.5
+            stroke:isRoot?'#5149e9':(n.isNew?'#12b76a':(n.retire?'#f79009':(n.expanded?'#5149e9':'#dfe6ef'))),
+            'stroke-width':1.5,
+            'stroke-dasharray':n.retire?'4 3':'none'
           });
           rect.addEventListener('click',function(){toggleNode(n._id);});
           (function(ref){rect.addEventListener('contextmenu',function(e){showContextMenu(e,n._id,ref);});})(n);
@@ -263,6 +270,73 @@
       }
 
       document.getElementById('ksSelect').onchange=function(){toast('切换知识体系');};
+      // ===== 检查更新：能力图谱变化经映射传导 + 标准与课程信号（mock） =====
+      var ksVersion='v2.1';
+      function findNode(name,node){node=node||treeData;if(node.name===name)return node;if(node.children)for(var i=0;i<node.children.length;i++){var r=findNode(name,node.children[i]);if(r)return r;}return null;}
+      function hasChild(parent,name){return !!(parent&&parent.children&&parent.children.some(function(c){return c.name===name;}));}
+      // 读取能力图谱（同一会话内）中「旅游业」已有的能力项与岗位
+      function abilityGraph(){try{var gs=JSON.parse(sessionStorage.getItem('ability_graphs_v3')||'[]');return gs.find(function(g){return g.id==='g1';})||null;}catch(e){return null;}}
+      // 能力图谱已采纳的市场更新：{更新项 id: 采纳后的名称}
+      function agApplied(id){var g=abilityGraph();var a=g&&g.appliedUpdates;return a&&(id in a)?{g:g,name:a[id]}:null;}
+      function ksUpdateItems(){
+        var items=[];
+        var live=agApplied('ag-live');
+        var dm=findNode('数字化营销');
+        if(live&&!hasChild(dm,'策划并制作葡萄酒短视频与直播内容'))items.push({id:'ks-gap-live',kind:'gap',title:'能力项「'+live.name+'」无对应技能',
+          path:'专业基础课程 › 数字化营销',editName:'策划并制作葡萄酒短视频与直播内容',
+          desc:'能力图谱「旅游业」已采纳该能力项，当前知识体系中没有可映射的技能。建议在「数字化营销」下新增任务（名称可修改）。',
+          metrics:[{v:'0 条',label:'现有映射'},{v:'23%',label:'导游 JD 提及率（能力图谱证据）',trend:'14pt',dir:'up'}],
+          links:['能力图谱：旅游业 › 导游 › '+live.name+'（'+live.g.version+' 已采纳）','映射审核台：该能力项暂无候选映射'],
+          conf:.88,impact:'1 门课程新增 1 个任务'});
+        var custom=agApplied('ag-pos');
+        var ext=findNode('专业拓展课程');
+        if(custom&&!hasChild(ext,'定制旅行产品设计'))items.push({id:'ks-gap-custom',kind:'gap',title:'新岗位「'+custom.name+'」缺少对应课程',
+          path:'专业拓展课程',editName:'定制旅行产品设计',
+          desc:'能力图谱新增岗位「'+custom.name+'」及 2 个能力项，知识体系中只有零散知识点可映射。建议在专业拓展课程下新增课程。',
+          metrics:[{v:'2 个',label:'未覆盖能力项'},{v:'680',label:'岗位 JD（能力图谱证据）',trend:'2.1 倍',dir:'up'}],
+          links:['能力图谱：旅游业 › 研学旅行与定制旅游策划执行 › '+custom.name,'能力项：客户需求访谈与画像、定制行程方案设计与报价'],
+          conf:.81,impact:'新增 1 门课程'});
+        var base=findNode('葡萄酒基础');
+        if(!hasChild(base,'葡萄酒标签与标识规范'))items.push({id:'ks-std',kind:'add',title:'新增标准「葡萄酒标签与标识规范」',
+          path:'专业基础课程 › 葡萄酒基础',editName:'葡萄酒标签与标识规范',
+          desc:'相关行业标准发布修订版（示例），对酒标信息、年份与产区标注提出新要求，课程中尚无对应的达标依据。',
+          metrics:[{v:'1 项',label:'标准修订（示例）'},{v:'3 条',label:'涉及条款'}],
+          links:['行业标准修订公告（示例）：发布机构、发布日期、条款 4.2–4.4'],
+          conf:.82,impact:'1 门课程新增 1 个标准节点'});
+        var leisure=findNode('休闲文化概论');
+        if(leisure&&!leisure.retire)items.push({id:'ks-retire',kind:'retire',title:'课程「休闲文化概论」不再列入教学标准',
+          path:'专业基础课程 › 休闲文化概论',
+          desc:'专业教学标准修订后（示例），该课程不再列入专业基础课程。',
+          metrics:[{v:'1 项',label:'教学标准修订（示例）'},{v:'0 门',label:'修订后对应课程'}],
+          note:'采纳后只标记「建议下线」，课程和关联内容保留，需教研组评审后再手动处理。',
+          links:['专业教学标准修订稿（示例）：课程设置章节'],
+          conf:.73,impact:'1 门课程（不自动删除）'});
+        return items;
+      }
+      function addChild(parent,node){if(!parent.children)parent.children=[];parent.children.push(node);parent.expanded=true;}
+      function applyKsUpdates(acc){
+        acc.forEach(function(x){
+          if(x.id==='ks-gap-live')addChild(findNode('数字化营销'),{name:x.name,type:'task',color:'#8b5cf6',isNew:true});
+          if(x.id==='ks-gap-custom')addChild(findNode('专业拓展课程'),{name:x.name,type:'course',color:'#3b82f6',isNew:true});
+          if(x.id==='ks-std')addChild(findNode('葡萄酒基础'),{name:x.name,type:'standard',color:'#8b5cf6',isNew:true});
+          if(x.id==='ks-retire')findNode('休闲文化概论').retire=true;
+        });
+        findNode('专业基础课程').expanded=true;
+        assignIds(treeData);renderTree();
+        var m=/^v(\d+)\.(\d+)$/.exec(ksVersion);ksVersion='v'+m[1]+'.'+(+m[2]+1);
+        return '已更新到 '+ksVersion+'：采纳 '+acc.length+' 项（新增节点绿框，建议下线橙色虚框）';
+      }
+      GraphUpdate.mount({
+        btn:'#checkUpdateBtn',title:'知识体系更新报告',toast:toast,
+        scope:'旅游类-葡萄酒文化与营销 · 关联能力图谱「旅游业」',
+        sources:['市场侧：能力图谱「旅游业」已采纳变更','教育侧：教学标准、行业标准（示例）'],
+        lastChecked:'2026-10-13（每周自动检查）',
+        steps:['检查上游能力图谱状态','读取已采纳的能力图谱变更','检查映射缺口','比对教学标准与行业标准','生成更新建议'],
+        storeKey:'gu-ignored-ks-wine',
+        version:function(){return ksVersion;},
+        getItems:ksUpdateItems,
+        onApply:applyKsUpdates
+      });
       document.getElementById('ksSearchInput').onkeydown=function(e){if(e.key==='Enter'){toast('搜索：'+e.target.value);}};
 
 

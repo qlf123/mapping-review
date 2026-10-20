@@ -6,6 +6,7 @@
 <title>能力图谱详情｜专业图谱平台</title>
 <link rel="stylesheet" href="ability-graph.css" />
   <link rel="stylesheet" href="design-tokens.css" />
+  <link rel="stylesheet" href="graph-update.css" />
 </head>
 <body>
 <aside class="platform-sidebar" aria-label="图谱平台导航">
@@ -38,6 +39,7 @@
     <div class="tree-stats" id="treeStats"></div>
   </section>
   <div class="tree-corner-actions">
+    <button class="task-button" id="checkUpdateBtn" type="button">检查更新</button>
     <button class="task-button" id="addNodeBtn" type="button" style="border-color:#5149e9;color:#5149e9;">＋ 新增节点</button>
     <button class="task-button" id="saveGraphBtn" type="button" style="background:#5149e9;color:#fff;border-color:#5149e9;">保存</button>
   </div>
@@ -103,6 +105,7 @@
 <div id="contextMenu" class="context-menu" role="menu" aria-hidden="true"></div>
 <div id="toast" class="toast" role="status"></div>
 </div>
+<script src="graph-update.js"></script>
 <script src="ability-graph.js"></script>
 </body>
 </html>

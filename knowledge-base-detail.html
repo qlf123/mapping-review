@@ -41,7 +41,7 @@
 
 /* ---------- 表格 ---------- */
 .kbd-table{border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#fff;}
-.kbd-thead,.kbd-row{display:grid;grid-template-columns:40px minmax(220px,1fr) 80px 80px 110px 100px 150px 60px;align-items:center;}
+.kbd-thead,.kbd-row{display:grid;grid-template-columns:40px minmax(220px,1fr) 140px 80px 150px 80px 150px 100px 60px;align-items:center;}
 .kbd-thead{background:#f7f9fc;border-bottom:1px solid #e2e8f0;font-size:12px;color:#8b99ac;font-weight:600;}
 .kbd-thead>span{padding:11px 12px;white-space:nowrap;}
 .kbd-row{border-bottom:1px solid #f0f0f0;font-size:13px;color:#41536f;transition:background .12s;}
@@ -93,6 +93,9 @@
 .kbd-hit-name{font-size:14px;font-weight:600;color:#31425e;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .kbd-hit-snippet{font-size:13px;color:#41536f;line-height:1.7;white-space:pre-line;}
 .kbd-hit-score{font-size:12px;font-weight:600;color:#5149e9;flex-shrink:0;}
+.kbd-hit-thumb{flex:none;width:96px;height:64px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#f7f9fc;line-height:0;}
+.kbd-hit-thumb svg{width:100%;height:100%;display:block;}
+.kbd-hit-ts{font-size:12px;color:#8b99ac;}
 .kbd-hit-empty{color:#8b99ac;font-size:13px;padding:20px 0;text-align:center;}
 
 /* ---------- 设置 / API ---------- */
@@ -121,14 +124,6 @@
 .kbd-dialog-body{padding:20px;overflow-y:auto;flex:1;min-height:0;}
 .kbd-dialog-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid #eef0f2;}
 
-/* 添加文件弹窗 */
-.kbd-add-types{display:flex;gap:8px;margin-bottom:16px;}
-.kbd-add-type{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 10px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;cursor:pointer;font-size:13px;color:#41536f;}
-.kbd-add-type:hover{border-color:#5149e9;}
-.kbd-add-type.active{border:1.5px solid #5149e9;background:#f7f6ff;color:#5149e9;font-weight:600;}
-.kbd-drop{border:1px dashed #c9c2ef;border-radius:10px;background:#f7f6ff;padding:28px 16px;text-align:center;font-size:13px;color:#8b99ac;display:flex;flex-direction:column;align-items:center;gap:8px;}
-.kbd-drop b{color:#5149e9;}
-.kbd-add-note{font-size:12px;color:#8b99ac;line-height:1.7;margin:12px 0 0;}
 
 /* ---------- 文档详情 ---------- */
 .dd-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:18px;}
@@ -136,6 +131,11 @@
 .dd-stat b{font-size:17px;color:#2f405d;}
 .dd-stat span{font-size:12px;color:#8b99ac;}
 .dd-sub{font-size:13px;font-weight:700;color:#2f405d;margin:16px 0 8px;}
+.dd-seg-toolbar{display:flex;align-items:center;gap:8px;margin:0 0 12px;flex-wrap:wrap;}
+.dd-seg-toolbar b{font-size:15px;margin-right:4px;color:#2f405d;white-space:nowrap;}
+.dd-seg-toolbar select{height:32px;padding:0 8px;border:1px solid #dfe6ef;border-radius:6px;font-size:13px;background:#fff;color:#41536f;font-family:inherit;}
+.search{height:32px;min-width:150px;flex:1 1 160px;border:1px solid #dfe6ef;border-radius:8px;padding:0 10px 0 32px;font-size:13px;color:#41536f;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238b99ac' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") no-repeat 11px center;box-sizing:border-box;font-family:inherit;}
+.search:focus{outline:none;border-color:#5149e9;}
 .dd-seg{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px;}
 .dd-seg.on{border:1.5px solid #5149e9;background:#fafaff;}
 .dd-seg-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:#8b99ac;}
@@ -170,6 +170,103 @@
 
 @keyframes kbdPulse{0%,100%{opacity:1}50%{opacity:.55}}
 .kbd-pulse{animation:kbdPulse 1.2s ease-in-out infinite;}
+
+/* ---------- 分段详情：两栏 + 知识点关联 ---------- */
+.doc-grid{display:grid;grid-template-columns:220px minmax(0,1fr) 300px;gap:18px;align-items:start;}
+.doc-col{display:flex;flex-direction:column;gap:10px;min-width:0;}
+.doc-toc{border-right:1px solid #eef0f2;padding-right:14px;position:sticky;top:0;align-self:start;max-height:calc(100vh - 32px);overflow:auto;display:flex;flex-direction:column;gap:2px;}
+.doc-toc-title{font-size:13px;font-weight:700;color:#2f405d;padding:2px 10px 10px;}
+.doc-toc-btn{display:block;width:100%;text-align:left;border:0;background:none;padding:8px 10px;border-radius:8px;font-size:13px;color:#41536f;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:inherit;}
+.doc-toc-btn:hover{background:#f5f7fa;}
+.doc-toc-btn.on{background:#eef0ff;color:#5149e9;font-weight:600;}
+@media (max-width:1300px){.doc-grid{grid-template-columns:minmax(0,1fr) 300px;}.doc-toc{display:none;}}
+.seg-card{display:flex;flex-direction:column;gap:9px;padding:12px 14px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;}
+.seg-card.on{border:1.5px solid #5149e9;background:#fafaff;}
+.seg-card:hover{border-color:#c9c2ef;}
+.seg-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:#8b99ac;}
+.seg-body{font-size:13px;color:#41536f;line-height:1.8;white-space:pre-line;}
+.seg-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.seg-edit{margin-left:auto;}
+.kp{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#5149e9;background:#eef0ff;border:1px solid #dcd6f5;border-radius:10px;padding:2px 8px;}
+.kp .x{cursor:pointer;opacity:.6;font-style:normal;}
+.kp .x:hover{opacity:1;}
+.dd-vhint{font-size:12px;color:#8b99ac;background:#f7f9fc;border-radius:6px;padding:6px 10px;margin:-6px 0 14px;}
+.seg-part{padding:6px 0;}
+.seg-part+.seg-part{border-top:1px dashed #e2e8f0;}
+.seg-part-title{font-size:12px;font-weight:600;color:#8b99ac;margin-bottom:4px;}
+.seg-fail{font-size:13px;color:#c72c2a;display:flex;align-items:center;gap:8px;}
+.sugg-src{font-size:11px;color:#0e9384;background:#e6f6f3;border-radius:4px;padding:1px 6px;}
+.sugg-ts{border:0;background:none;color:#5149e9;font-size:12px;cursor:pointer;padding:0;font-family:inherit;}
+.kp-none{font-size:12px;color:#b4bdcb;}
+.kp-add{font-size:12px;color:#5149e9;background:none;border:1px dashed #c9c2ef;border-radius:10px;padding:2px 8px;cursor:pointer;}
+.kp-add:hover{background:#f7f6ff;}
+.sugg-badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#f59e0b;background:#fff7e6;border-radius:10px;padding:2px 8px;font-weight:500;cursor:pointer;}
+.doc-aside{display:flex;flex-direction:column;gap:14px;position:sticky;top:0;}
+.aside-card{border:1px solid #e2e8f0;border-radius:10px;background:#fff;overflow:hidden;}
+.aside-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid #f0f0f0;font-size:13px;font-weight:700;color:#2f405d;}
+.aside-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
+.aicard{border-radius:14px;padding:16px;background:linear-gradient(180deg,#FFFAEB,#fff);border:1px solid #FEDF89;display:flex;flex-direction:column;gap:12px;}
+.ai-head{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#2f405d;}
+.ai-stats{display:flex;gap:20px;}
+.ai-stat{display:flex;flex-direction:column;gap:2px;}
+.ai-stat b{font-size:22px;font-weight:700;color:#2f405d;line-height:1.1;}
+.ai-stat span{font-size:12px;color:#8b99ac;}
+.ai-btn{width:100%;height:34px;border-radius:8px;border:1px solid #dfe6ef;background:#fff;font-size:13px;color:#41536f;cursor:pointer;font-family:inherit;}
+.ai-btn:hover{border-color:#c9c2ef;}
+.ai-btn.pri{background:#5149e9;border-color:#5149e9;color:#fff;}
+.ai-btn.pri:hover{background:#4038c0;}
+.ai-btn:disabled{opacity:.5;cursor:not-allowed;}
+.ai-note{font-size:12px;color:#8b99ac;line-height:1.7;}
+.sugg-card{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:9px;background:#fbfcfe;}
+.sugg-card:hover{border-color:#c9c2ef;}
+.sugg-card.sugg-done{opacity:.55;}
+.sugg-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.sugg-type{font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px;}
+.sugg-type.A{color:#5149e9;background:#eef0ff;}
+.sugg-type.B{color:#0e9384;background:#e6f6f3;}
+.sugg-type.C{color:#dc6803;background:#fff0e6;}
+.sugg-type.D{color:#7a5af8;background:#f4f3ff;}
+.sugg-type.U{color:#c72c2a;background:#fff1f0;}
+a.kp-link{text-decoration:none;cursor:pointer;}
+a.kp-link:hover{border-color:#5149e9;}
+.sugg-name{font-size:13px;font-weight:600;color:#31425e;}
+.sugg-conf{font-size:11px;color:#16a34a;margin-left:auto;font-variant-numeric:tabular-nums;}
+.sugg-quote{font-size:12px;color:#8b99ac;line-height:1.6;border-left:2px solid #e2e8f0;padding-left:8px;}
+.sugg-row{display:flex;gap:6px;flex-wrap:wrap;}
+.mount-box{display:flex;flex-direction:column;gap:6px;}
+.mount-title{font-size:12px;font-weight:600;color:#41536f;}
+.mount-item{padding:6px 8px;border:1px dashed #dcd6f5;border-radius:7px;background:#fff;}
+.mount-path{display:flex;align-items:center;gap:6px;font-size:12px;color:#5149e9;font-weight:500;}
+.mount-reason{font-size:11px;color:#8b99ac;margin-top:2px;line-height:1.5;}
+.mount-none{font-size:12px;color:#c72c2a;}
+.sugg-mini{font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid #dfe6ef;background:#fff;color:#41536f;cursor:pointer;}
+.sugg-mini:hover{border-color:#5149e9;color:#5149e9;}
+.sugg-mini.pri{background:#5149e9;border-color:#5149e9;color:#fff;}
+.sugg-mini.pri:hover{background:#4038c0;color:#fff;}
+.sugg-mini.danger{color:#c72c2a;}
+.sugg-mini.danger:hover{border-color:#c72c2a;color:#c72c2a;}
+/* 编辑分段抽屉 */
+.seg-drawer{position:fixed;inset:0;z-index:90;display:none;}
+.seg-drawer.show{display:block;}
+.seg-drawer-mask{position:absolute;inset:0;background:rgba(15,23,42,.35);}
+.seg-drawer-panel{position:absolute;top:0;right:0;bottom:0;width:520px;max-width:94vw;background:#fff;box-shadow:-10px 0 40px rgba(0,0,0,.18);display:flex;flex-direction:column;}
+.drawer-head{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid #eef0f2;}
+.drawer-head h2{font-size:16px;font-weight:700;color:#2f405d;margin:0;flex:1;}
+.drawer-body{flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:18px;min-height:0;}
+.drawer-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid #eef0f2;}
+.drawer-sec-title{font-size:13px;font-weight:700;color:#2f405d;}
+.edtx{width:100%;min-height:90px;padding:10px 12px;border:1px solid #dfe6ef;border-radius:8px;font-size:13px;font-family:inherit;line-height:1.7;resize:vertical;color:#41536f;box-sizing:border-box;}
+.edtx:focus{outline:none;border-color:#5149e9;}
+.field{width:100%;height:34px;padding:0 10px;border:1px solid #dfe6ef;border-radius:8px;font-size:13px;color:#41536f;box-sizing:border-box;font-family:inherit;}
+.field:focus{outline:none;border-color:#5149e9;}
+.pk{display:flex;flex-direction:column;gap:8px;border:1px solid #e2e8f0;border-radius:9px;padding:10px;}
+.pk-list{max-height:230px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;}
+.pk-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:7px;border:0;background:none;cursor:pointer;font-size:13px;color:#31425e;width:100%;text-align:left;font-family:inherit;}
+.pk-item:hover{background:#f5f3fa;}
+.pk-item.on{background:#eef0ff;color:#5149e9;}
+.pk-check{width:16px;height:16px;flex:none;border:1px solid #c9c2ef;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:#fff;background:#fff;}
+.pk-item.on .pk-check{background:#5149e9;border-color:#5149e9;}
+.pk-path{font-size:11px;color:#8b99ac;margin-left:auto;}
 </style>
   <link rel="stylesheet" href="design-tokens.css" />
 </head>
@@ -192,13 +289,13 @@
 <div class="platform-page">
 <main class="app-shell">
 
-  <div class="kbd-head">
+  <div class="kbd-head" id="kbHead">
     <a class="kbd-back" href="knowledge-base.html">← 知识库</a>
     <h1 class="kbd-title" id="kbTitle">旅游管理专业教学资源库</h1>
     <span class="kbd-meta" id="kbMeta">admin · 更新于 3 周前</span>
     <div class="kbd-head-actions">
       <button class="kbd-ghost" onclick="toast('同步数据源')">↻ 同步</button>
-      <button class="kbd-primary" onclick="openAdd()">＋ 添加文件</button>
+      <button class="kbd-primary" onclick="goAddFiles()">＋ 添加文件</button>
     </div>
   </div>
 
@@ -235,7 +332,7 @@
       </select>
       <input type="text" id="docSearch" placeholder="搜索文档名称" onkeydown="if(event.key==='Enter')renderTable()" />
       <div class="spacer"></div>
-      <button class="kbd-primary" onclick="openAdd()">＋ 添加文件</button>
+      <button class="kbd-primary" onclick="goAddFiles()">＋ 添加文件</button>
     </div>
 
     <div class="kbd-batch" id="batchBar">
@@ -247,7 +344,7 @@
     <div class="kbd-table">
       <div class="kbd-thead">
         <span class="kbd-cell-check"><input type="checkbox" class="kbd-check" id="selectAll" onchange="toggleSelectAll()" aria-label="全选"></span>
-        <span>文档</span><span>分段</span><span>命中</span><span>状态</span><span>索引方式</span><span>上传时间</span><span></span>
+        <span>名称</span><span>分段模式</span><span>字符数</span><span>知识点</span><span>召回次数</span><span>上传时间</span><span>状态</span><span>操作</span>
       </div>
       <div id="docRows"></div>
     </div>
@@ -264,7 +361,7 @@
         <button class="kbd-page-btn">›</button>
       </div>
     </div>
-    <p class="kbd-footnote">点击文档名可查看分段详情；当前为示例数据，仅展示部分文档。</p>
+    <p class="kbd-footnote">点击文档名查看并编辑分段信息；每个分段可关联知识点、处理 AI 建议。当前为示例数据，仅展示部分文档。</p>
   </div>
 
   <!-- 召回测试 -->
@@ -306,6 +403,21 @@
     </div>
   </div>
 
+  <!-- 文档详情（整页） -->
+  <div id="docDetail" style="display:none;">
+    <div class="kbd-head">
+      <a class="kbd-back" href="javascript:void(0)" onclick="closeDoc()">← 返回文档列表</a>
+      <h1 class="kbd-title" id="docTitle"></h1>
+      <span class="kbd-meta" id="docMeta"></span>
+      <div class="kbd-head-actions">
+        <button class="kbd-ghost" id="docPreviewBtn" onclick="openPreview()">源文预览</button>
+        <button class="kbd-ghost" id="docReparseBtn" onclick="reparseActive()">⟳ 重新解析</button>
+        <button class="kbd-ghost" onclick="toast('下载「'+activeDoc.name+'」')">↓ 下载</button>
+      </div>
+    </div>
+    <div id="docDetailBody"></div>
+  </div>
+
   <div id="toast" class="toast" role="status"></div>
 </main>
 </div>
@@ -321,43 +433,26 @@
   <div class="kbd-menu-item danger" data-act="delete">🗑 删除</div>
 </div>
 
-<!-- 添加文件弹窗 -->
-<div class="kbd-modal" id="addModal">
-  <div class="kbd-dialog">
-    <div class="kbd-dialog-head"><h2>添加文件</h2><button class="kbd-close" onclick="closeAdd()">×</button></div>
-    <div class="kbd-dialog-body">
-      <div class="kbd-add-types" id="addTypes">
-        <div class="kbd-add-type active" data-type="text" onclick="pickType('text')"><span id="t_icon_text"></span>文本</div>
-        <div class="kbd-add-type" data-type="image" onclick="pickType('image')"><span id="t_icon_image"></span>图文</div>
-        <div class="kbd-add-type" data-type="av" onclick="pickType('av')"><span id="t_icon_av"></span>音视频</div>
-      </div>
-      <div class="kbd-drop" onclick="toast('拖拽或选择文件')">
-        <span id="dropIcon"></span>
-        <div>拖拽文件至此，或 <b>选择文件</b></div>
-        <span id="dropHint" style="font-size:12px"></span>
-      </div>
-      <p class="kbd-add-note" id="addNote">文本：DOCX / PDF / TXT / MD 等；图文：JPG / PNG / WEBP 等；音视频：MP3 / M4A / MP4 / MOV 等。单个文件不超过对应类型大小限制。</p>
-    </div>
-    <div class="kbd-dialog-foot">
-      <button class="kbd-ghost" onclick="closeAdd()">取消</button>
-      <button class="kbd-primary" onclick="confirmAdd()">开始处理</button>
-    </div>
-  </div>
+
+
+<!-- 编辑分段抽屉 -->
+<div class="seg-drawer" id="segDrawer">
+  <div class="seg-drawer-mask" onclick="closeDrawer()"></div>
+  <div class="seg-drawer-panel" id="segDrawerPanel"></div>
 </div>
 
-<!-- 文档详情弹窗 -->
-<div class="kbd-modal" id="docModal">
-  <div class="kbd-dialog" style="width:880px">
-    <div class="kbd-dialog-head">
-      <h2 id="docTitle"></h2>
-      <button class="kbd-close" onclick="closeDoc()">×</button>
-    </div>
-    <div class="kbd-dialog-body" id="docBody"></div>
-    <div class="kbd-dialog-foot" id="docFoot">
-      <button class="kbd-ghost" id="docReparseBtn" onclick="reparseActive()">⟳ 重新解析</button>
-      <button class="kbd-ghost" onclick="toast('下载「'+activeDoc.name+'」')">↓ 下载</button>
-      <button class="kbd-primary" onclick="closeDoc()">关闭</button>
-    </div>
+<!-- 源文预览弹窗 -->
+<div class="kbd-modal" id="confirmModal">
+  <div class="kbd-dialog" style="width:420px">
+    <div class="kbd-dialog-head"><h2>一键通过高置信关联</h2><button class="kbd-close" onclick="closeConfirm()">×</button></div>
+    <div class="kbd-dialog-body"><p id="confirmText" style="margin:0;font-size:14px;color:#41536f;line-height:1.7"></p></div>
+    <div class="kbd-dialog-foot"><button class="kbd-ghost" onclick="closeConfirm()">取消</button><button class="kbd-primary" onclick="doOneClick()">确认通过</button></div>
+  </div>
+</div>
+<div class="kbd-modal" id="previewModal">
+  <div class="kbd-dialog" style="width:860px">
+    <div class="kbd-dialog-head"><h2 id="previewTitle"></h2><button class="kbd-close" onclick="closePreview()">×</button></div>
+    <div class="kbd-dialog-body" id="previewBody"></div>
   </div>
 </div>
 
@@ -408,6 +503,13 @@ const IMG_DESK = `<svg viewBox="0 0 480 320" xmlns="http://www.w3.org/2000/svg" 
   <rect x="30" y="214" width="420" height="16" rx="3" fill="#C9A27C"/><rect x="40" y="230" width="400" height="70" fill="#8B6B4A"/>
   </svg>`;
 
+const IMG_MENU = `<svg viewBox="0 0 480 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="手写中餐菜单">
+  <rect width="480" height="320" fill="#E8E2D6"/><rect x="120" y="20" width="240" height="280" rx="4" fill="#FFFDF7" stroke="#CDBFA6" transform="rotate(-3 240 160)"/>
+  <g font-family="Kaiti SC, STKaiti, KaiTi, serif" fill="#3B2F25" transform="rotate(-3 240 160)">
+    <text x="190" y="70" font-size="24" font-weight="700">今日推荐</text>
+    <text x="150" y="130" font-size="19">松鼠桂鱼　168</text><text x="150" y="180" font-size="19">蟹粉豆腐　58</text><text x="150" y="230" font-size="19">清炒时蔬　32</text></g>
+  <rect x="260" y="40" width="120" height="90" fill="#fff" opacity=".55" transform="rotate(18 320 85)"/></svg>`;
+
 let DOCS = [
   /* ---- 文本 ---- */
   {id:'d1', cat:'text', name:'前厅服务规范.docx', ext:'DOCX', size:'1.2 MB', status:'available', index:'high', source:'local', time:'2026-09-18 14:22', hits:12,
@@ -432,7 +534,7 @@ let DOCS = [
   {id:'d5', cat:'text', name:'酒店英语情景对话.txt', ext:'TXT', size:'64 KB', status:'available', index:'economy', source:'web', time:'2026-09-14 20:11', hits:15,
     segs:['Receptionist: Good afternoon, welcome to our hotel. May I help you with check-in?','Guest: I have a reservation under the name of Li. A double room for two nights.']},
   {id:'d6', cat:'text', name:'旅游管理专业人才培养方案.docx', ext:'DOCX', size:'2.8 MB', status:'indexing', index:'high', source:'local', time:'2026-09-20 10:02', hits:0, segs:[]},
-  {id:'d7', cat:'text', name:'导游资格考试大纲.pdf', ext:'PDF', size:'6.2 MB', status:'error', index:'high', source:'local', time:'2026-09-13 08:45', hits:0, segs:[]},
+  {id:'d7', cat:'text', name:'导游资格考试大纲.pdf', ext:'PDF', size:'6.2 MB', status:'error', index:'high', source:'local', time:'2026-09-13 08:45', hits:0, segs:[], errReason:'文件已加密，无法解析'},
   {id:'d8', cat:'text', name:'2024级学生名单.xlsx', ext:'XLSX', size:'210 KB', status:'waiting', index:'economy', source:'local', time:'2026-09-20 11:20', hits:0, segs:[]},
   {id:'d9', cat:'text', name:'实习基地汇总表.csv', ext:'CSV', size:'88 KB', status:'unavailable', index:'economy', source:'notion', time:'2026-09-12 15:00', hits:0, segs:[]},
 
@@ -443,6 +545,9 @@ let DOCS = [
   {id:'d11', cat:'image', name:'前台工作区照片.jpg', ext:'JPG', size:'3.1 MB', status:'available', index:'high', source:'local', time:'2026-09-18 14:32', hits:3, svg:IMG_DESK,
     ocr:'RECEPTION\n前台接待',
     desc:'酒店前台工作区。台面左侧是电脑显示器和键盘，右侧是房卡制卡机和 POS 机，后方墙上挂着「前台接待」标识，台面整洁，画面中没有客人。'},
+  {id:'d17', cat:'image', name:'中餐菜单手写稿.jpg', ext:'JPG', size:'1.9 MB', status:'available', index:'high', source:'local', time:'2026-09-18 14:35', hits:1, svg:IMG_MENU,
+    ocrFailed:true, ocr:'', ocrRetryText:'今日推荐\n松鼠桂鱼 168\n蟹粉豆腐 58\n清炒时蔬 32',
+    desc:'一张手写的中餐菜单，纸面有折痕和反光，列出 3 道菜名与价格，字迹较潦草。'},
   {id:'d12', cat:'image', name:'中餐摆台示意图.jpg', ext:'JPG', size:'1.6 MB', status:'indexing', index:'high', source:'local', time:'2026-09-20 10:05', hits:0, svg:null, ocr:'', desc:''},
 
   /* ---- 音视频 ---- */
@@ -464,7 +569,7 @@ let DOCS = [
       [465,730,1,'接下来看到的是太和殿，也就是俗称的金銮殿，是紫禁城中规格最高的建筑，明清两代的重大典礼都在这里举行。'],
       [730,960,1,'讲解时要注意节奏，每个点位控制在三到五分钟，并提醒游客注意台阶和人流。']
     ]},
-  {id:'d15', cat:'av', media:'audio', name:'企业师傅访谈-酒店前台.mp3', ext:'MP3', size:'21.7 MB', status:'available', index:'high', source:'local', time:'2026-09-16 13:55', hits:8, sec:1125,
+  {id:'d15', cat:'av', media:'audio', segMode:'speaker', name:'企业师傅访谈-酒店前台.mp3', ext:'MP3', size:'21.7 MB', status:'available', index:'high', source:'local', time:'2026-09-16 13:55', hits:8, sec:1125,
     speakers:{1:'说话人 1',2:'说话人 2'},
     segs:[
       [0,110,1,'王经理您好，想请您谈谈新员工到前台岗位后，最常见的问题是什么？'],
@@ -473,14 +578,16 @@ let DOCS = [
       [615,820,1,'那您觉得学校在实训课里应该加强哪方面？'],
       [820,1125,2,'多练夜审和交接班。学校实训一般练入住退房比较多，夜审很少涉及，但上岗后每个人都要轮。']
     ]},
-  {id:'d16', cat:'av', media:'video', name:'研学活动全程记录.mov', ext:'MOV', size:'1.8 GB', status:'error', index:'high', source:'local', time:'2026-09-11 09:00', hits:0, sec:13330, speakers:{}, segs:[]}
+  {id:'d16', cat:'av', media:'video', name:'研学活动全程记录.mov', ext:'MOV', size:'1.8 GB', status:'error', index:'high', source:'local', time:'2026-09-11 09:00', hits:0, sec:13330, speakers:{}, segs:[], errReason:'时长超过 3 小时，无法导入'}
 ];
 
 let selected = new Set();
 let menuDocId = null;
-let addType = 'text';
-let addCounter = 0;
 let activeDoc = null;
+let currentTab = 'doc';
+let segQ = '';
+let segFilter = 'all';
+let kpFilter = 'all';
 let curTime = 0, playing = false, playTimer = null, editing = null, renames = {};
 
 /* ================= 工具 ================= */
@@ -488,7 +595,7 @@ function toast(t){const el=document.getElementById('toast');el.textContent=t;el.
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=s=>{s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60,p=n=>(n<10?'0':'')+n;return h?h+':'+p(m)+':'+p(x):p(m)+':'+p(x)};
 const segCount=f=>f.cat==='image'?1:f.segs.length;
-const charCount=f=>{if(f.cat==='image')return (f.ocr||'').length+(f.desc||'').length;return f.segs.reduce((a,s)=>a+(s[3]||s).length,0);};
+const charCount=f=>{if(f.cat==='image')return (f.ocr||'').length+(f.desc||'').length;return f.segs.reduce((a,s)=>a+(f.cat==='av'?s[3]:s).length,0);};
 const spName=(f,n)=>renames[f.id+'-'+n]||f.speakers[n]||('说话人 '+n);
 
 /* ================= 图标 ================= */
@@ -520,6 +627,15 @@ function idxBadge(d){
     ? `<span class="kbd-idx" style="color:#5149e9;background:#eef0ff">高质量</span>`
     : `<span class="kbd-idx" style="color:#8b99ac;background:#f0f2f5">经济</span>`;
 }
+/* 分段模式：随文件处理时的设置展示 */
+const IMG_MODE_LABEL = {both:'识别文字 + 描述画面', ocr:'仅识别文字', desc:'仅描述画面'};
+const AV_MODE_LABEL = {semantic:'转写 · 语义段落', speaker:'转写 · 按说话人'};
+function segModeLabel(d){
+  if(d.cat==='av') return AV_MODE_LABEL[d.segMode||'semantic'];
+  if(d.cat==='image') return IMG_MODE_LABEL[d.imgMode||'both'];
+  if(d.scanned) return d.ocrOff ? '扫描件 · 未识别' : '扫描件 · OCR';
+  return '语义';
+}
 
 /* ================= 表格 ================= */
 function filtered(){
@@ -548,14 +664,21 @@ function renderTable(){
         <div class="kbd-doc-sub">${typeBadge(d)} · ${d.size}</div>
       </div>
     </div>
-    <div>${segCount(d)||'—'}</div>
+    <div style="white-space:nowrap">${segModeLabel(d)}</div>
+    <div>${d.status==='available'?charCount(d):'—'}</div>
+    <div style="white-space:nowrap">${kpCell(d)}</div>
     <div>${d.hits||'—'}</div>
-    <div>${statusBadge(d)}</div>
-    <div>${idxBadge(d)}</div>
     <div style="color:#8b99ac;white-space:nowrap">${d.time}</div>
+    <div title="${d.status==='error'?esc(d.errReason||''):''}">${statusBadge(d)}${d.status==='error'&&d.errReason?`<div style="font-size:11px;color:#c72c2a;margin-top:3px;white-space:normal">${esc(d.errReason)}</div>`:''}</div>
     <div><button class="kbd-more" onclick="openMenu(event,'${d.id}')" aria-label="操作">⋯</button></div>
   </div>`).join('');
   updateBatch();
+}
+function kpCell(d){
+  if(d.status!=='available') return '—';
+  const on=new Set(); let pend=0;
+  segKeys(d).forEach(k=>{ const st=segState(d,k); st.kps.forEach(id=>on.add(id)); pend+=st.sugg.filter(g=>g.status==='pending').length; });
+  return `<span style="color:#16a34a">已生效 ${on.size}</span> · <span style="color:${pend?'#B54708':'#8b99ac'}">待确认 ${pend}</span>`;
 }
 function updateBatch(){
   const n=selected.size;
@@ -570,10 +693,21 @@ function toggleSelectAll(){
   renderTable();
 }
 function clearSelection(){selected.clear();renderTable();}
+/* 删除文件：未审核的待确认项作废，已生效关联解除（已生效知识点保留在图谱，无来源时由图谱平台标「无来源」） */
+function removeDocs(ids){
+  let voided=0, unlinked=0;
+  ids.forEach(id=>{
+    const st=SEG_STATE[id];
+    if(st) Object.values(st).forEach(x=>{ voided+=x.sugg.filter(g=>g.status==='pending').length; unlinked+=x.kps.length; });
+    delete SEG_STATE[id];
+  });
+  DOCS=DOCS.filter(d=>!ids.includes(d.id));
+  return (voided||unlinked)?`，作废 ${voided} 条待确认建议，解除 ${unlinked} 条关联`:'';
+}
 function batchDelete(){
   const n=selected.size; if(!n) return;
-  DOCS=DOCS.filter(d=>!selected.has(d.id)); selected.clear(); renderTable();
-  toast('已删除 '+n+' 个文档');
+  const extra=removeDocs([...selected]); selected.clear(); renderTable();
+  toast('已删除 '+n+' 个文档'+extra);
 }
 
 /* ================= 行操作 ================= */
@@ -587,10 +721,21 @@ function openMenu(e,id){
 }
 function hideMenu(){document.getElementById('rowMenu').classList.remove('show');}
 document.addEventListener('click',e=>{ if(!e.target.closest('.kbd-menu') && !e.target.closest('.kbd-more')) hideMenu(); });
+/* 重新处理：按「分段内容被编辑」处理全部分段 */
 function reparse(d){
+  const wasError=d.status==='error';
   d.status='indexing'; renderTable(); if(activeDoc&&activeDoc.id===d.id) refreshDoc();
   toast('已重新提交解析「'+d.name+'」');
-  setTimeout(()=>{ d.status='available'; if(activeDoc&&activeDoc.id===d.id) refreshDoc(); renderTable(); },2400);
+  setTimeout(()=>{
+    if(wasError){ d.status='error'; toast('「'+d.name+'」解析失败：'+(d.errReason||'未知原因')); }
+    else{
+      d.status='available';
+      if(SEG_STATE[d.id]){ let v=0,f=0,u=0; segKeys(d).forEach(k=>{ const r=reextract(d,k,'文件重新处理',false); v+=r.voided; f+=r.fresh; u+=r.unlink; });
+        toast(`「${d.name}」重新处理完成：作废 ${v} 条旧建议，新增 ${f} 条建议${u?`，${u} 条关联待解除`:''}`); }
+      else toast('「'+d.name+'」重新处理完成');
+    }
+    if(activeDoc&&activeDoc.id===d.id) refreshDoc(); renderTable();
+  },2400);
 }
 document.getElementById('rowMenu').addEventListener('click',e=>{
   const item=e.target.closest('.kbd-menu-item'); if(!item) return;
@@ -601,11 +746,12 @@ document.getElementById('rowMenu').addEventListener('click',e=>{
   else if(act==='rename'){const n=prompt('重命名文档',d.name);if(n&&n.trim()){d.name=n.trim();renderTable();toast('已重命名');}}
   else if(act==='download') toast('下载「'+d.name+'」');
   else if(act==='toggle'){ if(d.status==='unavailable'){d.status='available';toast('已启用「'+d.name+'」');} else {d.status='unavailable';toast('已停用「'+d.name+'」');} renderTable(); }
-  else if(act==='delete'){DOCS=DOCS.filter(x=>x.id!==d.id);renderTable();toast('已删除「'+d.name+'」');}
+  else if(act==='delete'){const extra=removeDocs([d.id]);renderTable();toast('已删除「'+d.name+'」'+extra);}
 });
 
 /* ================= Tab ================= */
 function switchTab(t){
+  currentTab=t;
   ['doc','recall','settings','api'].forEach(k=>{
     document.getElementById('panel-'+k).style.display = k===t?'':'none';
   });
@@ -631,84 +777,276 @@ function doRecall(){
     .filter(c=>c.score>0).sort((a,b)=>b.score-a.score).slice(0,5);
   if(!hits.length){box.innerHTML='<div class="kbd-hit-empty">没有命中的文档，换个说法试试。</div>';return;}
   box.innerHTML=hits.map(({f,text,score,i,t})=>`<div class="kbd-hit-item">
-    <span class="kbd-doc-icon">${docIcon(f)}</span>
+    ${f.cat==='image'&&f.svg?`<div class="kbd-hit-thumb">${f.svg}</div>`:`<span class="kbd-doc-icon">${docIcon(f)}</span>`}
     <div class="kbd-hit-body">
       <div class="kbd-hit-name">${esc(f.name)} ${typeBadge(f)} ${statusBadge(f)}</div>
+      ${f.cat==='av'?`<div class="kbd-hit-ts">#${i+1} · ${fmt(f.segs[i][0])} – ${fmt(f.segs[i][1])}</div>`:''}
       <div class="kbd-hit-snippet">${esc(text.length>120?text.slice(0,120)+'…':text)}</div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
       <span class="kbd-hit-score">相似度 ${score.toFixed(2)}</span>
+      ${f.cat==='image'?`<button class="dd-mini" onclick="openImage('${f.id}')">查看原图</button>`:''}
+      ${f.cat==='av'?`<button class="dd-mini" onclick="playFrom('${f.id}',${t})">▶ 从 ${fmt(t)} 播放</button>`:''}
       <button class="dd-mini" onclick="openDoc('${f.id}')">查看详情</button>
     </div>
   </div>`).join('');
 }
 
-/* ================= 添加文件 ================= */
-function pickType(t){
-  addType=t;
-  document.querySelectorAll('.kbd-add-type').forEach(x=>x.classList.toggle('active',x.dataset.type===t));
-  const hint={text:'DOCX / PDF / TXT / MD / XLSX / CSV 等',image:'JPG / JPEG / PNG / WEBP / BMP 等',av:'MP3 / M4A / WAV / MP4 / MOV / MKV 等'}[t];
-  const icon={text:IC.doc('#5149e9'),image:IC.image('#0e9384'),av:IC.video('#dc6803')}[t];
-  document.getElementById('dropHint').textContent='支持 '+hint;
-  document.getElementById('dropIcon').innerHTML=icon;
+/* 命中图文：查看原图；命中音视频：打开文档并从分段开始时间播放 */
+function openImage(id){
+  const d=DOCS.find(x=>x.id===id); if(!d) return;
+  document.getElementById('previewTitle').innerHTML=docIcon(d,20)+'<span style="margin-left:8px">'+esc(d.name)+'</span>';
+  document.getElementById('previewBody').innerHTML=`<div class="dd-img">${d.svg||placeholder('图片处理中')}</div>`;
+  document.getElementById('previewModal').classList.add('show');
 }
-function openAdd(){pickType(addType);document.getElementById('addModal').classList.add('show');}
-function closeAdd(){document.getElementById('addModal').classList.remove('show');}
-function confirmAdd(){
-  addCounter++;
-  const tpl={text:{name:'新上传文档',ext:'DOCX',size:'1.0 MB',cat:'text'},image:{name:'新上传图文',ext:'PNG',size:'2.0 MB',cat:'image'},av:{name:'新上传音视频',ext:'MP4',size:'50.0 MB',cat:'av'}}[addType];
-  const d={id:'new'+Date.now(), name:tpl.name+addCounter+'.'+tpl.ext.toLowerCase(), cat:addType, ext:tpl.ext, size:tpl.size,
-    status:'indexing', index:'high', source:'local', time:'2026-10-10 '+new Date().toTimeString().slice(0,5), hits:0,
-    media:addType==='av'?'video':null, sec:addType==='av'?90:null, speakers:{}, segs:[], svg:null, ocr:'', desc:''};
-  DOCS.unshift(d);
-  closeAdd(); renderTable(); toast('已开始处理「'+d.name+'」');
-  setTimeout(()=>{ d.status='available'; if(d.cat==='image'){d.svg=IMG_BOARD;d.ocr='示例图文文字';d.desc='示例图文画面描述';} else if(d.cat==='av'){d.segs=[[0,30,1,'这是新上传音视频的示例转写分段。'],[30,90,1,'点击分段可跳转播放对应位置。']];} else {d.segs=['这是新上传文本的示例分段内容。','第二段内容，用于演示。'];} renderTable(); if(activeDoc&&activeDoc.id===d.id) refreshDoc(); },2400);
+function playFrom(id,t){
+  openDoc(id); curTime=t; togglePlay();
+  const i=activeDoc.segs.findIndex(s=>t>=s[0]&&t<s[1]);
+  const el=document.getElementById('seg-'+i); if(el) el.scrollIntoView({block:'center'});
+}
+
+/* ================= 添加文件 ================= */
+/* 与创建知识库相同的上传流程：上传文件 → 解析与分段 → 处理并完成，完成后回到本页 */
+function goAddFiles(){
+  const id=new URLSearchParams(location.search).get('id')||'KB004';
+  const meta=KB_META[id]||KB_META.KB004;
+  location.href='knowledge-base-create.html?mode=add&kb='+encodeURIComponent(id)+'&name='+encodeURIComponent(meta.name);
+}
+/* 读取「添加文件」流程交回的文档；仍在处理的文件模拟后台完成 */
+function loadAddedDocs(id){
+  let added=[];
+  try{ added=JSON.parse(sessionStorage.getItem('kb-added-'+id)||'[]'); }catch(e){}
+  added.forEach(d=>{ if(!DOCS.some(x=>x.id===d.id)) DOCS.unshift(d); });
+  const pending=added.filter(d=>d.status==='indexing');
+  if(pending.length) setTimeout(()=>{ pending.forEach(p=>{ const d=DOCS.find(x=>x.id===p.id); if(d) d.status='available'; }); renderTable(); if(activeDoc) refreshDoc(); },3000);
+  return added.length;
+}
+
+/* ================= 知识点 ================= */
+const KP=[
+  {id:'kp1',name:'房态代码（VC / VD / OC / OOO）',path:['酒店管理','前厅服务','房态管理'],kw:['房态','VC','VD','OOO']},
+  {id:'kp2',name:'散客入住登记流程',path:['酒店管理','前厅服务','入住登记'],kw:['入住登记','核验证件','办理入住']},
+  {id:'kp3',name:'提前入住与延迟退房政策',path:['酒店管理','前厅服务','退房管理'],kw:['提前入住','延迟退房']},
+  {id:'kp4',name:'夜审流程与日结',path:['酒店管理','财务','夜审'],kw:['夜审','日结']},
+  {id:'kp5',name:'客房清洁与布草更换标准',path:['酒店管理','客房部','客房清洁'],kw:['布草','查房','客房清洁']},
+  {id:'kp6',name:'餐饮席间服务规范',path:['酒店管理','餐饮','席间服务'],kw:['席间','上菜','斟酒']},
+  {id:'kp7',name:'投诉处理三步法',path:['酒店管理','服务','投诉处理'],kw:['投诉','致歉']},
+  {id:'kp8',name:'OTA 预订与房费结算',path:['酒店管理','渠道','OTA'],kw:['OTA','押金','预付']},
+  {id:'kp9',name:'故宫中轴线讲解要点',path:['旅游管理','导游实务','景点讲解'],kw:['午门','太和殿','金水桥','故宫','天坛']},
+  {id:'kp10',name:'交接班记录规范',path:['酒店管理','前厅服务','交接班'],kw:['交接班']}
+];
+function kpById(id){ return KP.find(k=>k.id===id); }
+/* 知识点提取（mock）：分段原文命中知识点关键词即生成「关联已有」建议，原文依据取命中句 */
+let suggUid=1000;
+function extractSeg(d,k,opts){
+  opts=opts||{};
+  const text=segTextOf(d,k), st=SEG_STATE[d.id]&&SEG_STATE[d.id][k];
+  const linked=st?st.kps:[], old=st?st.sugg:[];
+  const sentences=text.split(/(?<=[。！？?\n])/);
+  const out=[];
+  KP.forEach(x=>{
+    if(!x.kw||linked.includes(x.id)) return;
+    if(old.some(g=>g.kp===x.id&&g.status==='pending')) return;
+    // 驳回过的同一建议不重复推送；分段内容变更后除外
+    if(!opts.contentChanged && old.some(g=>g.kp===x.id&&g.status==='rejected')) return;
+    const hits=x.kw.filter(w=>text.includes(w));
+    if(!hits.length) return;
+    const quote=(sentences.find(t=>t.includes(hits[0]))||text).trim().replace(/[。！？?]$/,'');
+    const g={id:'s'+(suggUid++),type:'A',kp:x.id,conf:Math.min(.97,.86+hits.length*.04),quote,status:'pending'};
+    if(d.cat==='image') g.src=(d.desc||'').includes(hits[0])&&!(d.ocr||'').includes(hits[0])?'desc':'ocr';
+    out.push(g);
+  });
+  return out;
+}
+/* 分段内容变化后，已生效关联若不再被原文支持，生成「关联待解除」交人工确认 */
+function unlinkCheck(d,k){
+  const st=segState(d,k), text=segTextOf(d,k), out=[];
+  st.kps.forEach(id=>{
+    const x=kpById(id); if(!x||!x.kw) return;
+    if(x.kw.some(w=>text.includes(w))) return;
+    if(st.sugg.some(g=>g.type==='U'&&g.kp===id&&g.status==='pending')) return;
+    out.push({id:'s'+(suggUid++),type:'U',kp:id,quote:'',status:'pending',def:'修改后的分段内容中已找不到支撑该知识点的原文'});
+  });
+  return out;
+}
+/* 分段重新提取：未审核的旧建议作废 → 重新提取 → 检查已生效关联 */
+function reextract(d,k,reason,contentChanged){
+  const st=segState(d,k);
+  let voided=0;
+  st.sugg.forEach(g=>{ if(g.status==='pending'&&g.type!=='D'){ g.status='void'; g.reason=reason; voided++; } });
+  const fresh=extractSeg(d,k,{contentChanged}), un=unlinkCheck(d,k);
+  st.sugg=st.sugg.concat(fresh,un);
+  return {voided,fresh:fresh.length,unlink:un.length};
+}
+/* 知识体系节点（挂载候选）：取已有知识点路径的各级前缀 */
+function kbNodes(){
+  const m=new Map();
+  KP.forEach(k=>(k.mounts||[k.path]).forEach(p=>{ for(let i=2;i<=p.length;i++){ const sub=p.slice(0,i); m.set(sub.join('/'),sub); } }));
+  return [...m.values()].sort((a,b)=>a.join('/').localeCompare(b.join('/'),'zh'));
+}
+const mountPath=p=>p.join(' › ');
+let kpUid=100;
+
+/* 分段关联状态：docId -> { segKey: {kps:[], sugg:[]} } */
+const SEG_STATE={};
+function segKeys(d){ return d.cat==='image' ? ['0'] : d.segs.map((_,i)=>String(i)); }
+/* 图文每张图一个分段：图中文字 + 画面描述合在同一分段 */
+function segTextOf(d,key){ if(d.cat==='image') return [d.ocr,d.desc].filter(Boolean).join('\n'); const s=d.segs[+key]; return d.cat==='av'?s[3]:s; }
+function segState(d,key){ if(!SEG_STATE[d.id]) seedState(d); return SEG_STATE[d.id][key] || (SEG_STATE[d.id][key]={kps:[],sugg:[],enabled:true}); }
+function seedState(d){
+  SEG_STATE[d.id]={};
+  segKeys(d).forEach(k=> SEG_STATE[d.id][k]={kps:[],sugg:[],enabled:true});
+  const link=(k,ids)=> SEG_STATE[d.id][k].kps=ids.slice();
+  const sugg=(k,list)=> SEG_STATE[d.id][k].sugg=list.slice();
+  if(d.id==='d1'){
+    link('0',['kp2']); link('1',['kp2','kp8']); link('2',['kp3']); link('3',['kp10']);
+    sugg('0',[{id:'s1',type:'A',kp:'kp2',alts:['kp10'],conf:.96,quote:'前厅部是酒店对客服务的第一窗口',status:'pending'}]);
+    sugg('2',[{id:'s2',type:'B',name:'延迟退房计费标准',def:'14:00–18:00 加收半日房费，18:00 后按全日房费计。',conf:.88,quote:'14:00–18:00 加收半日房费',status:'pending',
+      mounts:[{path:['酒店管理','前厅服务','退房管理'],reason:'原文讲退房时间与计费，属退房管理',conf:.88},{path:['酒店管理','前厅服务','入住登记'],reason:'与提前入住政策同章出现',conf:.64}]}]);
+  } else if(d.id==='d2'){
+    link('0',['kp4']);
+    sugg('0',[{id:'s3',type:'A',kp:'kp4',conf:.91,quote:'夜审时间一般为每日 0:00 至 3:00',status:'pending'}]);
+  } else if(d.id==='d3'){ link('0',['kp5']); link('1',['kp5']); }
+  else if(d.id==='d4'){ link('1',['kp6']); }
+  else if(d.id==='d5'){ link('0',['kp2']); link('1',['kp2']); }
+  else if(d.id==='d10'){
+    link('0',['kp1']);
+    sugg('0',[{id:'s4',src:'ocr',type:'C',near:'kp1',name:'房态代码速查',def:'VC / VD / OC / OOO 及含义',conf:.89,quote:'VD 清洁完 → 客房部通知前台改 VC',status:'pending',
+      mounts:[{path:['酒店管理','前厅服务','房态管理'],reason:'板书内容为楼层房态表',conf:.82}]}]);
+  } else if(d.id==='d11'){
+    sugg('0',[{id:'s7',type:'B',src:'desc',name:'前台设备配置',def:'前台台面配置电脑、房卡制卡机与 POS 机。',conf:.8,quote:'右侧是房卡制卡机和 POS 机',status:'pending',
+      mounts:[{path:['酒店管理','前厅服务','入住登记'],reason:'设备用于入住登记时制卡与收款',conf:.74}]}]);
+  } else if(d.id==='d13'){
+    link('0',['kp2']); link('2',['kp8']); link('3',['kp8']); link('4',['kp3']);
+    sugg('2',[{id:'s8',type:'D',kp:'kp8',t:380,conf:.86,quote:'如果客人是通过 OTA 平台预订的，押金也要在前台另外收吗',status:'pending',
+      mounts:[{path:['酒店管理','前厅服务','入住登记'],reason:'原文讨论前台入住时 OTA 订单的押金收取',conf:.86}]}]);
+    sugg('3',[{id:'s5',type:'A',kp:'kp3',alts:['kp2'],t:610,conf:.93,quote:'常遇到客人要求提前入住',status:'pending'}]);
+  } else if(d.id==='d14'){ link('2',['kp9']); }
+  else if(!['d1','d2','d3','d4','d5','d10','d11','d15'].includes(d.id)){
+    // 其他文件（如新添加的文件）：按分段自动提取
+    segKeys(d).forEach(k=> SEG_STATE[d.id][k].sugg=extractSeg(d,k));
+  }
+  else if(d.id==='d15'){
+    link('2',['kp7']);
+    sugg('2',[{id:'s6',type:'B',name:'投诉处理三步法',def:'先倾听、再致歉、最后给方案。',conf:.52,quote:'先倾听、再致歉、最后给方案',status:'pending',mounts:[]}]);
+  }
 }
 
 /* ================= 文档详情 ================= */
+function showDocDetail(){
+  document.getElementById('kbHead').style.display='none';
+  document.querySelector('.kbd-tabs').style.display='none';
+  ['doc','recall','settings','api'].forEach(k=>document.getElementById('panel-'+k).style.display='none');
+  document.getElementById('docDetail').style.display='';
+}
+function hideDocDetail(){
+  document.getElementById('kbHead').style.display='';
+  document.querySelector('.kbd-tabs').style.display='';
+  document.getElementById('docDetail').style.display='none';
+  switchTab(currentTab);
+}
 function openDoc(id){
   stopPlay();
   activeDoc=DOCS.find(x=>x.id===id); if(!activeDoc) return;
-  curTime=0; editing=null;
+  segQ=''; segFilter='all'; kpFilter='all';
+  curTime=0;
   document.getElementById('docTitle').innerHTML=docIcon(activeDoc,22)+'<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(activeDoc.name)+'</span>';
+  document.getElementById('docMeta').textContent=activeDoc.size+' · 上传于 '+activeDoc.time;
   document.getElementById('docReparseBtn').style.display = activeDoc.status==='available'||activeDoc.status==='error' ? '' : 'none';
+  document.getElementById('docPreviewBtn').style.display = activeDoc.status==='available' ? '' : 'none';
+  showDocDetail();
   refreshDoc();
-  document.getElementById('docModal').classList.add('show');
 }
-function closeDoc(){ stopPlay(); activeDoc=null; document.getElementById('docModal').classList.remove('show'); }
+function closeDoc(){ stopPlay(); activeDoc=null; closeDrawer(); hideDocDetail(); renderTable(); }
 function refreshDoc(){
   if(!activeDoc) return;
-  const body=document.getElementById('docBody');
-  const y=body.scrollTop;
-  body.innerHTML = activeDoc.cat==='text' ? docText(activeDoc) : activeDoc.cat==='image' ? docImage(activeDoc) : docAV(activeDoc);
-  body.scrollTop=y;
+  const body=document.getElementById('docDetailBody');
+  if(activeDoc.status!=='available'){ body.innerHTML=processingNote(activeDoc); return; }
+  body.innerHTML=`<div class="doc-grid">${docToc(activeDoc)}<div class="doc-col">${activeDoc.cat==='text'?docText(activeDoc):activeDoc.cat==='image'?docImage(activeDoc):docAV(activeDoc)}</div>${docAside(activeDoc)}</div>`;
 }
+function docToc(d){
+  let items=[];
+  if(d.cat==='image'){ if(d.ocr||d.ocrFailed) items.push(['ocr','图中文字']); if(d.desc) items.push(['desc','画面描述']); }
+  else if(d.cat==='av') items=d.segs.map((s,i)=>[String(i),`${fmt(s[0])}  ${s[3].slice(0,12)}${s[3].length>12?'…':''}`]);
+  else items=d.segs.map((s,i)=>[String(i),`#${i+1} · ${s.slice(0,16)}${s.length>16?'…':''}`]);
+  return `<nav class="doc-toc" aria-label="目录">
+    <div class="doc-toc-title">目录</div>
+    ${items.map(([k,label])=>`<button type="button" class="doc-toc-btn" data-act="tocJump" data-k="${k}">${esc(label)}</button>`).join('')||'<span class="kp-none" style="padding:0 10px">无分段</span>'}
+  </nav>`;
+}
+function previewBodyOf(d){
+  if(d.cat==='image') return `<div class="dd-img">${d.svg||placeholder('图片处理中')}</div>`;
+  if(d.cat==='text') return `<div style="font-size:14px;line-height:1.9;color:#41536f">${d.segs.map((s,i)=>`<div style="margin-bottom:14px"><b style="color:#2f405d">#${i+1}</b>　${esc(s)}</div>`).join('')||placeholder('暂无内容')}</div>`;
+  const N=72, seed=d.id.charCodeAt(d.id.length-1);
+  const bars=Array.from({length:N},(_,i)=>`<span class="bar" style="height:${Math.round(12+Math.abs(Math.sin(i*1.7+seed)*Math.cos(i*.37+seed))*68)}px"></span>`).join('');
+  const media=d.media==='video'?`<div class="video" style="margin-bottom:12px">视频画面（mock）</div>`:`<div class="wave" style="margin-bottom:12px">${bars}</div>`;
+  const segs=`<div class="dd-sub">转写全文（${d.segs.length} 段）</div>`+d.segs.map((s,i)=>`<div style="font-size:13px;color:#41536f;line-height:1.8;padding:8px 0;border-bottom:1px solid #f0f0f0"><span style="color:#8b99ac">${fmt(s[0])} – ${fmt(s[1])}</span>　<span class="sp-tag sp${s[2]}">${esc(spName(d,s[2]))}</span><div style="margin-top:4px">${esc(s[3])}</div></div>`).join('');
+  return media+segs;
+}
+function openPreview(){
+  if(!activeDoc) return;
+  const d=activeDoc;
+  document.getElementById('previewTitle').innerHTML=docIcon(d,20)+'<span style="margin-left:8px">'+esc(d.name)+'</span>';
+  document.getElementById('previewBody').innerHTML=previewBodyOf(d);
+  document.getElementById('previewModal').classList.add('show');
+}
+function closePreview(){ document.getElementById('previewModal').classList.remove('show'); }
 function reparseActive(){ if(activeDoc) reparse(activeDoc); }
 
 function statRow(items){ return `<div class="dd-stats">${items.map(([b,s])=>`<div class="dd-stat"><b>${b}</b><span>${s}</span></div>`).join('')}</div>`; }
-function segActions(key){ return editing===key
-  ? `<button class="dd-mini pri" data-act="save" data-k="${key}">保存</button><button class="dd-mini" data-act="cancel">取消</button>`
-  : `<button class="dd-mini" data-act="edit" data-k="${key}">编辑</button>`; }
-const editable=(key,text)=>`<span class="dd-seg-text" ${editing===key?'contenteditable="true" id="edtx"':''}>${esc(text)}</span>`;
+function segChips(d,key){
+  const st=segState(d,key);
+  const kps=st.kps.map(id=>`<a class="kp kp-link" href="knowledge-system-detail.html" target="_blank" rel="noopener" title="在图谱平台查看该知识点">${esc(kpById(id)?.name||id)}</a>`).join('');
+  const pend=st.sugg.filter(g=>g.status==='pending').length;
+  return `<div class="seg-foot">${kps||(pend?'':'<span class="kp-none">无知识点</span>')}
+    ${pend?`<span class="sugg-badge" data-act="segEdit" data-k="${key}">✦ ${pend} 条建议待确认</span>`:''}
+    <button class="dd-mini seg-edit" data-act="segEdit" data-k="${key}">编辑分段</button></div>`;
+}
 
+function segMatch(f,key){
+  const q=segQ.trim().toLowerCase();
+  if(q && !segTextOf(f,key).toLowerCase().includes(q)) return false;
+  const st=segState(f,key);
+  if(segFilter==='on' && !st.enabled) return false;
+  if(segFilter==='off' && st.enabled) return false;
+  const linked=st.kps.length>0;
+  const pending=st.sugg.some(g=>g.status==='pending');
+  if(kpFilter==='linked' && !linked) return false;
+  if(kpFilter==='pending' && !pending) return false;
+  if(kpFilter==='none' && (linked||pending)) return false;
+  return true;
+}
+function segToolbar(f){
+  return `<div class="dd-seg-toolbar">
+    <b>${f.segs.length} 分段</b>
+    <select id="segEn" aria-label="启用状态"><option value="all" ${segFilter==='all'?'selected':''}>全部状态</option><option value="on" ${segFilter==='on'?'selected':''}>已启用</option><option value="off" ${segFilter==='off'?'selected':''}>已禁用</option></select>
+    <select id="segKp" aria-label="知识点"><option value="all" ${kpFilter==='all'?'selected':''}>全部知识点</option><option value="linked" ${kpFilter==='linked'?'selected':''}>已关联</option><option value="pending" ${kpFilter==='pending'?'selected':''}>有待确认</option><option value="none" ${kpFilter==='none'?'selected':''}>无知识点</option></select>
+    <input class="search" id="segQ" placeholder="搜索" value="${esc(segQ)}" aria-label="搜索分段">
+  </div>`;
+}
 function docText(f){
   if(f.status!=='available') return processingNote(f);
   let segs='';
   if(f.segs.length){
-    segs=`<div class="dd-sub">分段（${f.segs.length}）</div>`+f.segs.map((s,i)=>{const key=f.id+'-'+i;return `<div class="dd-seg">
-      <div class="dd-seg-head"><span style="font-weight:600">#${i+1}</span>${f.scanned?'<span class="dd-tag" style="color:#5149e9;background:#eef0ff">OCR</span>':''}
-        <span style="margin-left:auto">${s.length} 字</span>${segActions(key)}</div>
-      ${editable(key,s)}</div>`;}).join('');
-  } else segs=`<div class="kbd-hit-empty">该文档暂无分段内容。</div>`;
+    const items=f.segs.map((s,i)=>[i,s]).filter(([i,s])=>segMatch(f,String(i)));
+    segs=segToolbar(f)
+      +(items.length?items.map(([i,s])=>{const key=String(i);return `<div class="seg-card" id="seg-${key}">
+      <div class="seg-head"><span style="font-weight:600">#${i+1}</span>${f.scanned?'<span class="dd-tag" style="color:#5149e9;background:#eef0ff">OCR</span>':''}<span style="margin-left:auto">${s.length} 字</span></div>
+      <div class="seg-body">${esc(s)}</div>${segChips(f,key)}</div>`;}).join(''):'<div class="kbd-hit-empty">没有匹配的分段。</div>');
+  } else segs=`<div class="kbd-hit-empty">${f.scanned&&f.ocrOff?'无分段：该文件没有文字层且处理时未开启 OCR，不参与检索。可开启 OCR 后重新解析。':'无分段，不参与检索。'}</div>`;
   return statRow([[f.ext+(f.scanned?' · 扫描件':''),'类型'],[f.segs.length,'分段数'],[charCount(f),'字数']])+segs;
 }
 function docImage(f){
   if(f.status!=='available') return processingNote(f);
-  const keyO=f.id+'-ocr', keyD=f.id+'-desc';
   return `<div class="dd-img">${f.svg||placeholder('图片处理中')}</div>
     ${statRow([[f.ext,'类型'],[1,'分段数'],[charCount(f),'识别字数']])}
-    ${f.ocr?`<div class="dd-sub">图中文字</div><div class="dd-seg"><div class="dd-seg-head"><span style="margin-left:auto">${f.ocr.length} 字</span>${segActions(keyO)}</div>${editable(keyO,f.ocr)}</div>`:''}
-    ${f.desc?`<div class="dd-sub">画面描述</div><div class="dd-seg"><div class="dd-seg-head"><span style="margin-left:auto">${f.desc.length} 字</span>${segActions(keyD)}</div>${editable(keyD,f.desc)}</div>`:''}`;
+    <div class="seg-card" id="seg-0">
+      <div class="seg-head"><span style="font-weight:600">#1</span><span class="dd-tag" style="color:#0e9384;background:#e6f6f3">${IMG_MODE_LABEL[f.imgMode||'both']}</span><span style="margin-left:auto">${charCount(f)} 字</span></div>
+      ${f.ocr||f.ocrFailed?`<div class="seg-part" id="seg-ocr"><div class="seg-part-title">图中文字</div>${f.ocrFailed
+        ?`<div class="seg-fail">识别失败${f.desc?'，已保留画面描述':''} <button class="dd-mini" data-act="ocrRetry">重试</button></div>`
+        :`<div class="seg-body">${esc(f.ocr)}</div>`}</div>`:''}
+      ${f.desc?`<div class="seg-part" id="seg-desc"><div class="seg-part-title">画面描述</div><div class="seg-body">${esc(f.desc)}</div></div>`:''}
+      ${segChips(f,'0')}</div>`;
 }
 function docAV(f){
   if(f.status!=='available') return processingNote(f);
@@ -727,20 +1065,250 @@ function docAV(f){
   const stats=statRow([[fmt(f.sec),'时长'],[f.segs.length,'分段数'],[charCount(f),'转写字数'],[spk.length,'说话人']]);
   const speakers=`<div class="dd-sub">说话人</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
     ${spk.map(n=>`<button class="sp-rename" data-act="sprename" data-v="${n}"><span class="sp-tag sp${n}">${esc(spName(f,n))}</span> 改名</button>`).join('')}</div>`;
-  const segs=`<div class="dd-sub">转写分段（点击跳转播放）</div>`+f.segs.map((s,i)=>{const key=f.id+'-'+i;return `<div class="dd-seg ${i===ai?'on':''}" data-act="segjump" data-t="${s[0]}" style="cursor:pointer">
-    <div class="dd-seg-head"><span style="font-weight:600">#${i+1}</span><span class="dd-tag" style="color:#8b99ac;background:#f0f2f5">${fmt(s[0])} – ${fmt(s[1])}</span>
-      <span class="sp-tag sp${s[2]}">${esc(spName(f,s[2]))}</span><span style="margin-left:auto">${s[3].length} 字</span>${segActions(key)}</div>
-    ${editable(key,s[3])}</div>`;}).join('');
-  return player+stats+speakers+segs;
+  const items=f.segs.map((s,i)=>[i,s]).filter(([i,s])=>segMatch(f,String(i)));
+  const segs=segToolbar(f)
+    +(items.length?items.map(([i,s])=>{const key=String(i);return `<div class="seg-card ${i===ai?'on':''}" id="seg-${key}" data-act="segjump" data-t="${s[0]}" style="cursor:pointer">
+    <div class="seg-head"><span style="font-weight:600">#${i+1}</span><span class="dd-tag" style="color:#8b99ac;background:#f0f2f5">${fmt(s[0])} – ${fmt(s[1])}</span>
+      <span class="sp-tag sp${s[2]}">${esc(spName(f,s[2]))}</span><span style="margin-left:auto">${s[3].length} 字</span></div>
+    <div class="seg-body">${esc(s[3])}</div>${segChips(f,key)}</div>`;}).join(''):'<div class="kbd-hit-empty">没有匹配的分段。</div>');
+  const vhint=f.media==='video'?'<div class="dd-vhint">视频仅提取音轨做语音转写，不解析画面内容。</div>':'';
+  return player+vhint+stats+speakers+segs;
 }
 function placeholder(t){ return `<div style="padding:40px;text-align:center;color:#8b99ac;font-size:13px">${t}</div>`; }
 function processingNote(f){
   const s=STATUS[f.status];
   return statRow([[f.ext,'类型'],[f.size,'大小'],[SOURCE[f.source],'来源'],[f.time,'上传时间']])
-    +`<div class="kbd-hit-empty" style="padding:30px 0">${s.pulse?'文件正在解析与向量索引中，完成后可查看分段详情。':s.label+'，暂无可用分段。'}</div>`;
+    +`<div class="kbd-hit-empty" style="padding:30px 0">${s.pulse?'文件正在解析与向量索引中，完成后可查看分段详情。':(f.status==='error'?'解析失败：'+esc(f.errReason||'未知原因')+'。可点击右上角「重新解析」。':s.label+'，暂无可用分段。')}</div>`;
 }
 
-/* ---------- 播放 / 编辑 ---------- */
+/* ---------- 右栏：AI 建议 + 文档信息 ---------- */
+/* 原文依据的出处：图片标「来自画面描述」；音视频带开始时间，可从该处播放 */
+function quoteMeta(d,k,g){
+  if(!d) return '';
+  if(d.cat==='image') return g.src==='desc'?'<span class="sugg-src">来自画面描述 · 请对照原图</span>':(g.src==='ocr'?'<span class="sugg-src" style="color:#5149e9;background:#eef0ff">来自图中文字</span>':'');
+  if(d.cat==='av'&&d.segs[+k]){ const t=g.t!=null?g.t:d.segs[+k][0]; return `<button class="sugg-ts" data-act="quotePlay" data-t="${t}">▶ 从 ${fmt(t)} 播放</button>`; }
+  return '';
+}
+function suggTypeLabel(g){ return {A:'关联已有',B:'新建知识点',C:'相近待判',D:'新增挂载',U:'关联待解除'}[g.type]; }
+function suggName(g){ if(g.type==='A'||g.type==='D'||g.type==='U') return kpById(g.kp)?.name||g.kp; if(g.type==='C') return (kpById(g.near)?.name||g.near)+'（相近）'; return g.name; }
+function suggCardMini(k,g){
+  return `<div class="sugg-card" data-act="openSugg" data-k="${k}" style="cursor:pointer">
+    <div class="sugg-top"><span class="sugg-type ${g.type}">${suggTypeLabel(g)}</span><span class="sugg-name">${esc(suggName(g))}</span>${g.conf?`<span class="sugg-conf">${Math.round(g.conf*100)}%</span>`:''}</div>
+    <div class="sugg-quote">${esc(g.quote||g.def||'')}</div>${activeDoc&&activeDoc.cat==='image'&&g.src==='desc'?'<div>'+quoteMeta(activeDoc,k,g)+'</div>':''}</div>`;
+}
+function docInfoRows(d){
+  const rows=[['类型',d.ext+' · '+(d.cat==='av'?MEDIA_LABEL[d.media]:TYPE[d.cat].label)],['大小',d.size],['来源',SOURCE[d.source]],['上传时间',d.time]];
+  if(d.cat==='av') rows.push(['时长',fmt(d.sec)]);
+  return rows.map(([k,v])=>`<div style="display:flex;justify-content:space-between;gap:12px"><span>${k}</span><span style="color:#41536f">${esc(v)}</span></div>`).join('');
+}
+function docAside(d){
+  const pend=segKeys(d).flatMap(k=>segState(d,k).sugg.map(g=>({g,k}))).filter(x=>x.g.status==='pending').sort((a,b)=>(b.g.conf||0)-(a.g.conf||0));
+  const high=pend.filter(x=>x.g.type==='A'&&x.g.conf>=.9).length;
+  const linked=segKeys(d).reduce((a,k)=>a+segState(d,k).kps.length,0);
+  return `<div class="doc-aside">
+    <div class="aicard">
+      <div class="ai-head"><svg width="16" height="16" viewBox="0 0 24 24" fill="#F79009"><path d="M12 2l2.2 6.3L20.5 10l-6.3 2.2L12 18.5l-2.2-6.3L3.5 10l6.3-1.7z"/></svg>AI 知识点建议</div>
+      <div class="ai-stats">
+        <div class="ai-stat"><b>${linked}</b><span>已关联</span></div>
+        <div class="ai-stat"><b style="color:#B54708">${pend.length}</b><span>待确认</span></div>
+        <div class="ai-stat"><b>${high}</b><span>高置信关联</span></div>
+      </div>
+      <button class="ai-btn pri" data-act="oneclick" ${high?'':'disabled'}>一键通过高置信关联（${high} 条）</button>
+      <button class="ai-btn" data-act="onlypending" ${pend.length?'':'disabled'}>只看有待确认的分段</button>
+      <div class="ai-note">只对「关联已有知识点、置信度 ≥ 0.90」生效；新建知识点和相近判定需逐条确认。点分段可逐条审核。</div>
+    </div>
+    <div class="aside-card">
+      <div class="aside-head">文档信息</div>
+      <div class="aside-body" style="font-size:12px;color:#8b99ac;line-height:2">${docInfoRows(d)}</div>
+    </div>
+  </div>`;
+}
+
+/* ---------- 编辑分段抽屉 ---------- */
+let drawerDoc=null, drawerKey=null, pickerOpen=false, pickerQ='', suggEditing=null, suggRejecting=null, draft={}, nodePickerOpen=false, nodeQ='', suggRetarget=null, retargetQ='';
+function segLabel(d,k){ return '#'+(+k+1); }
+function openDrawer(key){
+  drawerDoc=activeDoc; drawerKey=key; pickerOpen=false; pickerQ=''; suggEditing=null; suggRejecting=null; nodePickerOpen=false; nodeQ=''; suggRetarget=null; retargetQ='';
+  const d=drawerDoc, k=key;
+  draft={ text: d.cat==='av'?d.segs[+k][3]:(d.cat==='text'?d.segs[+k]:''), ocr:d.ocr||'', desc:d.desc||'', reason:'', origText: segTextOf(d,k) };
+  renderDrawer();
+  document.getElementById('segDrawer').classList.add('show');
+}
+function closeDrawer(){ const el=document.getElementById('segDrawer'); if(el) el.classList.remove('show'); drawerDoc=null; drawerKey=null; }
+function findSugg(id){ if(!drawerDoc) return null; return segState(drawerDoc,drawerKey).sugg.find(x=>x.id===id); }
+function bindDrawerInputs(){
+  const panel=document.getElementById('segDrawerPanel');
+  ['text','ocr','desc'].forEach(fld=>{ const el=panel.querySelector('[data-fld="'+fld+'"]'); if(el) el.oninput=()=>{ draft[fld]=el.value; }; });
+  const pk=document.getElementById('pkQ'); if(pk) pk.oninput=()=>{ pickerQ=pk.value; renderDrawer(); };
+  const sn=document.getElementById('suggName'); if(sn) sn.oninput=()=>{ const g=findSugg(suggEditing); if(g) g.edit.name=sn.value; };
+  const sd=document.getElementById('suggDef'); if(sd) sd.oninput=()=>{ const g=findSugg(suggEditing); if(g) g.edit.def=sd.value; };
+  const rq=document.getElementById('retargetQ'); if(rq) rq.oninput=()=>{ retargetQ=rq.value; renderDrawer(); };
+  const nq=document.getElementById('nodeQ'); if(nq) nq.oninput=()=>{ nodeQ=nq.value; renderDrawer(); };
+  const sr=document.getElementById('suggReason'); if(sr) sr.oninput=()=>{ draft.reason=sr.value; };
+}
+function renderPicker(){
+  const st=segState(drawerDoc,drawerKey);
+  const q=pickerQ.trim().toLowerCase();
+  const list=KP.filter(x=>!q||x.name.toLowerCase().includes(q)||x.path.join('/').toLowerCase().includes(q));
+  return `<div class="pk" style="margin-top:10px">
+    <input class="field" id="pkQ" placeholder="搜索知识点" value="${esc(pickerQ)}">
+    <div class="pk-list">${list.map(x=>`<button type="button" class="pk-item ${st.kps.includes(x.id)?'on':''}" data-act="pkToggleItem" data-kp="${x.id}">
+      <span class="pk-check">${st.kps.includes(x.id)?'✓':''}</span><span style="flex:1;text-align:left">${esc(x.name)}</span><span class="pk-path">${esc(x.path.join(' / '))}</span></button>`).join('')||'<span class="kp-none">未找到知识点</span>'}</div></div>`;
+}
+function suggMounts(g){
+  const ms=g.mounts||[];
+  if(!ms.length) return `<div class="mount-box"><div class="mount-title">建议挂载</div><div class="mount-none">未找到合适节点，需手动指定至少一个节点</div></div>`;
+  return `<div class="mount-box"><div class="mount-title">建议挂载</div>${ms.map(m=>`<div class="mount-item"><div class="mount-path">${esc(mountPath(m.path))}<span class="sugg-conf">${Math.round(m.conf*100)}%</span></div><div class="mount-reason">${esc(m.reason)}</div></div>`).join('')}</div>`;
+}
+function mountEditor(g){
+  const sel=g.edit.mounts, on=p=>sel.some(x=>x.join('/')===p.join('/'));
+  const q=nodeQ.trim().toLowerCase();
+  const list=kbNodes().filter(p=>!q||p.join('/').toLowerCase().includes(q));
+  return `<div class="mount-box"><div class="mount-title">挂载节点 <span style="font-weight:400;color:#8b99ac">至少 1 个</span></div>
+    <div class="seg-foot">${sel.map((p,i)=>`<span class="kp">${esc(mountPath(p))}<span class="x" data-act="mountRemove" data-i="${i}">✕</span></span>`).join('')||'<span class="mount-none">未选择挂载节点</span>'}<button class="kp-add" data-act="nodePkToggle">＋ 添加挂载节点</button></div>
+    ${nodePickerOpen?`<div class="pk"><input class="field" id="nodeQ" placeholder="搜索知识体系节点" value="${esc(nodeQ)}">
+      <div class="pk-list">${list.map(p=>`<button type="button" class="pk-item ${on(p)?'on':''}" data-act="mountToggle" data-p="${esc(p.join('/'))}"><span class="pk-check">${on(p)?'✓':''}</span><span style="flex:1;text-align:left">${esc(mountPath(p))}</span></button>`).join('')||'<span class="kp-none">未找到节点</span>'}</div></div>`:''}</div>`;
+}
+function startSuggEdit(g){ g.edit={name:g.name,def:g.def,mounts:(g.mounts||[]).map(m=>m.path.slice())}; suggEditing=g.id; suggRejecting=null; nodePickerOpen=!(g.mounts||[]).length; nodeQ=''; renderDrawer(); }
+function suggCard(g){
+  const done=g.status!=='pending';
+  if(done){
+    return `<div class="sugg-card sugg-done"><div class="sugg-top"><span class="sugg-type ${g.type}">${suggTypeLabel(g)}</span><span class="sugg-name">${esc(suggName(g))}</span><span class="sugg-conf">${{done:'已通过',rejected:'已驳回',void:'已作废',kept:'已保留'}[g.status]}</span></div>${g.reason?`<div class="sugg-quote">${esc(g.reason)}</div>`:''}</div>`;
+  }
+  if(suggEditing===g.id){
+    return `<div class="sugg-card"><div class="sugg-top"><span class="sugg-type B">新建知识点</span></div>
+      <input class="field" id="suggName" value="${esc(g.edit?.name||g.name)}" placeholder="知识点名称">
+      <textarea class="edtx" id="suggDef" style="min-height:60px" placeholder="定义 / 说明">${esc(g.edit?.def||g.def||'')}</textarea>
+      ${mountEditor(g)}
+      <div class="sugg-row"><button class="sugg-mini" data-act="suggCancelEdit">取消</button><button class="sugg-mini pri" data-act="suggSaveEdit" data-g="${g.id}">保存为新知识点</button></div></div>`;
+  }
+  if(suggRejecting===g.id){
+    return `<div class="sugg-card"><div class="sugg-top"><span class="sugg-name" style="color:#c72c2a">填写驳回原因</span></div>
+      <input class="field" id="suggReason" placeholder="驳回原因（可选）">
+      <div class="sugg-row"><button class="sugg-mini" data-act="suggCancelReject">取消</button><button class="sugg-mini danger" data-act="suggConfirmReject" data-g="${g.id}">确认驳回</button></div></div>`;
+  }
+  if(suggRetarget===g.id){
+    const q=retargetQ.trim().toLowerCase();
+    const list=[...(g.alts||[]),...KP.map(x=>x.id).filter(id=>!(g.alts||[]).includes(id))].map(kpById).filter(x=>x&&(!q||x.name.toLowerCase().includes(q)));
+    return `<div class="sugg-card"><div class="sugg-top"><span class="sugg-type A">改选关联对象</span><span class="sugg-name">当前：${esc(suggName(g))}</span></div>
+      <input class="field" id="retargetQ" placeholder="搜索已有知识点" value="${esc(retargetQ)}">
+      <div class="pk-list">${list.map(x=>`<button type="button" class="pk-item ${x.id===g.kp?'on':''}" data-act="retargetPick" data-g="${g.id}" data-kp="${x.id}"><span class="pk-check">${x.id===g.kp?'✓':''}</span><span style="flex:1;text-align:left">${esc(x.name)}${(g.alts||[]).includes(x.id)?' <span class="sugg-src" style="color:#dc6803;background:#fff0e6">其他可能</span>':''}</span><span class="pk-path">${esc(x.path.join(' / '))}</span></button>`).join('')}</div>
+      <div class="sugg-row"><button class="sugg-mini" data-act="retargetCancel">取消</button></div></div>`;
+  }
+  return `<div class="sugg-card"><div class="sugg-top"><span class="sugg-type ${g.type}">${suggTypeLabel(g)}</span><span class="sugg-name">${esc(suggName(g))}</span>${g.retargeted?'<span class="sugg-src" style="color:#5149e9;background:#eef0ff">已改选</span>':''}${g.conf?`<span class="sugg-conf">置信 ${Math.round(g.conf*100)}%</span>`:''}</div>
+    ${g.def?`<div class="sugg-quote">${esc(g.def)}</div>`:''}
+    ${g.quote?`<div class="sugg-quote">原文：${esc(g.quote)}</div>`:''}
+    ${quoteMeta(drawerDoc,drawerKey,g)?`<div>${quoteMeta(drawerDoc,drawerKey,g)}</div>`:''}
+    ${g.type==='B'?suggMounts(g):''}
+    ${g.type==='A'&&g.alts&&g.alts.length?`<div class="sugg-quote">其他可能：${g.alts.map(id=>esc(kpById(id)?.name||id)).join('、')}</div>`:''}
+    ${g.type==='D'?`<div class="mount-box"><div class="mount-title">建议新增挂载</div>${g.mounts.map(m=>`<div class="mount-item"><div class="mount-path">${esc(mountPath(m.path))}</div><div class="mount-reason">${esc(m.reason)}</div></div>`).join('')}</div>
+      <div class="sugg-quote">新增挂载需在图谱平台「知识点待确认」中确认，知识库侧仅展示。</div>`:`
+    <div class="sugg-row">
+      ${g.type==='A'?`<button class="sugg-mini pri" data-act="suggApprove" data-g="${g.id}">通过</button><button class="sugg-mini" data-act="retarget" data-g="${g.id}">改选</button>`:''}
+      ${g.type==='B'?`<button class="sugg-mini pri" data-act="suggEdit" data-g="${g.id}">作为新知识点</button>`:''}
+      ${g.type==='C'?`<button class="sugg-mini pri" data-act="suggMerge" data-g="${g.id}">合并到已有</button><button class="sugg-mini" data-act="suggEdit" data-g="${g.id}">作为新知识点</button>`:''}
+      ${g.type==='U'?`<button class="sugg-mini danger" data-act="unlinkOk" data-g="${g.id}">解除关联</button><button class="sugg-mini" data-act="unlinkKeep" data-g="${g.id}">保留</button>`:`<button class="sugg-mini danger" data-act="suggReject" data-g="${g.id}">驳回</button>`}
+    </div>`}</div>`;
+}
+function renderDrawer(){
+  if(!drawerDoc) return;
+  const d=drawerDoc, k=drawerKey, st=segState(d,k);
+  const panel=document.getElementById('segDrawerPanel');
+  const act=document.activeElement, keepId=(act&&act.id)?act.id:null, keepPos=(act&&act.selectionStart!=null)?act.selectionStart:null;
+  let editor='';
+  if(d.cat==='image'){
+    editor = `<div class="drawer-sec-title">图中文字（识别结果）</div><textarea class="edtx" data-fld="ocr" placeholder="识别出的图中文字">${esc(draft.ocr)}</textarea>
+      <div class="drawer-sec-title">画面描述</div><textarea class="edtx" data-fld="desc" placeholder="画面内容描述">${esc(draft.desc)}</textarea>`;
+  } else if(d.cat==='av'){
+    editor = `<div class="drawer-sec-title">转写文本 <span style="font-weight:400;color:#8b99ac">${fmt(d.segs[+k][0])} – ${fmt(d.segs[+k][1])}</span></div><textarea class="edtx" data-fld="text">${esc(draft.text)}</textarea>`;
+  } else {
+    editor = `<div class="drawer-sec-title">分段内容</div><textarea class="edtx" data-fld="text">${esc(draft.text)}</textarea>`;
+  }
+  const pend=st.sugg.filter(g=>g.status==='pending').length;
+  panel.innerHTML=`
+    <div class="drawer-head"><h2>编辑分段 · ${esc(segLabel(d,k))}</h2><button class="kbd-close" data-act="drClose">×</button></div>
+    <div class="drawer-body">
+      ${editor}
+      <div>
+        <div class="drawer-sec-title">关联知识点</div>
+        <div class="seg-foot" style="margin-top:8px">${st.kps.length?st.kps.map(id=>`<span class="kp">${esc(kpById(id)?.name||id)}<span class="x" data-act="unlink" data-kp="${id}">✕</span></span>`).join(''):'<span class="kp-none">无知识点</span>'}<button class="kp-add" data-act="pkToggle">＋ 添加知识点</button></div>
+        ${pickerOpen?renderPicker():''}
+      </div>
+      <div>
+        <div class="drawer-sec-title">AI 建议${pend?`<span class="sugg-badge">${pend} 待确认</span>`:''}</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">${st.sugg.map(g=>suggCard(g)).join('')||'<span class="kp-none">暂无 AI 建议</span>'}</div>
+      </div>
+    </div>
+    <div class="drawer-foot"><button class="kbd-ghost" data-act="drClose">取消</button><button class="kbd-primary" data-act="drSave">保存</button></div>`;
+  bindDrawerInputs();
+  if(keepId){ const el=document.getElementById(keepId); if(el){ el.focus(); try{ if(keepPos!=null) el.setSelectionRange(keepPos,keepPos); }catch(e){} } }
+}
+function saveDrawer(){
+  if(!drawerDoc) return;
+  const d=drawerDoc, k=drawerKey;
+  let changed=false, newText='';
+  if(d.cat==='image'){ changed = draft.ocr!==(d.ocr||'') || draft.desc!==(d.desc||''); d.ocr=draft.ocr; d.desc=draft.desc; if(d.ocr) d.ocrFailed=false; }
+  else if(d.cat==='av'){ newText=draft.text; changed=newText!==draft.origText; d.segs[+k][3]=newText; }
+  else { newText=draft.text; changed=newText!==draft.origText; d.segs[+k]=newText; }
+  let r=null;
+  if(changed) r=reextract(d,k,'分段内容已修改',true);
+  closeDrawer(); refreshDoc(); renderTable();
+  toast(r?`已保存并重新提取：作废 ${r.voided} 条旧建议，新增 ${r.fresh} 条建议${r.unlink?`，${r.unlink} 条关联待解除`:''}`:'已保存');
+}
+function approveSugg(gid, mode){
+  if(!drawerDoc) return;
+  const st=segState(drawerDoc,drawerKey);
+  const g=st.sugg.find(x=>x.id===gid); if(!g) return;
+  let kpId;
+  if(g.type==='A') kpId=g.kp;
+  else if(g.type==='C'&&mode==='merge') kpId=g.near;
+  else { kpId='kp'+(kpUid++); KP.push({id:kpId,name:(g.edit&&g.edit.name)||g.name,def:(g.edit&&g.edit.def)||g.def||'',path:['自定义']}); }
+  if(!st.kps.includes(kpId)) st.kps.push(kpId);
+  g.status='done';
+  suggEditing=null; suggRejecting=null;
+  renderDrawer(); refreshDoc();
+  toast(g.type==='A'?'已通过，关联已写入知识图谱':(g.type==='C'&&mode==='merge'?'已合并到已有知识点并关联':'已通过，新知识点已写入知识图谱'));
+}
+function saveNewSugg(gid){
+  if(!drawerDoc) return;
+  const st=segState(drawerDoc,drawerKey);
+  const g=st.sugg.find(x=>x.id===gid); if(!g) return;
+  if(!(g.edit&&g.edit.name&&g.edit.name.trim())){ toast('请填写知识点名称'); return; }
+  if(!g.edit.mounts.length){ nodePickerOpen=true; renderDrawer(); toast('请至少指定一个挂载节点'); return; }
+  const kpId='kp'+(kpUid++);
+  KP.push({id:kpId,name:g.edit.name.trim(),def:g.edit.def||'',path:g.edit.mounts[0].slice(),mounts:g.edit.mounts.map(p=>p.slice())});
+  if(!st.kps.includes(kpId)) st.kps.push(kpId);
+  g.status='done';
+  suggEditing=null;
+  renderDrawer(); refreshDoc();
+  toast('新知识点已写入知识图谱，挂载到 '+g.edit.mounts.length+' 个节点');
+}
+function rejectSugg(gid){
+  if(!drawerDoc) return;
+  const st=segState(drawerDoc,drawerKey);
+  const g=st.sugg.find(x=>x.id===gid); if(!g) return;
+  g.status='rejected'; g.reason=draft.reason||'';
+  suggRejecting=null;
+  renderDrawer(); refreshDoc();
+  toast('已驳回');
+}
+function oneClickCount(){ return activeDoc?segKeys(activeDoc).reduce((a,k)=>a+segState(activeDoc,k).sugg.filter(g=>g.type==='A'&&g.conf>=.9&&g.status==='pending').length,0):0; }
+function askOneClick(){
+  const n=oneClickCount(); if(!n) return;
+  document.getElementById('confirmText').textContent='将通过 '+n+' 条置信度 ≥ 0.90 的关联，不包含新建知识点和新增挂载。';
+  document.getElementById('confirmModal').classList.add('show');
+}
+function closeConfirm(){ document.getElementById('confirmModal').classList.remove('show'); }
+function doOneClick(){
+  closeConfirm();
+  if(!activeDoc) return;
+  const d=activeDoc; let n=0;
+  segKeys(d).forEach(k=>{ const st=segState(d,k); st.sugg.forEach(g=>{ if(g.type==='A'&&g.conf>=.9&&g.status==='pending'){ if(!st.kps.includes(g.kp)) st.kps.push(g.kp); g.status='done'; n++; } }); });
+  refreshDoc(); if(drawerDoc) renderDrawer();
+  toast('已通过 '+n+' 条高置信关联，已写入知识图谱');
+}
+
+/* ---------- 播放 ---------- */
 function stopPlay(){ playing=false; clearInterval(playTimer); }
 function togglePlay(){
   if(playing){stopPlay();refreshDoc();return;}
@@ -748,27 +1316,62 @@ function togglePlay(){
   playTimer=setInterval(()=>{ curTime+=1; if(curTime>=activeDoc.sec){curTime=activeDoc.sec;stopPlay();} refreshDoc(); },250);
   refreshDoc();
 }
-function seek(e){ if(!activeDoc||!activeDoc.sec) return; const r=e.currentTarget.getBoundingClientRect(); curTime=Math.round((e.clientX-r.left)/r.width*activeDoc.sec); refreshDoc(); }
 
-/* ---------- 详情弹窗内的点击委托 ---------- */
-document.getElementById('docBody').addEventListener('click',e=>{
+/* ---------- 点击委托（详情 + 抽屉） ---------- */
+document.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]'); if(!el) return;
   const a=el.dataset.act;
   if(a==='play') togglePlay();
-  else if(a==='seek') seek(e);
-  else if(a==='segjump'){ if(e.target.closest('button,[contenteditable="true"]')) return; curTime=+el.dataset.t; refreshDoc(); }
+  else if(a==='seek'){ if(!activeDoc||!activeDoc.sec) return; const r=el.getBoundingClientRect(); curTime=Math.round((e.clientX-r.left)/r.width*activeDoc.sec); refreshDoc(); }
+  else if(a==='segjump'){ if(e.target.closest('button,input,textarea,label')) return; curTime=+el.dataset.t; refreshDoc(); }
+  else if(a==='tocJump'){ const seg=document.getElementById('seg-'+el.dataset.k); if(seg) seg.scrollIntoView({block:'center',behavior:'smooth'}); }
   else if(a==='sprename'){ const n=prompt('重命名说话人',spName(activeDoc,el.dataset.v)); if(n&&n.trim()) renames[activeDoc.id+'-'+el.dataset.v]=n.trim(); refreshDoc(); }
-  else if(a==='edit'){ editing=el.dataset.k; refreshDoc(); const t=document.getElementById('edtx'); if(t) t.focus(); }
-  else if(a==='cancel'){ editing=null; refreshDoc(); }
-  else if(a==='save'){
-    const key=el.dataset.k, t=document.getElementById('edtx').innerText.trim();
-    if(t){
-      if(key.endsWith('-ocr')) activeDoc.ocr=t;
-      else if(key.endsWith('-desc')) activeDoc.desc=t;
-      else { const i=+key.split('-').pop(); if(activeDoc.cat==='text') activeDoc.segs[i]=t; else activeDoc.segs[i][3]=t; }
-    }
-    editing=null; refreshDoc(); toast('已保存，该分段将重新索引');
+  else if(a==='segEdit') openDrawer(el.dataset.k);
+  else if(a==='quotePlay'){ const t=+el.dataset.t; closeDrawer(); curTime=t; if(!playing) togglePlay(); else refreshDoc(); toast('从 '+fmt(t)+' 开始播放'); }
+  else if(a==='ocrRetry'){ const d=activeDoc; toast('已重新提交文字识别'); setTimeout(()=>{ d.ocrFailed=false; d.ocr=d.ocrRetryText||''; refreshDoc(); renderTable(); toast('图中文字识别完成'); },1600); }
+  else if(a==='openSugg') openDrawer(el.dataset.k);
+  else if(a==='oneclick') askOneClick();
+  else if(a==='retarget'){ suggRetarget=el.dataset.g; retargetQ=''; suggEditing=null; suggRejecting=null; renderDrawer(); }
+  else if(a==='retargetCancel'){ suggRetarget=null; renderDrawer(); }
+  else if(a==='retargetPick'){ const g=findSugg(el.dataset.g); if(g){ if(g.kp!==el.dataset.kp){ g.kp=el.dataset.kp; g.retargeted=true; } suggRetarget=null; renderDrawer(); } }
+  else if(a==='unlinkOk'){ const g=findSugg(el.dataset.g); if(g){ const st=segState(drawerDoc,drawerKey); st.kps=st.kps.filter(x=>x!==g.kp); g.status='done'; g.reason='已解除关联'; renderDrawer(); refreshDoc(); toast('已解除关联'); } }
+  else if(a==='unlinkKeep'){ const g=findSugg(el.dataset.g); if(g){ g.status='kept'; g.reason='审核人确认保留关联'; renderDrawer(); refreshDoc(); toast('已保留关联'); } }
+  else if(a==='onlypending'){ kpFilter='pending'; refreshDoc(); }
+  else if(a==='drClose') closeDrawer();
+  else if(a==='drSave') saveDrawer();
+  else if(a==='unlink'){ if(drawerDoc){ const arr=segState(drawerDoc,drawerKey).kps; segState(drawerDoc,drawerKey).kps=arr.filter(x=>x!==el.dataset.kp); renderDrawer(); } }
+  else if(a==='pkToggle'){ pickerOpen=!pickerOpen; renderDrawer(); }
+  else if(a==='pkToggleItem'){ if(drawerDoc){ const arr=segState(drawerDoc,drawerKey).kps, id=el.dataset.kp; const i=arr.indexOf(id); i>=0?arr.splice(i,1):arr.push(id); renderDrawer(); } }
+  else if(a==='suggApprove'){ approveSugg(el.dataset.g); }
+  else if(a==='suggMerge'){ approveSugg(el.dataset.g,'merge'); }
+  else if(a==='suggEdit'){ const g=findSugg(el.dataset.g); if(g) startSuggEdit(g); }
+  else if(a==='nodePkToggle'){ nodePickerOpen=!nodePickerOpen; renderDrawer(); }
+  else if(a==='mountToggle'){ const g=findSugg(suggEditing); if(g){ const ms=g.edit.mounts, i=ms.findIndex(p=>p.join('/')===el.dataset.p); i>=0?ms.splice(i,1):ms.push(el.dataset.p.split('/')); renderDrawer(); } }
+  else if(a==='mountRemove'){ const g=findSugg(suggEditing); if(g){ g.edit.mounts.splice(+el.dataset.i,1); renderDrawer(); } }
+  else if(a==='suggSaveEdit'){ saveNewSugg(el.dataset.g); }
+  else if(a==='suggCancelEdit'){ suggEditing=null; nodePickerOpen=false; renderDrawer(); }
+  else if(a==='suggReject'){ suggRejecting=el.dataset.g; suggEditing=null; renderDrawer(); }
+  else if(a==='suggConfirmReject'){ rejectSugg(el.dataset.g); }
+  else if(a==='suggCancelReject'){ suggRejecting=null; renderDrawer(); }
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if(document.getElementById('previewModal').classList.contains('show')) closePreview();
+    else if(pickerOpen){ pickerOpen=false; renderDrawer(); }
+    else if(drawerDoc){ closeDrawer(); refreshDoc(); }
   }
+});
+document.addEventListener('input',e=>{
+  if(e.target && e.target.id==='segQ'){
+    segQ=e.target.value;
+    const pos=e.target.selectionStart;
+    refreshDoc();
+    const n=document.getElementById('segQ'); if(n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(err){} }
+  }
+});
+document.addEventListener('change',e=>{
+  if(e.target && e.target.id==='segEn'){ segFilter=e.target.value; refreshDoc(); }
+  else if(e.target && e.target.id==='segKp'){ kpFilter=e.target.value; refreshDoc(); }
 });
 
 /* ================= 初始化 ================= */
@@ -777,8 +1380,9 @@ document.getElementById('docBody').addEventListener('click',e=>{
   const meta=KB_META[id]||KB_META.KB004;
   document.title=meta.name+'｜专业图谱平台';
   document.getElementById('kbTitle').textContent=meta.name;
-  document.getElementById('kbMeta').textContent=meta.creator+' · 更新于 '+(meta.editTime||'3 周前');
-  document.getElementById('pageSummary').textContent='共 '+(meta.total||DOCS.length)+' 条文档';
+  document.getElementById('kbMeta').textContent=meta.creator+' · 更新于 '+(meta.editTime||'3 周前')+' · 知识体：旅游类-酒店管理与数字化运营';
+  const addedN=loadAddedDocs(id);
+  document.getElementById('pageSummary').textContent='共 '+((meta.total||DOCS.length-addedN)+addedN)+' 条文档';
   document.getElementById('apiId').textContent=id==='KB004'?'9a87bbc1-9075-4b61-aaf0-0658ed9cc568':('kb-'+id.toLowerCase()+'-'+Math.random().toString(16).slice(2,10));
   document.getElementById('apiCode').textContent=`curl --location --request POST 'http://<your-host>/v1/knowledge-bases/{id}/retrieval' \\
   --header 'Authorization: Bearer <api-key>' \\
