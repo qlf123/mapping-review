@@ -1911,7 +1911,7 @@ function marketUpdateItems(g){
   if(guide && !abl(guide,'短视频与直播讲解')) items.push({ id:'ag-live', kind:'add', title:'新增能力项「短视频与直播讲解」',
     path:'旅游业 › 旅行社与组团地接服务 › 导游', editName:'短视频与直播讲解',
     desc:'导游岗位 JD 中「短视频拍摄」「直播讲解」「账号运营」的要求快速增加，现有能力项未覆盖线上讲解场景。建议类型：技能 · 讲解服务与文化传播 · 要求等级 L2。',
-    metrics:[{v:'23%',label:'导游 JD 提及率（近 90 天）',trend:'14pt',dir:'up'},{v:'2,140',label:'导游岗位 JD 样本'},{v:'3 期',label:'连续上升'}],
+    metrics:[{v:'23%',label:'导游 JD 提及率（近 90 天）',trend:'14pt',dir:'up'},{v:'2,140',label:'导游岗位 JD 样本'},{v:'3 个月',label:'连续上升'}],
     links:['招聘平台 A：导游岗位 1,320 条（2026-07 至 2026-10）','招聘平台 B：导游岗位 820 条','行业报告：《2026 文旅从业者技能需求调研》'],
     conf:.91, impact:'0 条映射（新增后需在知识体系补技能）' });
   const op = pos('旅行社计调'), sys = abl(op,'计调操作系统与订单处理');
@@ -1931,9 +1931,9 @@ function marketUpdateItems(g){
   const ai = abl(guide,'AI行程规划工具应用');
   if(ai && ai.flag) items.push({ id:'ag-emerging', kind:'modify', title:'「AI行程规划工具应用」转为常规能力',
     path:'旅游业 › 旅行社与组团地接服务 › 导游', diff:{label:'标记 ',from:ai.flag,to:'常规能力'},
-    desc:'该能力已连续 3 期在导游 JD 中稳定出现（提及率 > 15%），不再属于仅有市场来源的新兴能力。',
-    metrics:[{v:'18%',label:'导游 JD 提及率',trend:'2pt',dir:'up'},{v:'3 期',label:'稳定超过门槛 15%'}],
-    links:['招聘平台 A、B 导游岗位连续 3 期统计'],
+    desc:'该能力已连续 3 个月在导游 JD 中稳定出现（提及率 > 15%），不再属于仅有市场来源的新兴能力。',
+    metrics:[{v:'18%',label:'导游 JD 提及率',trend:'2pt',dir:'up'},{v:'3 个月',label:'稳定超过门槛 15%'}],
+    links:['招聘平台 A、B 导游岗位连续 3 个月统计'],
     conf:.79, impact:'1 个能力项标记变化' });
   const applied = g.appliedUpdates || {};
   return items.filter(x => !(x.id in applied));

@@ -111,9 +111,17 @@ mark.hw{background:#FEF0C7;color:inherit;border-radius:3px;padding:0 2px}
 .track{height:6px;border-radius:3px;background:#F2F4F7;overflow:hidden}
 .track>div{height:100%;background:var(--pri);transition:width .25s}
 .track>div.ok{background:#17B26A}
-.done-hero{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0 4px;text-align:center}
-.done-badge{width:64px;height:64px;border-radius:50%;background:#ECFDF3;display:flex;align-items:center;justify-content:center}
-.done-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.pfile{position:relative;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:var(--bg2);overflow:hidden;font-size:14px}
+.pfile>*:not(.pfile-bar){position:relative}
+.pfile-bar{position:absolute;left:0;top:0;bottom:0;background:var(--pri-ll);transition:width .25s}
+.pfile-pct{font-size:13px;color:var(--t3);font-variant-numeric:tabular-nums}
+.kb-name-row{display:flex;align-items:flex-end;gap:16px}
+.kb-name-ico{width:64px;height:64px;border-radius:14px;background:var(--pri-ll);display:flex;align-items:center;justify-content:center;flex:none}
+.sum{display:grid;grid-template-columns:160px 1fr;gap:10px 16px;font-size:14px}
+.sum span{color:var(--t4)}
+.sum b{font-weight:500;color:var(--t2)}
+.spin{width:16px;height:16px;border:2px solid #E0DDFB;border-top-color:var(--pri);border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#101828;color:#fff;font-size:14px;padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:99}
 .toast.show{opacity:1}
 </style>
@@ -181,7 +189,9 @@ const MOCK_FILES = [
   { id:'t1', kind:'text', name:'前厅服务规范.docx', size:'1.2 MB', ext:'docx',
     segs:[
       {t:'第一章 总则：前厅部是酒店对客服务的第一窗口，员工须统一着装、佩戴工牌，站立服务，主动问候。'},
+      {t:'前厅员工应熟悉酒店各营业场所的位置与营业时间，能准确回答客人问询。'},
       {t:'第二章 入住登记：核验有效证件，确认预订信息与房型、房价、离店日期，收取押金后制作房卡并告知早餐时间。'},
+      {t:'无预订的散客入住时，先查询当前可售房态，向客人介绍房型与房价，确认后再办理登记。'},
       {t:'第三章 提前入住与延迟退房：提前入住视当日可售房态安排；延迟退房至 14:00 不另收费，14:00–18:00 加收半日房费，18:00 后按全日房费计。'},
       {t:'第四章 交接班：每班结束前核对房态、备用金和未完成事项，填写交接班记录本并双方签字。'}
     ]},
@@ -226,7 +236,7 @@ const MOCK_FILES = [
       [820,1125,2,'多练夜审和交接班。学校实训一般练入住退房比较多，夜审很少涉及，但上岗后每个人都要轮。']
     ]},
   /* ---- 超限示例 ---- */
-  { id:'d', kind:'av', media:'video', name:'研学活动全程记录.mov', size:'1.8 GB', ext:'mov', sec:13330, error:'时长超过 3 小时，无法导入', segs:[], speakers:{} }
+  { id:'d', kind:'av', media:'video', name:'研学活动全程记录.mov', size:'1.8 GB', ext:'mov', sec:5400, error:'时长超过 1 小时，无法导入', segs:[], speakers:{} }
 ];
 
 const EXT = {
@@ -234,7 +244,7 @@ const EXT = {
   image:['jpg','jpeg','png','webp','bmp'],
   av:['mp3','wav','m4a','aac','flac','mp4','mov','mkv','webm']
 };
-const LIMIT = { perBatch:20, text:100*1024**2, image:20*1024**2, av:2*1024**3, avSec:3*3600 };
+const LIMIT = { perBatch:20, text:100*1024**2, image:20*1024**2, av:2*1024**3, avSec:3600 };
 const KIND_LABEL = { text:'文本', image:'图文', av:'音视频' };
 
 /* 页面模式：create 创建知识库；add 向已有知识库添加文件（knowledge-base-create.html?mode=add&kb=KB004&name=…） */
@@ -251,18 +261,21 @@ const ADD_MOCK_NAMES = { t1:'前厅服务规范（2026 修订）.docx', t2:'夜�
    状态
    ====================================================================== */
 const S = {
-  step:1, name:'旅游管理实训素材', desc:'',
+  step:1, name:'', nameEdited:false, desc:'',
   source:'local', files:[], drag:false, tab:null,
   // 知识体：分段完成后在该知识体内自动提取知识点（创建页暂不提供选择，使用默认知识体）
   kbBody:'旅游类-酒店管理与数字化运营',
+  // AI 自动关联知识点：只作用于本批上传的文件，默认关闭
+  autoKp:false,
   // 通用
-  autoSeg:true, indexMode:'high',
+  // 索引设置：整个知识库统一，创建后向量模型不可更改
+  indexMode:'high', embed:'default',
   // 文本
   sep:'\\n\\n', maxLen:500, ocrScan:true,
   // 图文
-  imgMode:'both',
+  imgMode:'ocr',
   // 音视频
-  lang:'zh', diarize:true, clean:true, keepTs:true, segMode:'semantic',
+  lang:'auto', diarize:true, clean:true, keepTs:true, segMode:'semantic',
   hotwords:'前厅部，入住登记，预授权，押金，OTA，散客，房态，夜审',
   // 处理
   progress:{}, done:false
@@ -276,9 +289,10 @@ const $=(s)=>document.querySelector(s);
 const esc=(s)=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=(s)=>{s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60,p=n=>(n<10?'0':'')+n;return h?h+':'+p(m)+':'+p(x):p(m)+':'+p(x)};
 const valid=()=>S.files.filter(f=>!f.error);
+const defaultName=()=>valid()[0]?valid()[0].name:'未命名知识库';
 // 添加文件时沿用知识库已选的知识体
 const ADD_KB_BODY='旅游类-酒店管理与数字化运营';
-const extractOn=()=>MODE==='add'?true:!!S.kbBody;
+const extractOn=()=>(MODE==='add'?true:!!S.kbBody)&&S.autoKp;
 const ofKind=(k)=>valid().filter(f=>f.kind===k);
 const fileById=(id)=>S.files.find(f=>f.id===id);
 const spName=(f,n)=>S.renames?.[f.id+'-'+n]||f.speakers[n]||('说话人 '+n);
@@ -340,7 +354,7 @@ function viewStep1(){
   const canNext = S.source==='local' && valid().length>0 && valid().length===S.files.length;
   if(MODE==='add') return `<section class="col g24">
     <div class="col g6"><h2 class="h2">上传文件</h2>
-      <span class="muted">文件将添加到知识库「${esc(KB_NAME)}」，按类型自动识别并分别解析；分段完成后在知识体「${esc(ADD_KB_BODY)}」内自动提取知识点。</span></div>
+      <span class="muted">文件将添加到知识库「${esc(KB_NAME)}」，按类型自动识别并分别解析。</span></div>
     ${uploadBody()}
     <div class="row g12" style="justify-content:flex-end">
       <a class="btn" href="${DETAIL_URL}" style="text-decoration:none">取消</a>
@@ -354,7 +368,7 @@ function viewStep1(){
       ${staticCard('<span class="ico">'+I.web+'</span>','同步自 Web 站点','抓取站点正文')}</div>
     <div class="col g6">
       <div class="row g10 wrapflex"><span class="btn static">选择知识体</span>${S.kbBody?`<span class="chip act" style="font-size:13px;padding:6px 10px">知识体：${esc(S.kbBody)}</span>`:''}</div>
-      <span class="muted">${S.kbBody?'分段完成后将自动提取知识点，并与该知识体比对。':'未选择知识体时，不会自动提取知识点；可稍后在知识库设置中选择。'}</span></div>
+      <span class="muted">${S.kbBody?'知识点的关联与提取限定在该知识体内。':'未选择知识体时，不会自动提取知识点；可稍后在知识库设置中选择。'}</span></div>
     ${uploadBody()}
     <div class="row" style="justify-content:flex-end"><button class="btn pri" id="step1Next" style="min-width:160px" data-act="go" data-v="2" ${canNext?'':'disabled'}>下一步 ${I.arrow}</button></div>
     <div class="hr"></div>
@@ -373,7 +387,7 @@ function uploadBody(){
         <span class="ico sm">${fileIcon(f)}</span>
         <div class="col" style="flex:1;min-width:0;gap:2px"><span class="fname">${esc(f.name)}</span>
           <span class="row g6 wrapflex">${kindChip(f.kind)}<span class="muted">${f.size}${f.kind==='av'?' · 时长 '+fmt(f.sec):''}${f.scanned?' · 扫描件':''}</span></span></div>
-        <span style="font-size:13px;white-space:nowrap;${f.error?'font-weight:600;color:#B42318':'color:var(--t3)'}">${f.error||'待处理'}</span>
+        ${f.error?`<span style="font-size:13px;white-space:nowrap;font-weight:600;color:#B42318">${f.error}</span>`:''}
         <button class="x" data-act="remove" data-v="${f.id}" aria-label="移除文件">${I.x}</button></li>`).join('');
     const errCount=S.files.filter(f=>f.error).length;
     body=`<div class="col g12">
@@ -383,7 +397,7 @@ function uploadBody(){
           <span>拖拽文件或文件夹至此，或者 <button class="link" data-act="pick">选择文件</button></span></div>
         <p><b>文本</b>：${EXT.text.map(x=>x.toUpperCase()).join('、')}，单个不超过 100 MB<br>
            <b>图文</b>：${EXT.image.map(x=>x.toUpperCase()).join('、')}，单张不超过 20 MB<br>
-           <b>音视频</b>：${EXT.av.map(x=>x.toUpperCase()).join('、')}，单个不超过 2 GB、时长不超过 3 小时<br>
+           <b>音视频</b>：${EXT.av.map(x=>x.toUpperCase()).join('、')}，单个不超过 2 GB、时长不超过 1 小时<br>
            每批最多 ${LIMIT.perBatch} 个文件，系统按文件类型自动识别并分别处理。</p>
         <div class="row g8 wrapflex"><span class="muted">没有素材？</span><button class="btn mini" data-act="mock">载入示例文件（文本 2 · 图文 2 · 音视频 3 · 超限 1）</button></div>
       </div>
@@ -397,7 +411,25 @@ function uploadBody(){
 /* ======================================================================
    STEP 2 解析与分段（按类型设置 + 预览）
    ====================================================================== */
+/* 向量模型（mock）：可选范围由管理员配置 */
+const EMBED_MODELS={default:'系统默认向量模型', multi:'多语言向量模型'};
+function indexSettings(){
+  if(MODE==='add') return `<div class="card"><div class="set"><div class="col" style="flex:1;gap:2px"><b>索引设置</b>
+      <span class="muted">沿用知识库设置：高质量 · ${EMBED_MODELS.default}。同一知识库内统一，不可单独更改。</span></div></div></div>`;
+  return `<div class="col g12"><h3 class="h3">索引设置 <span class="muted" style="font-weight:400;font-size:13px">对本知识库所有文件生效</span></h3>
+    <div class="card">
+      <div class="set"><div class="col" style="flex:1;gap:2px"><b>索引方式</b><span class="muted">${S.indexMode==='high'?'使用向量模型建索引，检索更准确':'只建关键词索引，不使用向量模型，检索效果较弱'}</span></div>
+        <div class="row g8">${pill('indexMode','high','高质量',S.indexMode)}${pill('indexMode','economy','经济',S.indexMode)}</div></div>
+      ${S.indexMode==='high'?`<div class="set"><div class="col" style="flex:1;gap:2px"><b>向量模型</b><span class="muted">创建后不可更改；如需更换，需重建全部索引</span></div>
+        <select class="field" id="embedSel" style="width:200px">${Object.entries(EMBED_MODELS).map(([k,l])=>`<option value="${k}" ${S.embed===k?'selected':''}>${l}${k==='default'?'（推荐）':''}</option>`).join('')}</select></div>`:''}
+    </div></div>`;
+}
 const pill=(act,k,label,cur)=>`<button class="pill ${String(cur)===String(k)?'on':''}" data-act="${act}" data-v="${k}">${label}</button>`;
+function kpSettings(){
+  const label='AI 自动关联知识点', body=MODE==='add'?ADD_KB_BODY:(S.kbBody||'未选择');
+  return `<div class="col g12"><h3 class="h3">知识点 <span class="muted" style="font-weight:400;font-size:13px">只对本批上传的文件生效</span></h3>
+    <div class="card">${tg('autoKp',label,`开启后，本批文件分段完成时，AI 在知识体「${esc(body)}」内自动识别知识点，结果需在文档详情中确认。`)}</div></div>`;
+}
 const tg=(k,label,desc)=>`<div class="set"><div class="col" style="flex:1;gap:2px"><b>${label}</b><span class="muted">${desc}</span></div>
    <button class="tg ${S[k]?'on':''}" data-act="toggle" data-v="${k}" aria-label="${label}" aria-pressed="${S[k]}"></button></div>`;
 function hl(t){
@@ -483,8 +515,19 @@ function previewAV(){
       <p>${hl(p.text)}</p></div>`).join('');
 }
 
+/* 按类型的解析与分段配置：本期隐藏，使用系统默认规则（见 S 中的默认值） */
+const SHOW_TYPE_SETTINGS=false;
 function viewStep2(){
   const kinds=['text','image','av'].filter(k=>ofKind(k).length);
+  if(!SHOW_TYPE_SETTINGS) return `<section class="col g24">
+    <div class="col g6"><h2 class="h2">解析与分段</h2>
+      <span class="muted">本批共 ${valid().length} 个文件（${kinds.map(x=>KIND_LABEL[x]+' '+ofKind(x).length).join(' · ')}），按文件类型使用系统默认规则解析与分段。</span></div>
+    ${indexSettings()}
+    ${kpSettings()}
+    <div class="row g12">
+      <button class="btn" data-act="go" data-v="1">上一步</button>
+      <button class="btn pri" data-act="process">保存并处理</button></div>
+  </section>`;
   if(!kinds.includes(S.tab)) S.tab=kinds[0];
   const k=S.tab, list=ofKind(k);
   const summary=k==='av'?`${list.length} 个文件 · 总时长 ${fmt(list.reduce((a,f)=>a+f.sec,0))}`:`${list.length} 个文件`;
@@ -493,6 +536,7 @@ function viewStep2(){
   return `<section class="col g24">
     <div class="col g6"><h2 class="h2">按文件类型设置解析与分段</h2>
       <span class="muted">本批共 ${valid().length} 个文件，已按类型自动分组。每组设置只对该组文件生效。</span></div>
+    ${indexSettings()}
     <div class="tabs" role="tablist">${kinds.map(x=>`<button class="tab ${x===k?'on':''}" role="tab" aria-selected="${x===k}" data-act="tab" data-v="${x}">${x==='text'?I.doc('currentColor',16):x==='image'?I.image('currentColor',16):I.video('currentColor',16)}${KIND_LABEL[x]}<span class="cnt">${ofKind(x).length}</span></button>`).join('')}</div>
     <div class="row g24 wrapflex" style="align-items:flex-start;gap:32px">
       <div class="col" style="flex:999 1 500px;min-width:0;gap:24px">${settings}</div>
@@ -514,11 +558,12 @@ function viewStep2(){
 /* ======================================================================
    STEP 3 处理并完成
    ====================================================================== */
+const idxStage=()=>S.indexMode==='high'||MODE==='add'?'向量索引':'关键词索引';
 function stagesFor(f,pct){
   let names;
-  if(f.kind==='text') names=['上传',f.scanned&&S.ocrScan?'OCR 识别':'文本解析','分段','向量索引'];
-  else if(f.kind==='image') names=['上传',...(S.imgMode!=='desc'?['文字识别']:[]),...(S.imgMode!=='ocr'?['画面描述']:[]),'向量索引'];
-  else names=f.media==='video'?['上传','提取音轨','语音转写','智能分段','向量索引']:['上传','语音转写','智能分段','向量索引'];
+  if(f.kind==='text') names=['上传',f.scanned&&S.ocrScan?'OCR 识别':'文本解析','分段',idxStage()];
+  else if(f.kind==='image') names=['上传',...(S.imgMode!=='desc'?['文字识别']:[]),...(S.imgMode!=='ocr'?['画面描述']:[]),idxStage()];
+  else names=f.media==='video'?['上传','提取音轨','语音转写','智能分段',idxStage()]:['上传','语音转写','智能分段',idxStage()];
   if(extractOn()) names.push('知识点提取');
   const step=100/names.length;
   let cur=Math.floor(pct/step); if(pct>=100) cur=names.length;
@@ -526,59 +571,51 @@ function stagesFor(f,pct){
 }
 function viewStep3(){
   const v=valid(); let all=v.length>0, segTotal=0, kpTotal=0;
-  const groups=['text','image','av'].filter(k=>ofKind(k).length).map(k=>{
-    const rows=ofKind(k).map(f=>{
-      const pct=S.progress[f.id]||0, done=pct>=100; if(!done) all=false; else {segTotal+=segCount(f); kpTotal+=kpCount(f);}
-      const sg=stagesFor(f,pct);
-      const skipped=done&&segCount(f)===0;
-      return `<li class="proc"><div class="row g12"><span class="row g8" style="flex:1;min-width:0">${fileIcon(f,18)}<span class="fname">${esc(f.name)}</span></span>
-          <span style="font-size:13px;font-weight:600;white-space:nowrap;color:${skipped?'#B54708':done?'#067647':'#5149e9'}">${skipped?'已跳过（无文字层）':done?'已完成':sg.names[sg.cur]+'中 '+Math.floor(pct)+'%'}</span></div>
-        <div class="track"><div class="${done?'ok':''}" style="width:${pct}%"></div></div>
-        <div class="row g6 wrapflex">${sg.names.map((n,i)=>`<span class="chip ${i<sg.cur?'done':(i===sg.cur?'act':'')}">${n}</span>`).join('')}
-          <span class="muted" style="margin-left:auto">${done?segCount(f)+' 个分段 · '+charCount(f)+' 字'+(kpCount(f)?' · 提出 '+kpCount(f)+' 个候选知识点':''):(f.kind==='av'?'时长 '+fmt(f.sec):f.size)}</span></div></li>`;
-    }).join('');
-    return `<div class="col g10"><span class="row g8">${kindChip(k)}<span class="muted">${ofKind(k).length} 个文件</span></span><ul class="col g10">${rows}</ul></div>`;
-  }).join('');
+  // 文件列表只显示图标、名称与进度；处理阶段、分段数等信息隐藏
+  ['text','image','av'].forEach(k=>ofKind(k).forEach(f=>{ const pct=S.progress[f.id]||0; if(pct<100) all=false; else {segTotal+=segCount(f); kpTotal+=kpCount(f);} }));
+  const groups=`<ul class="col g8">${v.map(f=>{ const pct=Math.floor(S.progress[f.id]||0);
+    return `<li class="pfile"><div class="pfile-bar" style="width:${pct}%"></div>
+      <span class="pfile-ico">${fileIcon(f,16)}</span><span class="fname" style="flex:1;min-width:0">${esc(f.name)}</span>
+      <span class="pfile-pct">${pct}%</span></li>`;}).join('')}</ul>`;
 
-  const hero = MODE==='add' ? (all ? `<div class="done-hero">
-      <div class="done-badge">${I.check}</div>
-      <h2 style="font-size:22px">已添加到「${esc(KB_NAME)}」</h2>
-      <span class="muted" style="font-size:14px">共 ${v.length} 个文件，生成 ${segTotal} 个分段，已完成向量索引，可开始检索。</span>
-      <span class="muted" style="font-size:14px">${extractOn()?`提出 ${kpTotal} 个候选知识点，已推送图谱平台待确认，也可在文档详情中确认。`:'未选择知识体，未提取知识点。可在知识库设置中选择知识体后再提取。'}</span>
-      <div class="done-actions">
-        <button class="btn pri" data-act="finish">返回文档列表 ${I.arrow}</button>
-        <button class="btn" data-act="restart">继续添加</button>
-      </div>
-    </div>`
-    : `<div class="col g6"><h2 style="font-size:22px">文件已添加，正在处理</h2>
-        <span class="muted" style="font-size:14px">处理在后台进行，可以 <a href="${DETAIL_URL}" style="color:var(--pri)">返回文档列表</a>，完成后在列表查看。</span></div>`)
-    : all ? `<div class="done-hero">
-      <div class="done-badge">${I.check}</div>
-      <h2 style="font-size:22px">知识库「${esc(S.name)}」已创建</h2>
-      <span class="muted" style="font-size:14px">共 ${v.length} 个文件，生成 ${segTotal} 个分段，已完成向量索引，可开始检索。</span>
-      <span class="muted" style="font-size:14px">${extractOn()?`提出 ${kpTotal} 个候选知识点，已推送图谱平台待确认，也可在文档详情中确认。`:'未选择知识体，未提取知识点。可在知识库设置中选择知识体后再提取。'}</span>
-      <div class="done-actions">
-        <button class="btn pri" data-act="finish">前往文档 ${I.arrow}</button>
-        <button class="btn" data-act="restart">再创建一个</button>
-      </div>
-    </div>`
-    : `<div class="col g6"><h2 style="font-size:22px">知识库已创建，正在处理文件</h2>
-        <span class="muted" style="font-size:14px">处理在后台进行，可以离开此页面，完成后在文档列表查看。</span></div>`;
+  const kpLine=extractOn()?`提出 ${kpTotal} 个候选知识点，请在文档详情中确认。`:(S.kbBody?'未开启 AI 自动关联知识点，可在文档详情中手动关联知识点。':'未选择知识体，未提取知识点。');
+  const head = MODE==='add'
+    ? `<div class="col g6"><h2 class="h2">🎉 文件已添加</h2><span class="muted">已添加到知识库「${esc(KB_NAME)}」，处理在后台进行，无需等待处理完成即可前往文档。</span></div>`
+    : `<div class="col g6"><h2 class="h2">🎉 知识库已创建</h2><span class="muted">我们自动为该知识库起了个名称，您也可以随时修改</span></div>
+      <div class="kb-name-row"><span class="kb-name-ico">${I.doc('#5149e9',30)}</span>
+        <label class="col g6" style="flex:1;min-width:0"><span class="lbl">知识库名称</span>
+          <input class="field" id="kbName" value="${esc(S.name)}" maxlength="40" autocomplete="off"></label></div>`;
+  const status = `<div class="col g6"><h3 class="h3 row g8">${all?`${I.check.replace(/width="34" height="34"/,'width="18" height="18"')}处理完成`:'<span class="spin"></span>处理中…'}</h3>
+      <span class="muted">${all?`共 ${v.length} 个文件，生成 ${segTotal} 个分段，已完成${idxStage()}，可开始检索。${kpLine}`:'处理在后台进行，可以先前往文档，完成后在文档列表查看结果。'}</span></div>`;
+  const summary = `<div class="sum">
+      <span>解析与分段</span><b>系统默认规则（按文件类型）</b>
+      <span>索引方式</span><b>${S.indexMode==='high'||MODE==='add'?'高质量':'经济'}</b>
+      ${S.indexMode==='high'||MODE==='add'?`<span>向量模型</span><b>${MODE==='add'?EMBED_MODELS.default:EMBED_MODELS[S.embed]}</b>`:''}
+      <span>知识体</span><b>${esc(MODE==='add'?ADD_KB_BODY:(S.kbBody||'未选择'))}</b>
+      <span>AI 自动关联知识点</span><b>${S.autoKp?'已开启（本批文件）':'未开启'}</b></div>`;
+  const actions = `<div class="row g12">
+      <button class="btn pri" data-act="finish">前往文档 ${I.arrow}</button>
+      ${MODE==='add'?'<button class="btn" data-act="restart">继续添加</button>':''}</div>`;
 
+  // 不需要等待处理完成即可前往文档
   return `<section class="col g24" style="max-width:820px">
-    ${hero}
-    ${all&&MODE==='create'?`<div class="col g6"><span class="muted">知识库名称</span>
-      <span style="font-size:15px;font-weight:600;padding:10px 12px;border:1px solid var(--bd);border-radius:8px;background:var(--bg2)">${esc(S.name)}</span></div>`:''}
-    ${groups}</section>`;
+    ${head}
+    <div class="hr"></div>
+    ${status}
+    ${groups}
+    <div class="hr"></div>
+    ${summary}
+    ${actions}</section>`;
 }
 
 /* ======================================================================
    渲染 & 交互
    ====================================================================== */
 function render(){
-  const y=window.scrollY;
+  const y=window.scrollY, act=document.activeElement, keepId=act&&act.id, pos=act&&act.selectionStart;
   $('#app').innerHTML=stepper()+[null,viewStep1,viewStep2,viewStep3][S.step]();
   window.scrollTo(0,y);
+  if(keepId){ const el=document.getElementById(keepId); if(el){ el.focus(); try{ if(pos!=null) el.setSelectionRange(pos,pos); }catch(e){} } }
   bindExtras();
 }
 
@@ -597,12 +634,21 @@ function fromRealFile(file){
   if(kind==='av') r.media=['mp4','mov','mkv','webm'].includes(ext)?'video':'audio';
   if(!kind) r.error='格式不支持';
   else if(file.size>LIMIT[kind]) r.error={text:'文件超过 100 MB',image:'图片超过 20 MB',av:'文件超过 2 GB'}[kind];
+  if(kind==='av' && !r.error) probeDuration(file,r);
   return r;
+}
+/* 读取真实音视频的时长，超过 1 小时标红拦截 */
+function probeDuration(file,r){
+  const el=document.createElement(r.media==='video'?'video':'audio'), url=URL.createObjectURL(file);
+  el.preload='metadata';
+  el.onloadedmetadata=()=>{ URL.revokeObjectURL(url); if(isFinite(el.duration)){ r.sec=Math.round(el.duration); if(r.sec>LIMIT.avSec) r.error='时长超过 1 小时，无法导入'; render(); } };
+  el.onerror=()=>URL.revokeObjectURL(url);
+  el.src=url;
 }
 /* 添加模式：把本批文件交给文档详情页（同一会话内），格式与详情页 DOCS 一致 */
 function toDoc(f,status){
   const now=new Date(), p=n=>(n<10?'0':'')+n;
-  const d={id:f.docId, cat:f.kind, name:f.name, ext:f.ext.toUpperCase(), size:f.size, status, index:'high', source:'local',
+  const d={id:f.docId, autoKp:extractOn(), cat:f.kind, name:f.name, ext:f.ext.toUpperCase(), size:f.size, status, source:'local',
     time:now.getFullYear()+'-'+p(now.getMonth()+1)+'-'+p(now.getDate())+' '+p(now.getHours())+':'+p(now.getMinutes()), hits:0};
   if(f.kind==='text') Object.assign(d,{scanned:!!f.scanned, ocrOff:!!f.scanned&&!S.ocrScan, segs:textSegs(f).map(s=>s.t)});
   else if(f.kind==='image') Object.assign(d,{svg:f.svg, imgMode:S.imgMode}, imgParts(f));
@@ -620,6 +666,8 @@ function handoff(status){
 function startProcessing(){
   clearInterval(procTimer); S.progress={}; valid().forEach(f=>S.progress[f.id]=0); S.done=false; S.step=3; render();
   const t=Date.now(); valid().forEach(f=>f.docId='add-'+f.id+'-'+t);
+  // 知识库名称默认取第一个文件名，可修改
+  if(!S.nameEdited) S.name=defaultName();
   handoff('indexing');
   const base={text:9,image:7,av:3.2};
   const speed={}; valid().forEach((f,i)=>speed[f.id]=base[f.kind]*(0.8+((i*37)%10)/25));
@@ -643,22 +691,22 @@ document.addEventListener('click',e=>{
     case 'go': clearInterval(procTimer); S.step=+v; break;
     case 'tab': S.tab=v; break;
     case 'lang': S.lang=v; break;
-    case 'autoSeg': S.autoSeg=(v==='auto'); break;
-    case 'indexMode': S.indexMode=v; break;
+    case 'indexMode': if(MODE==='create') S.indexMode=v; break;
     case 'toggle': S[v]=!S[v]; break;
     case 'segMode': S.segMode=v; break;
     case 'imgMode': S.imgMode=v; break;
     case 'process': startProcessing(); return;
     case 'finish': location.href=DETAIL_URL; return;
-    case 'restart': clearInterval(procTimer); Object.assign(S,{step:1,name:'旅游管理实训素材',desc:'',files:[],progress:{},done:false,tab:null}); break;
+    case 'restart': clearInterval(procTimer); Object.assign(S,{step:1,name:'',nameEdited:false,desc:'',files:[],progress:{},done:false,tab:null,autoKp:false}); break;
   }
   render();
 });
 
 function bindExtras(){
-  const name=$('#kbName'); if(name && name!==document.activeElement){ name.oninput=()=>{S.name=name.value; const b=$('#step1Next'); if(b) b.disabled = !(S.source==='local' && valid().length>0 && valid().length===S.files.length);}; }
+  const name=$('#kbName'); if(name){ name.oninput=()=>{ S.name=name.value; S.nameEdited=true; }; name.onblur=()=>{ if(!S.name.trim()){ S.name=defaultName(); S.nameEdited=false; name.value=S.name; toast('名称不能为空，已恢复默认名称'); } }; }
   const desc=$('#kbDesc'); if(desc) desc.oninput=()=>{S.desc=desc.value;};
   const hot=$('#hot'); if(hot) hot.oninput=()=>{S.hotwords=hot.value; const pos=hot.selectionStart; render(); const h=$('#hot'); h.focus(); h.setSelectionRange(pos,pos);};
+  const em=$('#embedSel'); if(em) em.onchange=()=>{ S.embed=em.value; };
   const sep=$('#sepSel'); if(sep) sep.onchange=()=>{ S.sep=sep.value; render(); };
   const ml=$('#maxLen'); if(ml) ml.onchange=()=>{ S.maxLen=Math.min(2000,Math.max(50,parseInt(ml.value,10)||500)); render(); };
   const pk=$('#picker'); if(pk) pk.onchange=()=>addFiles([...pk.files].map(fromRealFile));
