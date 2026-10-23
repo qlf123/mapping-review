@@ -68,3 +68,15 @@
 .gu-steps .cur{color:#5149e9;font-weight:600}
 .gu-empty{padding:48px 24px;text-align:center;color:#8b99ac;font-size:14px;line-height:1.8}
 .gu-empty b{display:block;font-size:16px;color:#1f2d46;margin-bottom:4px}
+/* ===== 历史更新报告 ===== */
+.gu-head-spacer{flex:1}
+.gu-head-hist{margin-right:12px;border:1px solid #dfe6ef;background:#fff;color:#41536f;border-radius:8px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:inherit}
+.gu-head-hist:hover{border-color:#5149e9;color:#5149e9}
+.gu-hist{border:1px solid #e2e8f0;border-radius:12px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.gu-hist-top{display:flex;align-items:center;gap:8px}
+.gu-hist-time{font-size:13px;font-weight:600;color:#1f2d46}
+.gu-hist-scope{font-size:12px;color:#8b99ac}
+.gu-hist-stats{font-size:12px;color:#41536f}
+.gu-hist-stats b{color:#1f2d46;font-weight:600}
+.gu-hist-items{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px dashed #edf1f5;padding-top:8px}
+.gu-hist-name{font-size:12px;color:#41536f}

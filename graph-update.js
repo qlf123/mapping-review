@@ -17,21 +17,33 @@
     get(k){ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){ return []; } },
     set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
   };
+  const nowStr = () => { const d=new Date(), p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); };
 
   function mount(cfg){
     const btn = document.querySelector(cfg.btn);
     if(!btn) return;
     btn.classList.add('gu-btn');
+    const histKey = cfg.storeKey + '-hist';
+    const loadHist = () => store.get(histKey);
     const mask = document.createElement('div');
     mask.className = 'gu-mask';
     mask.innerHTML = '<div class="gu-dialog" role="dialog" aria-modal="true" aria-label="'+esc(cfg.title)+'"></div>';
     document.body.appendChild(mask);
     const dlg = mask.firstChild;
 
-    let items = [], decision = {}, names = {}, filter = 'all', confirming = false, open = {}, lastChecked = cfg.lastChecked;
+    let items = [], decision = {}, names = {}, filter = 'all', confirming = false, open = {}, lastChecked = cfg.lastChecked, mode = 'report', wasChecked = false;
     const ignored = () => store.get(cfg.storeKey);
     const seenKey = cfg.storeKey + '-seen';
     const live = () => cfg.getItems().filter(x => !ignored().includes(x.id));
+
+    // 历史更新报告入口（与「检查更新」按钮并列）
+    const histBtn = document.createElement('button');
+    histBtn.type = 'button';
+    histBtn.className = btn.className;
+    histBtn.style.marginLeft = '8px';
+    histBtn.textContent = '历史报告';
+    btn.insertAdjacentElement('afterend', histBtn);
+    histBtn.onclick = () => { mode = 'history'; mask.classList.add('show'); renderHistory(); };
 
     // 定期检查结果：按钮角标提示待处理条数
     function refreshDot(){
@@ -54,6 +66,7 @@
       items.forEach(x => counts[x.kind] = (counts[x.kind]||0)+1);
       return `<div class="gu-head">
         <div class="gu-head-top"><h2>${esc(cfg.title)}</h2><span class="gu-ver">当前 ${esc(cfg.version())}</span>
+          ${withFilters ? '<span class="gu-head-spacer"></span><button class="gu-head-hist" data-gu="history">历史报告</button>' : ''}
           <button class="gu-close" data-gu="close" aria-label="关闭">×</button></div>
         <div class="gu-meta"><b>检查范围</b>　${esc(cfg.scope)}　·　<b>上次检查</b>　${esc(lastChecked)}<br>
           <b>数据来源</b>　${cfg.sources.map(s=>`<span class="gu-src">${esc(s)}</span>`).join('')}</div>
@@ -106,6 +119,26 @@
       dlg.innerHTML = head(true) + `<div class="gu-body">${list.map(card).join('')}</div>` + foot();
     }
 
+    function histCard(h){
+      const itemsHtml = (h.items||[]).map(x => `<span class="gu-type ${x.kind}">${KIND[x.kind]||x.kind}</span><span class="gu-hist-name">${esc(x.name||x.title)}</span>`).join('');
+      const ver = (h.from && h.from!==h.version) ? esc(h.from)+' → '+esc(h.version) : esc(h.version);
+      return `<div class="gu-hist">
+        <div class="gu-hist-top"><span class="gu-hist-time">${esc(h.time)}</span><span class="gu-ver">${ver}</span></div>
+        <div class="gu-hist-scope">${esc(h.scope||'')}</div>
+        <div class="gu-hist-stats">采纳 <b>${h.acc||0}</b> 项 · 忽略 <b>${h.ign||0}</b> 项 · 共 <b>${h.total||0}</b> 项</div>
+        ${itemsHtml ? `<div class="gu-hist-items">${itemsHtml}</div>` : ''}
+      </div>`;
+    }
+    function renderHistory(){
+      const list = loadHist();
+      dlg.innerHTML = `<div class="gu-head">
+        <div class="gu-head-top"><h2>历史更新报告</h2><button class="gu-close" data-gu="close" aria-label="关闭">×</button></div>
+        <div class="gu-meta"><b>检查范围</b>　${esc(cfg.scope)}　·　共 ${list.length} 份报告（数据保存在本机浏览器）</div>
+      </div>
+      <div class="gu-body">${list.length ? list.slice().reverse().map(histCard).join('') : '<div class="gu-empty"><b>暂无历史报告</b>完成并应用一次「检查更新」后，会在这里留下记录。</div>'}</div>
+      <div class="gu-foot"><span class="gu-spacer"></span><button class="gu-btn-ghost" data-gu="back-report">返回检查更新</button><button class="gu-btn-pri" data-gu="close">关闭</button></div>`;
+    }
+
     function check(){
       const why = cfg.disabled && cfg.disabled();
       if(why){ cfg.toast(why); return; }
@@ -118,7 +151,7 @@
         if(i++ < cfg.steps.length){ setTimeout(tick, 450); return; }
         btn.disabled = false;
         lastChecked = '刚刚';
-        items = live(); decision = {}; names = {}; filter = 'all'; confirming = false; open = {};
+        items = live(); decision = {}; names = {}; filter = 'all'; confirming = false; open = {}; mode = 'report'; wasChecked = true;
         if(!items.length){
           dlg.innerHTML = head(false) + `<div class="gu-empty"><b>已是最新</b>与上次检查相比，市场数据没有达到更新门槛的变化。<br>系统每周自动检查一次，发现变化会在按钮上提示。</div>
             <div class="gu-foot"><span class="gu-spacer"></span><button class="gu-btn-pri" data-gu="close">知道了</button></div>`;
@@ -136,6 +169,8 @@
       const el = e.target.closest('[data-gu]'); if(!el) return;
       const a = el.dataset.gu, v = el.dataset.v;
       if(a==='close') return close();
+      if(a==='history'){ mode = 'history'; renderHistory(); return; }
+      if(a==='back-report'){ mode = 'report'; if(items.length) render(); else check(); return; }
       if(a==='filter') filter = v;
       else if(a==='acc' || a==='ign') decision[v] = decision[v]===a ? undefined : a;
       else if(a==='links') open[v] = !open[v];
@@ -148,8 +183,13 @@
       else if(a==='back') confirming = false;
       else if(a==='apply'){
         const accepted = items.filter(x=>decision[x.id]==='acc').map(x => Object.assign({}, x, {name: x.editName ? (names[x.id]!=null?names[x.id]:x.editName).trim() : undefined}));
+        const ignCount = items.filter(x=>decision[x.id]==='ign').length;
         store.set(cfg.storeKey, ignored().concat(items.filter(x=>decision[x.id]==='ign').map(x=>x.id)));
-        const msg = accepted.length ? cfg.onApply(accepted) : '已忽略 '+items.filter(x=>decision[x.id]==='ign').length+' 项，图谱未变化';
+        const from = cfg.version();
+        const msg = accepted.length ? cfg.onApply(accepted) : '已忽略 '+ignCount+' 项，图谱未变化';
+        const hist = loadHist();
+        hist.push({ time: nowStr(), from: from, version: cfg.version(), scope: cfg.scope, acc: accepted.length, ign: ignCount, total: items.length, items: accepted.map(x => ({kind:x.kind, title:x.title, name:x.name||x.title})) });
+        store.set(histKey, hist.slice(-50));
         close(); refreshDot(); cfg.toast(msg);
         return;
       }
