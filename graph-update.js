@@ -6,7 +6,8 @@
      btn:'#checkUpdateBtn', title, scope, sources:[], lastChecked, steps:[],
      version:()=>'v1.3', disabled:()=>false|'原因',
      getItems:()=>[{id,kind,title,path,diff,desc,metrics,links,conf,impact,editName,note}],
-     onApply:(accepted)=>'结果提示', toast:fn, storeKey
+     onApply:(accepted)=>'结果提示', toast:fn, storeKey,
+     seedHist:[{time,from,version,scope,acc,ign,total,items:[{kind,name}]}]  // 历史报告 mock 初始数据
    })
    kind：add 新增 / modify 修改 / retire 建议下线 / gap 映射缺口
    ====================================================================== */
@@ -25,6 +26,7 @@
     btn.classList.add('gu-btn');
     const histKey = cfg.storeKey + '-hist';
     const loadHist = () => store.get(histKey);
+    if(cfg.seedHist && cfg.seedHist.length && !loadHist().length) store.set(histKey, cfg.seedHist);
     const mask = document.createElement('div');
     mask.className = 'gu-mask';
     mask.innerHTML = '<div class="gu-dialog" role="dialog" aria-modal="true" aria-label="'+esc(cfg.title)+'"></div>';
@@ -121,7 +123,7 @@
 
     function histCard(h){
       const itemsHtml = (h.items||[]).map(x => `<span class="gu-type ${x.kind}">${KIND[x.kind]||x.kind}</span><span class="gu-hist-name">${esc(x.name||x.title)}</span>`).join('');
-      const ver = (h.from && h.from!==h.version) ? esc(h.from)+' → '+esc(h.version) : esc(h.version);
+      const ver = esc(h.version);
       return `<div class="gu-hist">
         <div class="gu-hist-top"><span class="gu-hist-time">${esc(h.time)}</span><span class="gu-ver">${ver}</span></div>
         <div class="gu-hist-scope">${esc(h.scope||'')}</div>
@@ -153,7 +155,7 @@
         lastChecked = '刚刚';
         items = live(); decision = {}; names = {}; filter = 'all'; confirming = false; open = {}; mode = 'report'; wasChecked = true;
         if(!items.length){
-          dlg.innerHTML = head(false) + `<div class="gu-empty"><b>已是最新</b>与上次检查相比，市场数据没有达到更新门槛的变化。<br>系统每周自动检查一次，发现变化会在按钮上提示。</div>
+          dlg.innerHTML = head(false) + `<div class="gu-empty"><b>已是最新</b>与上次检查相比，市场数据没有达到更新门槛的变化。<br>系统每月自动检查一次，发现变化会在按钮上提示。</div>
             <div class="gu-foot"><span class="gu-spacer"></span><button class="gu-btn-pri" data-gu="close">知道了</button></div>`;
           return;
         }

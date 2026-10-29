@@ -208,6 +208,12 @@
 .seg-part+.seg-part{border-top:1px dashed #e2e8f0;}
 .seg-part-title{font-size:12px;font-weight:600;color:#8b99ac;margin-bottom:4px;}
 .seg-fail{font-size:13px;color:#c72c2a;display:flex;align-items:center;gap:8px;}
+.row-time{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.t-in{width:72px;height:28px;border:1px solid #dfe6ef;border-radius:6px;padding:0 8px;font-size:13px;color:#41536f;font-variant-numeric:tabular-nums;font-family:inherit;}
+.t-in:focus{outline:none;border-color:#5149e9;}
+.t-in.err{border-color:#c72c2a;}
+.t-hint{font-size:12px;color:#8b99ac;margin:-4px 0 4px;}
+.t-hint.err{color:#c72c2a;}
 .sugg-why{font-size:12px;color:#41536f;line-height:1.6;background:#f7f9fc;border-radius:6px;padding:6px 8px;}
 .sugg-src{font-size:11px;color:#0e9384;background:#e6f6f3;border-radius:4px;padding:1px 6px;}
 .sugg-ts{border:0;background:none;color:#5149e9;font-size:12px;cursor:pointer;padding:0;font-family:inherit;}
@@ -1245,7 +1251,8 @@ function segLabel(d,k){ return '#'+(+k+1); }
 function openDrawer(key){
   drawerDoc=activeDoc; drawerKey=key; pickerOpen=false; pickerQ=''; suggEditing=null; suggRejecting=null; nodePickerOpen=false; nodeQ='';
   const d=drawerDoc, k=key;
-  draft={ text: d.cat==='av'?d.segs[+k][3]:(d.cat==='text'?d.segs[+k]:''), ocr:d.ocr||'', desc:d.desc||'', reason:'', origText: segTextOf(d,k) };
+  draft={ text: d.cat==='av'?d.segs[+k][3]:(d.cat==='text'?d.segs[+k]:''), ocr:d.ocr||'', desc:d.desc||'', reason:'', origText: segTextOf(d,k),
+    t0: d.cat==='av'?fmt(d.segs[+k][0]):'', t1: d.cat==='av'?fmt(d.segs[+k][1]):'' };
   renderDrawer();
   document.getElementById('segDrawer').classList.add('show');
 }
@@ -1253,6 +1260,7 @@ function closeDrawer(){ const el=document.getElementById('segDrawer'); if(el) el
 function findSugg(id){ const st=ctxState(); return st?st.sugg.find(x=>x.id===id):null; }
 function bindDrawerInputs(){
   const panel=document.getElementById('segDrawerPanel');
+  ['t0','t1'].forEach(fld=>{ const el=panel.querySelector('[data-fld="'+fld+'"]'); if(el) el.oninput=()=>{ draft[fld]=el.value; el.classList.remove('err'); const h=document.getElementById('tHint'); if(h) h.classList.remove('err'); }; });
   ['text','ocr','desc'].forEach(fld=>{ const el=panel.querySelector('[data-fld="'+fld+'"]'); if(el) el.oninput=()=>{ draft[fld]=el.value; }; });
   const pk=document.getElementById('pkQ'); if(pk) pk.oninput=()=>{ pickerQ=pk.value; drawerDoc?renderDrawer():refreshDoc(); };
   const sn=document.getElementById('suggName'); if(sn) sn.oninput=()=>{ const g=findSugg(suggEditing); if(g) g.edit.name=sn.value; };
@@ -1326,7 +1334,12 @@ function renderDrawer(){
     editor = `<div class="drawer-sec-title">图中文字（识别结果）</div><textarea class="edtx" data-fld="ocr" placeholder="识别出的图中文字">${esc(draft.ocr)}</textarea>
       <div class="drawer-sec-title">画面描述</div><textarea class="edtx" data-fld="desc" placeholder="画面内容描述">${esc(draft.desc)}</textarea>`;
   } else if(d.cat==='av'){
-    editor = `<div class="drawer-sec-title">转写文本 <span style="font-weight:400;color:#8b99ac">${fmt(d.segs[+k][0])} – ${fmt(d.segs[+k][1])}</span></div><textarea class="edtx" data-fld="text">${esc(draft.text)}</textarea>`;
+    const lim=avTimeLimits(d,+k);
+    editor = `<div class="drawer-sec-title row-time">转写文本
+        <input class="t-in" data-fld="t0" value="${esc(draft.t0)}" aria-label="开始时间" placeholder="mm:ss"> –
+        <input class="t-in" data-fld="t1" value="${esc(draft.t1)}" aria-label="结束时间" placeholder="mm:ss"></div>
+      <div class="t-hint" id="tHint">可调整范围 ${fmt(lim.min)} – ${fmt(lim.max)}</div>
+      <textarea class="edtx" data-fld="text">${esc(draft.text)}</textarea>`;
   } else {
     editor = `<div class="drawer-sec-title">分段内容</div><textarea class="edtx" data-fld="text">${esc(draft.text)}</textarea>`;
   }
@@ -1349,17 +1362,30 @@ function renderDrawer(){
   bindDrawerInputs();
   if(keepId){ const el=document.getElementById(keepId); if(el){ el.focus(); try{ if(keepPos!=null) el.setSelectionRange(keepPos,keepPos); }catch(e){} } }
 }
+/* 音视频分段时间：在音视频时长内即可，允许与相邻分段重叠（便于往前 / 往后多选一点） */
+function avTimeLimits(d,i){ return {min:0, max:d.sec}; }
+function parseTime(t){ const m=String(t).trim().match(/^(?:(\d+):)?(\d{1,2}):(\d{2})$/); if(!m||+m[3]>59||(m[1]&&+m[2]>59)) return null; return (+(m[1]||0))*3600+(+m[2])*60+(+m[3]); }
 function saveDrawer(){
   if(!drawerDoc) return;
   const d=drawerDoc, k=drawerKey;
-  let changed=false, newText='';
+  let changed=false, newText='', timeChanged=false;
+  if(d.cat==='av'){
+    const a=parseTime(draft.t0), b=parseTime(draft.t1), lim=avTimeLimits(d,+k), panel=document.getElementById('segDrawerPanel'), hint=document.getElementById('tHint');
+    let err='';
+    if(a==null||b==null) err='时间格式应为 mm:ss（超过 1 小时为 h:mm:ss）';
+    else if(a>=b) err='开始时间需早于结束时间';
+    else if(a<lim.min||b>lim.max) err=`超出音视频时长，可调整范围 ${fmt(lim.min)} – ${fmt(lim.max)}`;
+    if(err){ if(hint){ hint.textContent=err; hint.classList.add('err'); } panel.querySelectorAll('.t-in').forEach(x=>x.classList.add('err')); toast(err); return; }
+    timeChanged=a!==d.segs[+k][0]||b!==d.segs[+k][1];
+    d.segs[+k][0]=a; d.segs[+k][1]=b;
+  }
   if(d.cat==='image'){ changed = draft.ocr!==(d.ocr||'') || draft.desc!==(d.desc||''); d.ocr=draft.ocr; d.desc=draft.desc; if(d.ocr) d.ocrFailed=false; }
   else if(d.cat==='av'){ newText=draft.text; changed=newText!==draft.origText; d.segs[+k][3]=newText; }
   else { newText=draft.text; changed=newText!==draft.origText; d.segs[+k]=newText; }
   let r=null;
   if(changed) r=reextract(d,k,'分段内容已修改',true);
   closeDrawer(); refreshDoc(); renderTable();
-  toast(r?`已保存并重新提取：作废 ${r.voided} 条旧建议，新增 ${r.fresh} 条建议${r.unlink?`，${r.unlink} 条关联待解除`:''}`:'已保存');
+  toast(r?`已保存并重新提取：作废 ${r.voided} 条旧建议，新增 ${r.fresh} 条建议${r.unlink?`，${r.unlink} 条关联待解除`:''}`:(timeChanged?'已保存，分段时间已更新':'已保存'));
 }
 function approveSugg(gid, mode){
   const st=ctxState(); if(!st) return;

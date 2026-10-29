@@ -255,7 +255,7 @@ let graphs = [
     id: 'g1',
     name: '旅游业',
     describe: '本图谱以旅游活动组织、目的地接待与游览服务为核心，按岗位能力体系相似性划定边界。纳入旅行社组团与地接、景区运营、研学定制、在线旅游平台及酒店前厅等直接面向游客的接待服务岗位。',
-    buildStatus: 'built', syncStatus: 'synced',
+    buildStatus: 'built', syncStatus: 'synced', version: 'v1.3',
     createdAt: '2026-09-09', updatedAt: '2026-10-02',
     stats: { positions: 10, abilities: 28, subIndustries: 5 },
     tree: {
@@ -1963,6 +1963,14 @@ function applyMarketUpdates(g, accepted){
   saveGraphs(); renderTreeStats(g.tree); renderGraph(g.tree);
   return '已更新到 '+g.version+'：采纳 '+accepted.length+' 项市场变化';
 }
+const ABILITY_HIST_SEED = [
+  { time:'2026-09-14 10:32', from:'v1.0', version:'v1.1', scope:'旅游业 · 全国 · 近 90 天', acc:2, ign:1, total:3,
+    items:[{kind:'add', name:'多语言导览服务'},{kind:'modify', name:'「旅游产品与目的地知识储备」要求等级提高'}] },
+  { time:'2026-09-28 14:05', from:'v1.1', version:'v1.2', scope:'旅游业 · 全国 · 近 90 天', acc:1, ign:2, total:3,
+    items:[{kind:'add', name:'旅行管家'}] },
+  { time:'2026-10-12 09:40', from:'v1.2', version:'v1.3', scope:'旅游业 · 全国 · 近 90 天', acc:1, ign:0, total:1,
+    items:[{kind:'retire', name:'「手绘地图讲解」不再满足需求'}] }
+];
 function mountGraphUpdate(){
   if(!$('#checkUpdateBtn') || !window.GraphUpdate) return;
   const cur = () => graphs.find(x=>x.id===currentGraphId);
@@ -1970,13 +1978,14 @@ function mountGraphUpdate(){
     btn:'#checkUpdateBtn', title:'能力图谱更新报告', toast,
     scope: (cur()?.name||'') + ' · 全国 · 近 90 天',
     sources:['招聘 JD 12,480 条','新职业公告 1 条','行业报告 3 份'],
-    lastChecked:'2026-10-13（每周自动检查）',
+    lastChecked:'2026-10-13（每月自动检查）',
     steps:['拉取近 90 天招聘数据','识别岗位与能力要求','与当前图谱比对','生成更新建议'],
     storeKey:'gu-ignored-ability-'+currentGraphId,
     version: () => cur()?.version || 'v1.0',
     disabled: () => cur()?.buildStatus==='building' ? '图谱构建中，暂不能检查更新' : false,
     getItems: () => marketUpdateItems(cur()),
-    onApply: acc => applyMarketUpdates(cur(), acc)
+    onApply: acc => applyMarketUpdates(cur(), acc),
+    seedHist: currentGraphId==='g1' ? ABILITY_HIST_SEED : undefined
   });
 }
 if($('#confirmGraphBtn')) $('#confirmGraphBtn').onclick = ()=>{ if(currentGraphId) confirmGraph(currentGraphId); };

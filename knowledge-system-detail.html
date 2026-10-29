@@ -558,12 +558,26 @@
         btn:'#checkUpdateBtn',title:'知识体系更新报告',toast:toast,
         scope:'旅游类-葡萄酒文化与营销',
         sources:['教育侧：教学标准、行业标准（示例）'],
-        lastChecked:'2026-10-13（每周自动检查）',
+        lastChecked:'2026-10-13（每月自动检查）',
         steps:['获取教学标准与行业标准','比对教学标准与行业标准','生成更新建议'],
         storeKey:'gu-ignored-ks-wine',
         version:function(){return ksVersion;},
         getItems:ksUpdateItems,
-        onApply:applyKsUpdates
+        onApply:applyKsUpdates,
+        seedHist:[
+          { time:'2026-07-06 10:15', from:'v1.5', version:'v1.6', scope:'旅游类-葡萄酒文化与营销', acc:1, ign:1, total:2,
+            items:[{kind:'add', name:'葡萄酒分类与品鉴基础'}] },
+          { time:'2026-07-20 14:32', from:'v1.6', version:'v1.7', scope:'旅游类-葡萄酒文化与营销', acc:2, ign:0, total:2,
+            items:[{kind:'add', name:'葡萄酒产区与风土'},{kind:'add', name:'葡萄品种识别'}] },
+          { time:'2026-08-05 09:48', from:'v1.7', version:'v1.8', scope:'旅游类-葡萄酒文化与营销', acc:1, ign:1, total:2,
+            items:[{kind:'modify', name:'「葡萄品种与酿造工艺」内容更新'}] },
+          { time:'2026-08-28 16:05', from:'v1.8', version:'v1.9', scope:'旅游类-葡萄酒文化与营销', acc:2, ign:1, total:3,
+            items:[{kind:'add', name:'餐酒搭配原则'},{kind:'retire', name:'「葡萄酒营销案例」不再列入教学标准'}] },
+          { time:'2026-09-15 11:20', from:'v1.9', version:'v2.0', scope:'旅游类-葡萄酒文化与营销', acc:2, ign:1, total:3,
+            items:[{kind:'add', name:'侍酒服务流程'},{kind:'add', name:'葡萄酒储存与温度控制'}] },
+          { time:'2026-10-06 09:12', from:'v2.0', version:'v2.1', scope:'旅游类-葡萄酒文化与营销', acc:1, ign:1, total:2,
+            items:[{kind:'modify', name:'「葡萄酒营销策略」内容更新'}] }
+        ]
       });
       document.getElementById('ksSearchInput').onkeydown=function(e){if(e.key==='Enter'){toast('搜索：'+e.target.value);}};
 
@@ -605,12 +619,12 @@
         category:{label:'课程分类',next:'course'},
         course:{label:'课程',next:'task'},
         task:{label:'任务',next:['skill','process','standard','case']},
-        skill:{label:'技能规范',next:['step','standard','case','knowledge']},
-        process:{label:'操作流程',next:['step','knowledge']},
-        standard:{label:'标准',next:['step','knowledge']},
-        case:{label:'案例',next:['knowledge','step']},
-        step:{label:'操作步骤',next:['knowledge']},
-        knowledge:{label:'知识点',next:['knowledge']}
+        skill:{label:'技能规范',next:['step','standard','case']},
+        process:{label:'操作流程',next:['step']},
+        standard:{label:'标准',next:['step']},
+        case:{label:'案例',next:['step']},
+        step:{label:'操作步骤',next:[]},
+        knowledge:{label:'知识点',next:[]}
       };
       var TYPE_COLOR={root:'#5149e9',major:'#f59e0b',category:'#22c55e',course:'#3b82f6',task:'#8b5cf6',skill:'#14b8a6',process:'#06b6d4',standard:'#8b5cf6',case:'#8b5cf6',step:'#3b82f6',knowledge:'#8b5cf6'};
       function childTypes(parentType){
