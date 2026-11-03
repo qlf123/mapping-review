@@ -968,9 +968,9 @@ function renderGraph(tree){
   // 子行业节点
   subs.forEach(s => {
     const w = XS[1]-XS[0];
-    nodes += `<g class="gnode" data-nid="${esc(s.id)}" data-level="1">
+    nodes += `<g class="gnode${s.disabled?' off':''}" data-nid="${esc(s.id)}" data-level="1">
       <rect x="${XS[0]}" y="${subY[s.id]-15}" width="${w}" height="30" rx="8" fill="#f0f4ff" stroke="#d0d8e8"/>
-      <text x="${XS[0]+11}" y="${subY[s.id]}" dominant-baseline="central" class="gt">${esc(fitText(s.name, w-38))}</text>
+      <text x="${XS[0]+11}" y="${subY[s.id]}" dominant-baseline="central" class="gt">${esc(fitText(s.name, w-38))}${s.disabled?'（已停用）':''}</text>
       <text x="${XS[1]-10}" y="${subY[s.id]}" text-anchor="end" dominant-baseline="central" class="gt gt-n">${(s.positions||[]).length}</text></g>`;
   });
 
@@ -978,18 +978,18 @@ function renderGraph(tree){
   posLayout.forEach(p => {
     const w = XP[1]-XP[0];
     const P = positions.find(x=>x.id===p.id);
-    nodes += `<g class="gnode" data-nid="${esc(p.id)}" data-level="2">
+    nodes += `<g class="gnode${P.disabled?' off':''}" data-nid="${esc(p.id)}" data-level="2">
       <rect x="${XP[0]}" y="${p.y-14}" width="${w}" height="28" rx="8" fill="#fff8ef" stroke="#e8d8c0"/>
-      <text x="${XP[0]+11}" y="${p.y}" dominant-baseline="central" class="gt">${esc(fitText(P.name, w-38))}</text>
+      <text x="${XP[0]+11}" y="${p.y}" dominant-baseline="central" class="gt">${esc(fitText(P.name, w-38))}${P.disabled?'（已停用）':''}</text>
       <text x="${XP[1]-10}" y="${p.y}" text-anchor="end" dominant-baseline="central" class="gt gt-n">${(P.abilities||[]).length}</text></g>`;
   });
 
   // 能力项节点
   abilities.forEach(a => {
     const y = ablY[a.id];
-    nodes += `<g class="gnode ab" data-nid="${esc(a.id)}" data-level="3">
+    nodes += `<g class="gnode ab${a.disabled?' off':''}" data-nid="${esc(a.id)}" data-level="3">
       <rect x="${XA[0]-4}" y="${y-11}" width="${XA[1]-XA[0]+4}" height="22" rx="6" class="abbg"/>
-      <text x="${XA[0]+14}" y="${y}" dominant-baseline="central" class="gt gt-ab">${esc(fitText(a.name, 180))}${a.core ? ' ★' : ''}</text>
+      <text x="${XA[0]+14}" y="${y}" dominant-baseline="central" class="gt gt-ab">${esc(fitText(a.name, 180))}${a.core ? ' ★' : ''}${a.disabled?'（已停用）':''}</text>
       ${a.requiredBy.length > 1
         ? `<g><rect x="${XA[1]-58}" y="${y-9}" width="54" height="18" rx="9" fill="#fff3e0" stroke="#ffb74d"/><text x="${XA[1]-31}" y="${y}" text-anchor="middle" dominant-baseline="central" class="gt" style="font-size:10px;fill:#e65100;font-weight:600;">共享×${a.requiredBy.length}</text></g>`
         : `<text x="${XA[1]-4}" y="${y}" text-anchor="end" dominant-baseline="central" class="gt gt-n">×${a.requiredBy.length}</text>`}</g>`;
@@ -1043,9 +1043,15 @@ function showContextMenu(nodeId, level, x, y){
   }
   // 编辑（所有层级）
   items += `<div class="context-menu-item" data-cmd="edit" data-nid="${nodeId}" data-level="${level}"><span class="cm-icon">✎</span>编辑${labels[level]}</div>`;
-  // 删除（仅 1/2/3 层级，根节点不可删）
+  // 删除 / 停用（仅 1/2/3 层级，根节点不可删）：被全景图谱引用的节点只能停用
   if(level > 0){
-    items += `<div class="context-menu-item danger" data-cmd="delete" data-nid="${nodeId}" data-level="${level}"><span class="cm-icon">✕</span>删除${labels[level]}</div>`;
+    const f = findNode(nodeId, level);
+    if(f && f.node.disabled)
+      items += `<div class="context-menu-item" data-cmd="restore" data-nid="${nodeId}" data-level="${level}"><span class="cm-icon">↺</span>恢复启用</div>`;
+    else if(f && isReferenced(f.node))
+      items += `<div class="context-menu-item danger" data-cmd="retire" data-nid="${nodeId}" data-level="${level}"><span class="cm-icon">⊘</span>停用${labels[level]}</div>`;
+    else
+      items += `<div class="context-menu-item danger" data-cmd="delete" data-nid="${nodeId}" data-level="${level}"><span class="cm-icon">✕</span>删除${labels[level]}</div>`;
   }
   m.innerHTML = items;
   // 边界处理
@@ -1068,6 +1074,8 @@ function showContextMenu(nodeId, level, x, y){
       else if(cmd === 'addSibling') addSibling(nid, lv);
       else if(cmd === 'edit') editNode(nid, lv);
       else if(cmd === 'delete') deleteNode(nid, lv);
+      else if(cmd === 'retire') retireNode(nid, lv);
+      else if(cmd === 'restore') restoreNode(nid, lv);
     };
   });
 }
@@ -1194,6 +1202,54 @@ function deleteNode(nodeId, level){
     renderTreeStats(g.tree);
     saveGraphs();
   }
+}
+
+// ========== 停用节点 ==========
+// 原型约定：已同步进全景图谱的节点（演示数据 n1、n2…）视为被引用；本次新增的节点未被引用，仍可删除
+function isReferenced(node){ return /^n\d+$/.test(node.id); }
+function walkNode(node, level, fn){
+  fn(node);
+  (getNodeChildren(node, level) || []).forEach(c => walkNode(c, level+1, fn));
+}
+// 同一能力项可被多个岗位引用（共享），按 ID 统一设置
+function setDisabled(tree, ids, val){
+  walkNode(tree, 0, n => { if(ids[n.id]){ if(val) n.disabled = true; else delete n.disabled; } });
+}
+function retireNode(nodeId, level){
+  const g = graphs.find(x=>x.id===currentGraphId);
+  const f = findNode(nodeId, level);
+  if(!g || !f) return;
+  // 下级里仍被其他岗位要求的共享能力项不随之停用
+  const outside = {};
+  (function walkOut(n, lv){
+    if(n === f.node) return;
+    outside[n.id] = true;
+    (getNodeChildren(n, lv) || []).forEach(c => walkOut(c, lv+1));
+  })(g.tree, 0);
+  const ids = {}; let sub = 0;
+  ids[f.node.id] = true;
+  walkNode(f.node, level, n => { if(n !== f.node && !outside[n.id]){ ids[n.id] = true; sub++; } });
+  const labels = ['行业','子行业','岗位','能力项'];
+  NodeRetire.open({
+    name: f.node.name, typeLabel: labels[level], subCount: sub, graph: g.name,
+    // 能力图谱是行业级共享来源，同行业各专业只读引用
+    majors: /旅游/.test(g.tree.name) ? ['酒店管理','旅游管理'] : [g.tree.name+'相关专业'],
+    onConfirm: () => {
+      setDisabled(g.tree, ids, true);
+      renderGraph(g.tree); renderTreeStats(g.tree); saveGraphs();
+      toast('已停用「'+f.node.name+'」，已生成影响分析记录');
+    }
+  });
+}
+function restoreNode(nodeId, level){
+  const g = graphs.find(x=>x.id===currentGraphId);
+  const f = findNode(nodeId, level);
+  if(!g || !f) return;
+  const ids = {};
+  walkNode(f.node, level, n => { ids[n.id] = true; });
+  setDisabled(g.tree, ids, false);
+  renderGraph(g.tree); renderTreeStats(g.tree); saveGraphs();
+  toast('已恢复启用「'+f.node.name+'」');
 }
 
 // ========== 编辑节点弹窗 ==========
@@ -1911,28 +1967,24 @@ function marketUpdateItems(g){
   if(guide && !abl(guide,'短视频与直播讲解')) items.push({ id:'ag-live', kind:'add', title:'新增能力项「短视频与直播讲解」',
     path:'旅游业 › 旅行社与组团地接服务 › 导游', editName:'短视频与直播讲解',
     desc:'导游岗位 JD 中「短视频拍摄」「直播讲解」「账号运营」的要求快速增加，现有能力项未覆盖线上讲解场景。建议类型：技能 · 讲解服务与文化传播 · 要求等级 L2。',
-    metrics:[{v:'23%',label:'导游 JD 提及率（近 90 天）',trend:'14pt',dir:'up'},{v:'2,140',label:'导游岗位 JD 样本'},{v:'3 个月',label:'连续上升'}],
     links:['招聘平台 A：导游岗位 1,320 条（2026-07 至 2026-10）','招聘平台 B：导游岗位 820 条','行业报告：《2026 文旅从业者技能需求调研》'],
     conf:.91, impact:'0 条映射（新增后需在知识体系补技能）' });
   const op = pos('旅行社计调'), sys = abl(op,'计调操作系统与订单处理');
   if(sys && sys.requiredLevel==='L2') items.push({ id:'ag-level', kind:'modify', title:'「计调操作系统与订单处理」要求等级提高',
     path:'旅游业 › 旅行社与组团地接服务 › 旅行社计调', diff:{label:'要求等级 ',from:'L2',to:'L3'},
     desc:'计调 JD 普遍要求同时处理 OTA 多平台订单与库存同步，超出 L2「熟练录入、改单与退单」的描述。',
-    metrics:[{v:'41%',label:'要求多平台订单对接',trend:'17pt',dir:'up'},{v:'960',label:'计调岗位 JD 样本'}],
     links:['招聘平台 A：计调岗位 610 条','招聘平台 B：计调岗位 350 条'],
     conf:.84, impact:'2 条映射需复核等级' });
   const study = sub('研学旅行与定制旅游策划执行');
   if(study && !(study.positions||[]).some(p=>p.name==='定制旅行师')) items.push({ id:'ag-pos', kind:'add', title:'新增岗位「定制旅行师」',
     path:'旅游业 › 研学旅行与定制旅游策划执行', editName:'定制旅行师',
     desc:'定制游需求增长，出现独立招聘的「定制旅行师」岗位。建议同时新增 2 个能力项：客户需求访谈与画像、定制行程方案设计与报价。',
-    metrics:[{v:'680',label:'定制旅行师 JD（近 90 天）',trend:'2.1 倍',dir:'up'},{v:'1',label:'相关新职业公告'}],
     links:['人社部新职业信息公告（示例）','招聘平台 A：定制旅行师 420 条','招聘平台 B：定制旅行师 260 条'],
     conf:.87, impact:'新增 1 个岗位、2 个能力项' });
   const ai = abl(guide,'AI行程规划工具应用');
   if(ai && ai.flag) items.push({ id:'ag-emerging', kind:'modify', title:'「AI行程规划工具应用」转为常规能力',
     path:'旅游业 › 旅行社与组团地接服务 › 导游', diff:{label:'标记 ',from:ai.flag,to:'常规能力'},
     desc:'该能力已连续 3 个月在导游 JD 中稳定出现（提及率 > 15%），不再属于仅有市场来源的新兴能力。',
-    metrics:[{v:'18%',label:'导游 JD 提及率',trend:'2pt',dir:'up'},{v:'3 个月',label:'稳定超过门槛 15%'}],
     links:['招聘平台 A、B 导游岗位连续 3 个月统计'],
     conf:.79, impact:'1 个能力项标记变化' });
   const applied = g.appliedUpdates || {};

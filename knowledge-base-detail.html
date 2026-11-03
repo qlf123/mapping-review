@@ -244,7 +244,6 @@
 .sugg-type{font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px;}
 .sugg-type.A{color:#5149e9;background:#eef0ff;}
 .sugg-type.B{color:#0e9384;background:#e6f6f3;}
-.sugg-type.C{color:#dc6803;background:#fff0e6;}
 .sugg-type.D{color:#7a5af8;background:#f4f3ff;}
 .sugg-type.U{color:#c72c2a;background:#fff1f0;}
 a.kp-link{text-decoration:none;cursor:pointer;}
@@ -258,6 +257,9 @@ a.kp-link:hover{border-color:#5149e9;}
 .mount-item{padding:6px 8px;border:1px dashed #dcd6f5;border-radius:7px;background:#fff;}
 .mount-path{display:flex;align-items:center;gap:6px;font-size:12px;color:#5149e9;font-weight:500;}
 .mount-reason{font-size:11px;color:#8b99ac;margin-top:2px;line-height:1.5;}
+.mount-type{font-size:10px;font-weight:600;color:#60718a;background:#f1f3f6;border-radius:4px;padding:0 5px;margin-right:2px;white-space:nowrap;}
+.mount-shallow{font-size:10px;font-weight:600;color:#b54708;background:#fffaeb;border-radius:4px;padding:0 5px;white-space:nowrap;}
+.mount-hint{font-size:11px;color:#b54708;line-height:1.5;}
 .mount-none{font-size:12px;color:#c72c2a;}
 .sugg-mini{font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid #dfe6ef;background:#fff;color:#41536f;cursor:pointer;}
 .sugg-mini:hover{border-color:#5149e9;color:#5149e9;}
@@ -299,10 +301,10 @@ a.kp-link:hover{border-color:#5149e9;}
   <nav class="platform-nav">
     <div class="nav-section-title">图谱建设</div>
     <a href="knowledge-graph.html" class="platform-nav-item"><span class="nav-icon">图</span><span>知识图谱</span></a>
-    <a href="knowledge-system.html" class="platform-nav-item"><span class="nav-icon">系</span><span>知识体系</span></a>
-    <a href="knowledge-base.html" class="platform-nav-item active" aria-current="page"><span class="nav-icon">库</span><span>知识库</span></a>
     <a href="ability-graph.html" class="platform-nav-item"><span class="nav-icon">能</span><span>能力图谱</span></a>
+    <a href="knowledge-system.html" class="platform-nav-item"><span class="nav-icon">系</span><span>知识体系</span></a>
     <a href="mapping-review.html" class="platform-nav-item"><span class="nav-icon">映</span><span>图谱映射审核台</span></a>
+    <a href="knowledge-base.html" class="platform-nav-item active" aria-current="page"><span class="nav-icon">库</span><span>知识库</span></a>
   </nav>
   <div class="platform-sidebar-footer"><span class="platform-avatar">秦</span><span>平台管理员</span><span class="sidebar-more">···</span></div>
 </aside>
@@ -863,17 +865,41 @@ function loadAddedDocs(id){
 }
 
 /* ================= 知识点 ================= */
+/* 知识体系节点树（mock）：专业 › 课程 › 任务 › 技能规范 / 操作流程 / 标准 / 案例 */
+const NODE_TREE=[
+  ['酒店管理','major',[
+    ['前厅服务','course',[
+      ['房态管理','task',[['房态变更流程','process']]],
+      ['入住接待','task',[['散客入住登记','process'],['前台收银与押金','skill']]],
+      ['退房办理','task',[['退房结算流程','process'],['提前入住与延迟退房标准','standard']]],
+      ['交接班','task',[['交接班流程','process']]],
+      ['前厅服务礼仪','task',[['仪容仪表规范','skill']]]
+    ]],
+    ['酒店财务管理','course',[['夜审','task',[['夜审日结流程','process']]]]],
+    ['客房服务','course',[['客房清洁','task',[['客房清洁标准','standard']]]]],
+    ['餐饮服务','course',[['席间服务','task',[['席间服务规范','skill']]]]],
+    ['服务质量管理','course',[['投诉处理','task',[['投诉处理流程','process'],['典型投诉案例','case']]]]],
+    ['酒店收益管理','course',[['OTA 渠道管理','task',[['OTA 订单处理','process']]]]]
+  ]],
+  ['旅游管理','major',[['导游实务','course',[['景点讲解','task',[['故宫讲解','skill']]]]]]]
+];
+const NODE_TYPE_LABEL={major:'专业',course:'课程',task:'任务',skill:'技能规范',process:'操作流程',standard:'标准',case:'案例',step:'操作步骤'};
+const NODES=[];
+(function walk(list,parent){ list.forEach(([name,type,kids])=>{ const path=parent.concat(name); NODES.push({path,type}); if(kids) walk(kids,path); }); })(NODE_TREE,[]);
+const nodeType=p=>(NODES.find(n=>n.path.join('/')===p.join('/'))||{}).type;
+/* 6.3：专业大类 / 专业 / 课程分类不可挂载；课程、任务仅作兜底（挂载层级偏浅） */
+const isShallow=p=>['course','task'].includes(nodeType(p));
 const KP=[
-  {id:'kp1',name:'房态代码（VC / VD / OC / OOO）',path:['酒店管理','前厅服务','房态管理'],kw:['房态','VC','VD','OOO']},
-  {id:'kp2',name:'散客入住登记流程',path:['酒店管理','前厅服务','入住登记'],kw:['入住登记','核验证件','办理入住']},
-  {id:'kp3',name:'提前入住与延迟退房政策',path:['酒店管理','前厅服务','退房管理'],kw:['提前入住','延迟退房']},
-  {id:'kp4',name:'夜审流程与日结',path:['酒店管理','财务','夜审'],kw:['夜审','日结']},
-  {id:'kp5',name:'客房清洁与布草更换标准',path:['酒店管理','客房部','客房清洁'],kw:['布草','查房','客房清洁']},
-  {id:'kp6',name:'餐饮席间服务规范',path:['酒店管理','餐饮','席间服务'],kw:['席间','上菜','斟酒']},
-  {id:'kp7',name:'投诉处理三步法',path:['酒店管理','服务','投诉处理'],kw:['投诉','致歉']},
-  {id:'kp8',name:'OTA 预订与房费结算',path:['酒店管理','渠道','OTA'],kw:['OTA','押金','预付']},
-  {id:'kp9',name:'故宫中轴线讲解要点',path:['旅游管理','导游实务','景点讲解'],kw:['午门','太和殿','金水桥','故宫','天坛']},
-  {id:'kp10',name:'交接班记录规范',path:['酒店管理','前厅服务','交接班'],kw:['交接班']}
+  {id:'kp1',name:'房态代码（VC / VD / OC / OOO）',path:['酒店管理','前厅服务','房态管理','房态变更流程'],kw:['房态','VC','VD','OOO']},
+  {id:'kp2',name:'散客入住登记流程',path:['酒店管理','前厅服务','入住接待','散客入住登记'],kw:['入住登记','核验证件','办理入住']},
+  {id:'kp3',name:'提前入住与延迟退房政策',path:['酒店管理','前厅服务','退房办理','提前入住与延迟退房标准'],kw:['提前入住','延迟退房']},
+  {id:'kp4',name:'夜审流程与日结',path:['酒店管理','酒店财务管理','夜审','夜审日结流程'],kw:['夜审','日结']},
+  {id:'kp5',name:'客房清洁与布草更换标准',path:['酒店管理','客房服务','客房清洁','客房清洁标准'],kw:['布草','查房','客房清洁']},
+  {id:'kp6',name:'餐饮席间服务规范',path:['酒店管理','餐饮服务','席间服务','席间服务规范'],kw:['席间','上菜','斟酒']},
+  {id:'kp7',name:'投诉处理三步法',path:['酒店管理','服务质量管理','投诉处理','投诉处理流程'],kw:['投诉','致歉']},
+  {id:'kp8',name:'OTA 预订与房费结算',path:['酒店管理','酒店收益管理','OTA 渠道管理','OTA 订单处理'],kw:['OTA','押金','预付']},
+  {id:'kp9',name:'故宫中轴线讲解要点',path:['旅游管理','导游实务','景点讲解','故宫讲解'],kw:['午门','太和殿','金水桥','故宫','天坛']},
+  {id:'kp10',name:'交接班记录规范',path:['酒店管理','前厅服务','交接班','交接班流程'],kw:['交接班']}
 ];
 function kpById(id){ return KP.find(k=>k.id===id); }
 /* 关联来源：manual 手动关联；ai AI 识别后人工确认 */
@@ -884,10 +910,16 @@ function linkSrc(st,id){ return (st.src&&st.src[id])||{by:'manual',who:'平台�
 function linkTitle(st,id){ const x=linkSrc(st,id); return (x.by==='ai'?'AI 识别 · '+x.who+'确认':'手动关联 · '+x.who)+' · '+x.time; }
 /* 知识点提取（mock）：分段原文命中知识点关键词即生成「关联已有」建议，原文依据取命中句 */
 let suggUid=1000;
+const NO_INFO_RE=/^(第?\d+页|目录|谢谢(大家|观看)?|好的?|我们继续|下面[我们]*[开始讲]*|同学们好)[。！!，,]*$/;
 function extractSeg(d,k,opts){
   opts=opts||{};
   const text=segTextOf(d,k), st=SEG_STATE[d.id]&&SEG_STATE[d.id][k];
   const linked=st?st.kps:[], old=st?st.sugg:[];
+  // 6.1 短分段：无信息段不识别；短信息段（< 30 字，音视频 < 10 秒）只保留置信度 ≥ 0.90 的关联已有
+  const isCh=String(k).startsWith('ch'), body=text.replace(CH_RE,'').replace(/\s/g,'');
+  const avSeg=d.cat==='av'&&!isCh?d.segs[+k]:null;
+  if(!isCh&&(body.length<6||NO_INFO_RE.test(body))) return [];
+  const short=!isCh&&(body.length<30||(avSeg&&avSeg[1]-avSeg[0]<10));
   const sentences=text.split(/(?<=[。！？?\n])/);
   const out=[];
   KP.forEach(x=>{
@@ -898,7 +930,9 @@ function extractSeg(d,k,opts){
     const hits=x.kw.filter(w=>text.includes(w));
     if(!hits.length) return;
     const quote=(sentences.find(t=>t.includes(hits[0]))||text).trim().replace(/[。！？?]$/,'');
-    const g={id:'s'+(suggUid++),type:'A',kp:x.id,conf:Math.min(.97,.86+hits.length*.04),quote,status:'pending',
+    const conf=Math.min(.97,.86+hits.length*.04);
+    if(short&&conf<.9) return;
+    const g={id:'s'+(suggUid++),type:'A',kp:x.id,conf,quote,status:'pending',
       why:'原文提到「'+hits.join('」「')+'」，与已有知识点「'+x.name+'」指同一内容'};
     if(d.cat==='image') g.src=(d.desc||'').includes(hits[0])&&!(d.ocr||'').includes(hits[0])?'desc':'ocr';
     out.push(g);
@@ -926,13 +960,12 @@ function reextract(d,k,reason,contentChanged){
   st.sugg=st.sugg.concat(fresh,un);
   return {voided,fresh:fresh.length,unlink:un.length};
 }
-/* 知识体系节点（挂载候选）：取已有知识点路径的各级前缀 */
-function kbNodes(){
-  const m=new Map();
-  KP.forEach(k=>(k.mounts||[k.path]).forEach(p=>{ for(let i=2;i<=p.length;i++){ const sub=p.slice(0,i); m.set(sub.join('/'),sub); } }));
-  return [...m.values()].sort((a,b)=>a.join('/').localeCompare(b.join('/'),'zh'));
-}
-const mountPath=p=>p.join(' › ');
+/* 知识体系节点（挂载候选）：只列课程及以下可挂载类型 */
+function kbNodes(){ return NODES.filter(n=>n.type!=='major').map(n=>n.path); }
+/* 路径从课程开始显示 */
+const mountPath=p=>p.slice(1).join(' › ');
+/* 同一路径：a 是 b 的上级或下级 */
+const onSamePath=(a,b)=>{ const x=a.join('/'), y=b.join('/'); return x!==y&&(y.startsWith(x+'/')||x.startsWith(y+'/')); };
 let kpUid=100;
 
 /* 分段关联状态：docId -> { segKey: {kps:[], sugg:[]} } */
@@ -953,12 +986,12 @@ function seedState(d){
     // 章节：第二章手动关联；第一章、第三章有章节级 AI 建议
     addLink(chState(d,2),'kp2','manual');
     chState(d,0).sugg=[{id:'sc1',type:'B',name:'前厅服务礼仪规范',def:'着装、工牌、站立服务与主动问候等前厅服务基本要求。',conf:.83,quote:'员工须统一着装、佩戴工牌，站立服务，主动问候',status:'pending',
-      why:'本章整体讲前厅员工的服务礼仪要求，图谱中没有对应知识点，判定为新知识点',mounts:[{path:['酒店管理','前厅服务'],reason:'本章为前厅服务总则，覆盖前厅各岗位',conf:.83}]}];
+      why:'本章整体讲前厅员工的服务礼仪要求，图谱中没有对应知识点，判定为新知识点',mounts:[{path:['酒店管理','前厅服务','前厅服务礼仪'],reason:'本章讲前厅员工礼仪要求，对应前厅服务礼仪任务',conf:.83}]}];
     chState(d,4).sugg=[{id:'sc2',type:'A',kp:'kp3',conf:.95,quote:'提前入住视当日可售房态安排',status:'pending',
       why:'本章整体讲提前入住与延迟退房的处理规则，与「提前入住与延迟退房政策」指同一内容'}];
     sugg('2',[{id:'s1',type:'A',kp:'kp2',why:'原文描述入住时核验证件、确认预订信息的步骤，与「散客入住登记流程」指同一内容',conf:.96,quote:'核验有效证件，确认预订信息与房型、房价、离店日期',status:'pending'}]);
     sugg('4',[{id:'s2',type:'B',why:'图谱中没有讲延迟退房计费的知识点；「提前入住与延迟退房政策」只讲政策、不含计费标准，判定为新知识点',name:'延迟退房计费标准',def:'14:00–18:00 加收半日房费，18:00 后按全日房费计。',conf:.88,quote:'14:00–18:00 加收半日房费',status:'pending',
-      mounts:[{path:['酒店管理','前厅服务','退房管理'],reason:'原文讲退房时间与计费，属退房管理',conf:.88},{path:['酒店管理','前厅服务','入住登记'],reason:'与提前入住政策同章出现',conf:.64}]}]);
+      mounts:[{path:['酒店管理','前厅服务','退房办理','退房结算流程'],reason:'原文讲延迟退房的计费，属退房结算',conf:.88},{path:['酒店管理','前厅服务','退房办理','提前入住与延迟退房标准'],reason:'计费标准是延迟退房政策的组成部分',conf:.66}]}]);
   } else if(d.id==='d2'){
     link('0',['kp4']);
     sugg('0',[{id:'s3',type:'A',kp:'kp4',why:'原文说明夜审时间与核对内容，与「夜审流程与日结」指同一内容',conf:.91,quote:'夜审时间一般为每日 0:00 至 3:00',status:'pending'}]);
@@ -967,15 +1000,15 @@ function seedState(d){
   else if(d.id==='d5'){ link('0',['kp2']); link('1',['kp2']); }
   else if(d.id==='d10'){
     link('0',['kp1'],'ai');
-    sugg('0',[{id:'s4',src:'ocr',type:'C',why:'与已有「房态代码（VC / VD / OC / OOO）」大部分重叠，但多了 VD 改 VC 的交接流程，判定为相近',near:'kp1',name:'房态代码速查',def:'VC / VD / OC / OOO 及含义',conf:.89,quote:'VD 清洁完 → 客房部通知前台改 VC',status:'pending',
-      mounts:[{path:['酒店管理','前厅服务','房态管理'],reason:'板书内容为楼层房态表',conf:.82}]}]);
+    sugg('0',[{id:'s4',src:'ocr',type:'B',why:'已有「房态代码」只讲代码含义，本条讲 VD 改 VC 的交接流程，侧重点不同，判定为新知识点',name:'VD 房改 VC 房交接流程',def:'客房清洁完成后由客房部通知前台，将 VD 房改为 VC 房。',conf:.82,quote:'VD 清洁完 → 客房部通知前台改 VC',status:'pending',
+      mounts:[{path:['酒店管理','前厅服务','房态管理','房态变更流程'],reason:'板书内容为房态改态流程',conf:.82}]}]);
   } else if(d.id==='d11'){
     sugg('0',[{id:'s7',type:'B',src:'desc',why:'画面描述列出前台的设备配置，图谱中没有设备配置类知识点，判定为新知识点',name:'前台设备配置',def:'前台台面配置电脑、房卡制卡机与 POS 机。',conf:.8,quote:'右侧是房卡制卡机和 POS 机',status:'pending',
-      mounts:[{path:['酒店管理','前厅服务','入住登记'],reason:'设备用于入住登记时制卡与收款',conf:.74}]}]);
+      mounts:[{path:['酒店管理','前厅服务','入住接待'],reason:'设备用于入住接待时制卡与收款，下级无对应节点',conf:.74}]}]);
   } else if(d.id==='d13'){
     link('0',['kp2'],'ai'); link('2',['kp8']); link('3',['kp8'],'ai'); link('4',['kp3']);
-    sugg('2',[{id:'s8',type:'D',kp:'kp8',why:'「OTA 预订与房费结算」目前只挂在「渠道 › OTA」，原文在前台入住场景讨论 OTA 订单押金，建议增加挂载',t:380,conf:.86,quote:'如果客人是通过 OTA 平台预订的，押金也要在前台另外收吗',status:'pending',
-      mounts:[{path:['酒店管理','前厅服务','入住登记'],reason:'原文讨论前台入住时 OTA 订单的押金收取',conf:.86}]}]);
+    sugg('2',[{id:'s8',type:'D',kp:'kp8',why:'「OTA 预订与房费结算」目前只挂在「OTA 渠道管理 › OTA 订单处理」，原文在前台入住场景讨论 OTA 订单押金，建议增加挂载',t:380,conf:.86,quote:'如果客人是通过 OTA 平台预订的，押金也要在前台另外收吗',status:'pending',
+      mounts:[{path:['酒店管理','前厅服务','入住接待','前台收银与押金'],reason:'原文讨论前台入住时 OTA 订单的押金收取',conf:.86}]}]);
     sugg('3',[{id:'s5',type:'A',kp:'kp3',why:'原文讲客人要求提前入住时的处理方式，与「提前入住与延迟退房政策」指同一内容',t:610,conf:.93,quote:'常遇到客人要求提前入住',status:'pending'}]);
   } else if(d.id==='d14'){ link('2',['kp9']); }
   else if(!['d1','d2','d3','d4','d5','d10','d11','d15'].includes(d.id)){
@@ -1209,8 +1242,8 @@ function quoteMeta(d,k,g){
   if(d.cat==='av'&&d.segs[+k]){ const t=g.t!=null?g.t:d.segs[+k][0]; return `<button class="sugg-ts" data-act="quotePlay" data-t="${t}">▶ 从 ${fmt(t)} 播放</button>`; }
   return '';
 }
-function suggTypeLabel(g){ return {A:'关联已有',B:'新建知识点',C:'相近待判',D:'新增挂载',U:'关联待解除'}[g.type]; }
-function suggName(g){ if(g.type==='A'||g.type==='D'||g.type==='U') return kpById(g.kp)?.name||g.kp; if(g.type==='C') return (kpById(g.near)?.name||g.near)+'（相近）'; return g.name; }
+function suggTypeLabel(g){ return {A:'关联已有',B:'新建知识点',D:'新增挂载',U:'关联待解除'}[g.type]; }
+function suggName(g){ if(g.type==='A'||g.type==='D'||g.type==='U') return kpById(g.kp)?.name||g.kp; return g.name; }
 function suggCardMini(k,g){
   return `<div class="sugg-card" data-act="openSugg" data-k="${k}" style="cursor:pointer">
     <div class="sugg-top"><span class="sugg-type ${g.type}">${suggTypeLabel(g)}</span><span class="sugg-name">${esc(suggName(g))}</span>${g.conf?`<span class="sugg-conf">${Math.round(g.conf*100)}%</span>`:''}</div>
@@ -1236,7 +1269,7 @@ function docAside(d){
       </div>
       <button class="ai-btn pri" data-act="oneclick" ${high?'':'disabled'}>一键通过高置信关联（${high} 条）</button>
       <button class="ai-btn" data-act="onlypending" ${pend.length?'':'disabled'}>只看有待确认的分段</button>
-      <div class="ai-note">只对「关联已有知识点、置信度 ≥ 0.90」生效；新建知识点、相近判定、新增挂载需逐条确认。确认后写入知识图谱。</div>
+      <div class="ai-note">只对「关联已有知识点、置信度 ≥ 0.90」生效；新建知识点、新增挂载需逐条确认。确认后写入知识图谱。</div>
     </div>
     <div class="aside-card">
       <div class="aside-head">文档信息</div>
@@ -1275,21 +1308,28 @@ function renderPicker(){
   return `<div class="pk" style="margin-top:10px">
     <input class="field" id="pkQ" placeholder="搜索知识点" value="${esc(pickerQ)}">
     <div class="pk-list">${list.map(x=>`<button type="button" class="pk-item ${st.kps.includes(x.id)?'on':''}" data-act="pkToggleItem" data-kp="${x.id}">
-      <span class="pk-check">${st.kps.includes(x.id)?'✓':''}</span><span style="flex:1;text-align:left">${esc(x.name)}</span><span class="pk-path">${esc(x.path.join(' / '))}</span></button>`).join('')||'<span class="kp-none">未找到知识点</span>'}</div></div>`;
+      <span class="pk-check">${st.kps.includes(x.id)?'✓':''}</span><span style="flex:1;text-align:left">${esc(x.name)}</span><span class="pk-path">${esc(mountPath(x.path))}</span></button>`).join('')||'<span class="kp-none">未找到知识点</span>'}</div></div>`;
 }
+const shallowTag=`<span class="mount-shallow" title="课程、任务一级仅作兜底，建议确认下级是否有更合适的节点">挂载层级偏浅</span>`;
+const typeTag=p=>`<span class="mount-type">${NODE_TYPE_LABEL[nodeType(p)]||''}</span>`;
 function suggMounts(g){
-  const ms=g.mounts||[];
+  const ms=g.mounts||[], ch=String((ctx()||{}).k).startsWith('ch');
   if(!ms.length) return `<div class="mount-box"><div class="mount-title">建议挂载</div><div class="mount-none">未找到合适节点，需手动指定至少一个节点</div></div>`;
-  return `<div class="mount-box"><div class="mount-title">建议挂载</div>${ms.map(m=>`<div class="mount-item"><div class="mount-path">${esc(mountPath(m.path))}<span class="sugg-conf">${Math.round(m.conf*100)}%</span></div><div class="mount-reason">${esc(m.reason)}</div></div>`).join('')}</div>`;
+  return `<div class="mount-box"><div class="mount-title">建议挂载</div>${ms.map(m=>`<div class="mount-item"><div class="mount-path">${typeTag(m.path)}${esc(mountPath(m.path))}${isShallow(m.path)&&!(ch&&nodeType(m.path)==='task')?shallowTag:''}<span class="sugg-conf">${Math.round(m.conf*100)}%</span></div><div class="mount-reason">${esc(m.reason)}</div></div>`).join('')}</div>`;
 }
 function mountEditor(g){
   const sel=g.edit.mounts, on=p=>sel.some(x=>x.join('/')===p.join('/'));
   const q=nodeQ.trim().toLowerCase();
   const list=kbNodes().filter(p=>!q||p.join('/').toLowerCase().includes(q));
+  const ch=String((ctx()||{}).k).startsWith('ch');
+  const hints=[];
+  if(sel.some(p=>isShallow(p)&&!(ch&&nodeType(p)==='task'))) hints.push('已选课程或任务一级节点，挂载层级偏浅，建议确认下级是否有更合适的节点');
+  if(sel.some((p,i)=>sel.some((q,j)=>j>i&&onSamePath(p,q)))) hints.push('已选节点中包含同一路径的上级 / 下级节点，同一路径建议只挂一个');
   return `<div class="mount-box"><div class="mount-title">挂载节点 <span style="font-weight:400;color:#8b99ac">至少 1 个</span></div>
     <div class="seg-foot">${sel.map((p,i)=>`<span class="kp">${esc(mountPath(p))}<span class="x" data-act="mountRemove" data-i="${i}">✕</span></span>`).join('')||'<span class="mount-none">未选择挂载节点</span>'}<button class="kp-add" data-act="nodePkToggle">＋ 添加挂载节点</button></div>
-    ${nodePickerOpen?`<div class="pk"><input class="field" id="nodeQ" placeholder="搜索知识体系节点" value="${esc(nodeQ)}">
-      <div class="pk-list">${list.map(p=>`<button type="button" class="pk-item ${on(p)?'on':''}" data-act="mountToggle" data-p="${esc(p.join('/'))}"><span class="pk-check">${on(p)?'✓':''}</span><span style="flex:1;text-align:left">${esc(mountPath(p))}</span></button>`).join('')||'<span class="kp-none">未找到节点</span>'}</div></div>`:''}</div>`;
+    ${hints.map(h=>`<div class="mount-hint">${h}</div>`).join('')}
+    ${nodePickerOpen?`<div class="pk"><input class="field" id="nodeQ" placeholder="搜索课程、任务、技能规范等节点" value="${esc(nodeQ)}">
+      <div class="pk-list">${list.map(p=>`<button type="button" class="pk-item ${on(p)?'on':''}" data-act="mountToggle" data-p="${esc(p.join('/'))}"><span class="pk-check">${on(p)?'✓':''}</span>${typeTag(p)}<span style="flex:1;text-align:left">${esc(mountPath(p))}</span>${!on(p)&&sel.some(q=>onSamePath(p,q))?'<span class="pk-path">已选其'+(sel.some(q=>p.join('/').startsWith(q.join('/')+'/'))?'上级':'下级')+'节点</span>':''}</button>`).join('')||'<span class="kp-none">未找到节点</span>'}</div></div>`:''}</div>`;
 }
 function startSuggEdit(g){ g.edit={name:g.name,def:g.def,mounts:(g.mounts||[]).map(m=>m.path.slice())}; suggEditing=g.id; suggRejecting=null; nodePickerOpen=!(g.mounts||[]).length; nodeQ=''; renderDrawer(); }
 function suggCard(g){
@@ -1320,7 +1360,6 @@ function suggCard(g){
       ${g.type==='D'?`<button class="sugg-mini pri" data-act="mountApprove" data-g="${g.id}">通过</button>`:''}
       ${g.type==='A'?`<button class="sugg-mini pri" data-act="suggApprove" data-g="${g.id}">通过</button>`:''}
       ${g.type==='B'?`<button class="sugg-mini pri" data-act="suggEdit" data-g="${g.id}">作为新知识点</button>`:''}
-      ${g.type==='C'?`<button class="sugg-mini pri" data-act="suggMerge" data-g="${g.id}">合并到已有</button><button class="sugg-mini" data-act="suggEdit" data-g="${g.id}">作为新知识点</button>`:''}
       ${g.type==='U'?`<button class="sugg-mini danger" data-act="unlinkOk" data-g="${g.id}">解除关联</button><button class="sugg-mini" data-act="unlinkKeep" data-g="${g.id}">保留</button>`:`<button class="sugg-mini danger" data-act="suggReject" data-g="${g.id}">驳回</button>`}
     </div></div>`;
 }
@@ -1392,13 +1431,12 @@ function approveSugg(gid, mode){
   const g=st.sugg.find(x=>x.id===gid); if(!g) return;
   let kpId;
   if(g.type==='A') kpId=g.kp;
-  else if(g.type==='C'&&mode==='merge') kpId=g.near;
-  else { kpId='kp'+(kpUid++); KP.push({id:kpId,name:(g.edit&&g.edit.name)||g.name,def:(g.edit&&g.edit.def)||g.def||'',path:['自定义']}); }
+  else return; // 新建知识点须确认挂载节点，统一由 saveNewSugg 保存
   addLink(st,kpId,'ai');
   g.status='done';
   suggEditing=null; suggRejecting=null;
   renderDrawer(); refreshDoc();
-  toast(g.type==='A'?'已通过，关联已写入知识图谱':(g.type==='C'&&mode==='merge'?'已合并到已有知识点并关联':'已通过，新知识点已写入知识图谱'));
+  toast(g.type==='A'?'已通过，关联已写入知识图谱':'已通过，新知识点已写入知识图谱');
 }
 function saveNewSugg(gid){
   const st=ctxState(); if(!st) return;
@@ -1481,7 +1519,6 @@ document.addEventListener('click',e=>{
   else if(a==='pkToggle'){ pickerOpen=!pickerOpen; renderDrawer(); if(!drawerDoc) refreshDoc(); }
   else if(a==='pkToggleItem'){ const st=ctxState(), id=el.dataset.kp; if(st){ st.kps.includes(id)?dropLink(st,id):addLink(st,id,'manual'); renderDrawer(); refreshDoc(); renderTable(); } }
   else if(a==='suggApprove'){ approveSugg(el.dataset.g); }
-  else if(a==='suggMerge'){ approveSugg(el.dataset.g,'merge'); }
   else if(a==='suggEdit'){ const g=findSugg(el.dataset.g); if(g) startSuggEdit(g); }
   else if(a==='nodePkToggle'){ nodePickerOpen=!nodePickerOpen; renderDrawer(); }
   else if(a==='mountToggle'){ const g=findSugg(suggEditing); if(g){ const ms=g.edit.mounts, i=ms.findIndex(p=>p.join('/')===el.dataset.p); i>=0?ms.splice(i,1):ms.push(el.dataset.p.split('/')); renderDrawer(); } }

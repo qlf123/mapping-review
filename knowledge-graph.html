@@ -109,10 +109,10 @@
       <nav class="platform-nav">
         <div class="nav-section-title">图谱建设</div>
         <a href="knowledge-graph.html" class="platform-nav-item active" aria-current="page"><span class="nav-icon">图</span><span>知识图谱</span></a>
-        <a href="knowledge-system.html" class="platform-nav-item"><span class="nav-icon">系</span><span>知识体系</span></a>
-        <a href="knowledge-base.html" class="platform-nav-item"><span class="nav-icon">库</span><span>知识库</span></a>
         <a href="ability-graph.html" class="platform-nav-item"><span class="nav-icon">能</span><span>能力图谱</span></a>
+        <a href="knowledge-system.html" class="platform-nav-item"><span class="nav-icon">系</span><span>知识体系</span></a>
         <a href="mapping-review.html" class="platform-nav-item"><span class="nav-icon">映</span><span>图谱映射审核台</span></a>
+        <a href="knowledge-base.html" class="platform-nav-item"><span class="nav-icon">库</span><span>知识库</span></a>
       </nav>
       <div class="platform-sidebar-footer"><span class="platform-avatar">秦</span><span>平台管理员</span><span class="sidebar-more">···</span></div>
     </aside>
@@ -165,6 +165,7 @@
       <div id="toast" class="toast" role="status"></div>
     </main>
     </div>
+    <script src="pano-version.js"></script>
     <script>
       function toast(text){var t=document.getElementById('toast');t.textContent=text;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(function(){t.classList.remove('show')},2200)}
       var taskModal=document.getElementById('taskModal');
@@ -219,7 +220,7 @@
           
           +'</div>'
           +'<div class="panorama-industry-card-body">'
-          +'<div class="panorama-industry-card-row"><span class="task-card-label">说明</span><span class="task-card-value">查看完整全景图谱，包含所有已映射行业</span></div>'
+          +'<div class="panorama-industry-card-row"><span class="task-card-label">说明</span><span class="task-card-value">查看平台大图谱：各专业当前已发布版本的合集，不单独发版本</span></div>'
           +'</div>'
           +'<div class="panorama-industry-card-footer">'
           +'<span class="task-card-time">所有行业</span>'
@@ -260,6 +261,7 @@
             +'<div class="panorama-industry-card-body">'
             +'<div class="panorama-industry-card-row"><span class="task-card-label">能力图谱</span><span class="task-card-value">'+ind.graph+'</span><span class="task-scope-tag">'+(ind.graphScope||'')+'</span></div>'
             +'<div class="panorama-industry-card-row"><span class="task-card-label">知识体系</span><span class="task-card-value">'+majorsHtml+'</span></div>'
+            +(ind.latestStatus==='done'?versionRow(ind.industry):'')
             +'</div>'
             +'<div class="panorama-industry-card-footer">'
             +'<span class="task-card-time">'+ind.latestTime+'</span>'
@@ -268,6 +270,14 @@
             +'</div>';
         }).join('');
         grid.innerHTML=html;
+      }
+
+      // 全景版本按专业发布：行业卡片只汇总各专业的版本状态
+      function versionRow(industry){
+        if(!window.PanoVersion)return '';
+        var v=PanoVersion.summary(industry);if(!v.majors)return '';
+        var tip=v.sync?'<span style="color:#dc6803">'+v.sync+' 个可同步更新</span>':'<span style="color:#16a34a">均已同步</span>';
+        return '<div class="panorama-industry-card-row"><span class="task-card-label">全景版本</span><span class="task-card-value">'+v.majors+' 个专业 · '+tip+(v.draft?' · '+v.draft+' 个有草稿':'')+'</span></div>';
       }
 
       function viewAllGraph(){

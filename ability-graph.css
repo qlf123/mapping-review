@@ -246,4 +246,6 @@ input,select,textarea,button{font-family:inherit}
 .rebuild-btn:hover{background:#463bc9}
 
 .task-form{overflow-y:auto;flex:1;padding:18px 24px;}
-.task-dialog form{overflow-y:auto;flex:1;padding:18px 24px;max-height:calc(90vh - 120px);}
+.task-dialog form{overflow-y:auto;flex:1;padding:18px 24px;max-height:calc(90vh - 120px);}/* 已停用节点 */
+.gnode.off{opacity:.45}
+.gnode.off rect{stroke-dasharray:4 3}

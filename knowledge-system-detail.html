@@ -156,6 +156,7 @@
         </style>
     <link rel="stylesheet" href="design-tokens.css" />
   <link rel="stylesheet" href="graph-update.css" />
+  <link rel="stylesheet" href="pano-version.css" />
 </head>
   <body>
     <aside class="platform-sidebar" aria-label="图谱平台导航">
@@ -166,10 +167,10 @@
       <nav class="platform-nav">
         <div class="nav-section-title">图谱建设</div>
         <a href="knowledge-graph.html" class="platform-nav-item"><span class="nav-icon">图</span><span>知识图谱</span></a>
-        <a href="knowledge-system.html" class="platform-nav-item active" aria-current="page"><span class="nav-icon">系</span><span>知识体系</span></a>
-        <a href="knowledge-base.html" class="platform-nav-item"><span class="nav-icon">库</span><span>知识库</span></a>
         <a href="ability-graph.html" class="platform-nav-item"><span class="nav-icon">能</span><span>能力图谱</span></a>
+        <a href="knowledge-system.html" class="platform-nav-item active" aria-current="page"><span class="nav-icon">系</span><span>知识体系</span></a>
         <a href="mapping-review.html" class="platform-nav-item"><span class="nav-icon">映</span><span>图谱映射审核台</span></a>
+        <a href="knowledge-base.html" class="platform-nav-item"><span class="nav-icon">库</span><span>知识库</span></a>
       </nav>
       <div class="platform-sidebar-footer"><span class="platform-avatar">秦</span><span>平台管理员</span><span class="sidebar-more">···</span></div>
     </aside>
@@ -223,6 +224,10 @@
       <div class="ksd-context-menu-item" id="ctxAddSibling" onclick="ctxAction('addSibling')"><span class="icon">⇄</span>新增同级节点</div>
       <div class="ksd-context-menu-divider"></div>
       <div class="ksd-context-menu-item" onclick="ctxAction('addKp')"><span class="icon">✎</span>新增知识点</div>
+      <div class="ksd-context-menu-divider" id="ctxStateDivider"></div>
+      <div class="ksd-context-menu-item danger" id="ctxRetire" onclick="ctxAction('retire')"><span class="icon">⊘</span>停用节点</div>
+      <div class="ksd-context-menu-item danger" id="ctxDelete" onclick="ctxAction('delete')"><span class="icon">✕</span>删除节点</div>
+      <div class="ksd-context-menu-item" id="ctxRestore" onclick="ctxAction('restore')"><span class="icon">↺</span>恢复启用</div>
     </div>
 
     <div class="ksd-modal" id="addNodeModal" aria-hidden="true">
@@ -349,6 +354,7 @@
     </div>
 
     <script src="graph-update.js"></script>
+    <script src="node-retire.js"></script>
     <script>
       function toast(text){var t=document.getElementById('toast');t.textContent=text;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(function(){t.classList.remove('show')},2200)}
 
@@ -453,18 +459,20 @@
           var rect=el('rect',{
             class:isRoot?'ksd-node-rect root':(n.expanded?'ksd-node-rect expanded':'ksd-node-rect'),
             x:x,y:y,width:w,height:h,rx:6,ry:6,
-            fill:isRoot?'#5149e9':'#fff',
+            fill:isRoot?'#5149e9':(n.disabled?'#f2f4f7':'#fff'),
             stroke:isRoot?'#5149e9':(n._hl?'#f79009':(n.isNew?'#12b76a':(n.retire?'#f79009':(n.expanded?'#5149e9':'#dfe6ef')))),
             'stroke-width':n._hl?3:1.5,
-            'stroke-dasharray':n.retire?'4 3':'none'
+            'stroke-dasharray':(n.retire||n.disabled)?'4 3':'none',
+            opacity:n.disabled?.6:1
           });
           rect.addEventListener('click',function(){toggleNode(n._id);});
           (function(ref){rect.addEventListener('contextmenu',function(e){showContextMenu(e,n._id,ref);});})(n);
           svg.appendChild(rect);
           var text=n.name;
           if(!tag&&text.length>12&&!isRoot)text=text.substring(0,11)+'...';
+          if(n.disabled)text=(text.length>8?text.substring(0,7)+'…':text)+'（已停用）';
           var txt=el('text',{class:isRoot?'ksd-node-text root':'ksd-node-text normal',x:tag?(x+10):(x+w/2),y:n._y+4,'text-anchor':tag?'start':'middle'});
-          txt.textContent=text;
+          txt.textContent=text;if(n.disabled)txt.setAttribute('style','fill:#98a2b3');
           svg.appendChild(txt);
           if(n.children&&n.children.length){
             var icon=el('text',{class:'ksd-expand-icon',x:x+w+4,y:n._y+4});
@@ -530,14 +538,12 @@
         if(!hasChild(base,'葡萄酒标签与标识规范'))items.push({id:'ks-std',kind:'add',title:'新增标准「葡萄酒标签与标识规范」',
           path:'专业基础课程 › 葡萄酒基础',editName:'葡萄酒标签与标识规范',
           desc:'相关行业标准发布修订版（示例），对酒标信息、年份与产区标注提出新要求，课程中尚无对应的达标依据。',
-          metrics:[{v:'1 项',label:'标准修订（示例）'},{v:'3 条',label:'涉及条款'}],
           links:['行业标准修订公告（示例）：发布机构、发布日期、条款 4.2–4.4'],
           conf:.82,impact:'1 门课程新增 1 个标准节点'});
         var leisure=findNode('休闲文化概论');
         if(leisure&&!leisure.retire)items.push({id:'ks-retire',kind:'retire',title:'课程「休闲文化概论」不再列入教学标准',
           path:'专业基础课程 › 休闲文化概论',
           desc:'专业教学标准修订后（示例），该课程不再列入专业基础课程。',
-          metrics:[{v:'1 项',label:'教学标准修订（示例）'},{v:'0 门',label:'修订后对应课程'}],
           note:'采纳后只标记「建议下线」，课程和关联内容保留，需教研组评审后再手动处理。',
           links:['专业教学标准修订稿（示例）：课程设置章节'],
           conf:.73,impact:'1 门课程（不自动删除）'});
@@ -590,6 +596,12 @@
         ctxNodeId=nodeId;
         ctxNodeRef=nodeRef;
         document.getElementById('ctxAddSibling').style.display=(nodeRef===treeData)?'none':'';
+        // 被全景图谱引用的节点只能停用；本次新增、未被引用的节点可删除；根节点两者都不提供
+        var isRoot=nodeRef===treeData;
+        document.getElementById('ctxStateDivider').style.display=isRoot?'none':'';
+        document.getElementById('ctxRestore').style.display=!isRoot&&nodeRef.disabled?'':'none';
+        document.getElementById('ctxRetire').style.display=!isRoot&&!nodeRef.disabled&&!nodeRef.isNew?'':'none';
+        document.getElementById('ctxDelete').style.display=!isRoot&&!nodeRef.disabled&&nodeRef.isNew?'':'none';
         ctxMenu.style.left=Math.min(e.clientX,window.innerWidth-180)+'px';
         ctxMenu.style.top=Math.min(e.clientY,window.innerHeight-240)+'px';
         ctxMenu.classList.add('show');
@@ -602,6 +614,9 @@
         if(action==='add')ctxAddChild();
         else if(action==='addSibling')ctxAddSibling();
         else if(action==='addKp')ctxAddKp();
+        else if(action==='retire')ctxRetire();
+        else if(action==='delete')ctxDelete();
+        else if(action==='restore')ctxRestore();
         hideCtxMenu();
       }
 
@@ -611,6 +626,21 @@
           if(e.target.closest('.ksd-canvas-wrap'))e.preventDefault();
         }
       });
+
+      // ===== 停用 / 删除 / 恢复节点 =====
+      function walkKs(n,fn){fn(n);(n.children||[]).forEach(function(c){walkKs(c,fn);});}
+      function ctxRetire(){
+        var n=ctxNodeRef,sub=-1;walkKs(n,function(){sub++;});
+        NodeRetire.open({name:n.name,typeLabel:(TYPE_META[n.type]||{}).label||'节点',subCount:sub,graph:treeData.name,majors:[treeData.name],
+          onConfirm:function(){walkKs(n,function(x){x.disabled=true;});renderTree();toast('已停用「'+n.name+'」，已生成影响分析记录');}});
+      }
+      function ctxDelete(){
+        var n=ctxNodeRef,parent=findParent(n,treeData);if(!parent)return;
+        if(!confirm('「'+n.name+'」尚未被全景图谱引用，删除后不可恢复。确认删除？'))return;
+        parent.children.splice(parent.children.indexOf(n),1);
+        assignIds(treeData);renderTree();toast('已删除「'+n.name+'」');
+      }
+      function ctxRestore(){var n=ctxNodeRef;walkKs(n,function(x){delete x.disabled;});renderTree();toast('已恢复启用「'+n.name+'」');}
 
       // ===== 新增节点（支持 AI 构建后续节点）=====
       var TYPE_META={
