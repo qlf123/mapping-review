@@ -68,6 +68,22 @@ textarea{font-family:inherit;border:1px solid var(--bd2);border-radius:8px;paddi
 .pill.on{border-color:var(--pri);background:var(--pri-l);color:var(--pri-d);font-weight:600}
 .opt{display:flex;flex-direction:column;gap:4px;text-align:left;padding:14px 16px;border-radius:10px;border:1px solid var(--bd);background:#fff}
 .opt.on{border:1.5px solid var(--pri);background:var(--pri-ll)}
+/* 分段设置选项卡：纵向整行，图标 + 标题 + 描述（参考 ds.dsnlkj.com 创建知识库）；选中卡内嵌子设置 */
+.seg-opt{border-radius:12px;border:1px solid var(--bd);background:#fff}
+.seg-opt:hover{border-color:var(--bd2)}
+.seg-opt.on{border:1.5px solid var(--pri);background:var(--pri-ll)}
+.seg-head{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:14px 18px;background:none;border:none;border-radius:12px;cursor:pointer;font-family:inherit}
+.seg-head .ic{width:38px;height:38px;border-radius:9px;background:var(--pri-l);display:flex;align-items:center;justify-content:center;font-size:18px;flex:none}
+.seg-body{padding:2px 18px 18px;display:flex;flex-direction:column;gap:16px}
+.ckb{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--t2);cursor:pointer;flex-wrap:wrap}
+.ckb input{width:16px;height:16px;accent-color:var(--pri);cursor:pointer;flex:none;margin:0}
+.q{width:15px;height:15px;border-radius:50%;background:var(--bd);color:var(--t4);font-size:10px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;cursor:help;flex:none}
+.numwrap{position:relative;display:flex;align-items:center}
+.numwrap .field{padding-right:52px;width:100%}
+.numwrap .unit{position:absolute;right:30px;font-size:12px;color:var(--t4);pointer-events:none}
+/* 分段预览弹窗 */
+.ovl{position:fixed;inset:0;background:rgba(16,24,40,.45);display:flex;align-items:center;justify-content:center;z-index:60;padding:24px}
+.mdl{background:#fff;border-radius:14px;width:min(680px,94vw);max-height:82vh;overflow:auto;padding:24px;box-shadow:0 12px 32px rgba(16,24,40,.18)}
 .tg{width:44px;height:26px;border-radius:13px;border:0;background:var(--bd2);position:relative;flex:none;padding:0}
 .tg::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(16,24,40,.2);transition:left .15s}
 .tg.on{background:var(--pri)}.tg.on::after{left:21px}
@@ -280,8 +296,12 @@ const S = {
   // 通用
   // 索引设置：整个知识库统一，创建后向量模型不可更改
   indexMode:'high', embed:'default',
+  // 分段设置（文本类）：语义分段 / 通用 / 父子分段
+  chunkMode:'semantic', parentSep:'\\n\\n', parentLen:1024, childSep:'\\n', childLen:512,
+  // 通用分段：标识符 / 最大长度 / 重叠长度；文本预处理规则
+  sep:'\\n\\n', maxLen:1024, overlap:50, preClean:true, stripUrl:false, autoSummary:false, qaSeg:false, qaLang:'zh',
   // 文本
-  sep:'\\n\\n', maxLen:500, ocrScan:true,
+  ocrScan:true,
   // 图文
   imgMode:'ocr',
   // 音视频
@@ -310,8 +330,16 @@ const avText=(s)=>S.clean?s[3]:(s[4]||s[3]);
 const toast=(t)=>{const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),1800)};
 const kindOf=(ext)=>Object.keys(EXT).find(k=>EXT[k].includes(ext));
 const imgParts=(f)=>({ocr:S.imgMode!=='desc'?f.ocr:'', desc:S.imgMode!=='ocr'?f.desc:''});
-// 文本分段：按「分段最大长度」切分（示例按字数近似 tokens）；扫描件未开启 OCR 时无分段
-const textSegs=(f)=>{ if(f.scanned&&!S.ocrScan) return []; const n=S.maxLen; return f.segs.flatMap(s=>{ const out=[]; for(let i=0;i<s.t.length;i+=n) out.push({t:s.t.slice(i,i+n)}); return out; }); };
+// 文本分段：随「分段设置」变化（语义分段：每段即一个分段；通用：按最大长度+重叠长度切分；父子：父块内切子块，子块带父块序号）
+// 扫描件未开启 OCR 时无分段
+const textSegs=(f)=>{ if(f.scanned&&!S.ocrScan) return [];
+  const src=f.segs;
+  if(S.chunkMode==='semantic') return src.map(s=>({t:s.t}));
+  const n=S.chunkMode==='parent'?S.childLen:S.maxLen, step=Math.max(1,n-(S.chunkMode==='parent'?0:S.overlap));
+  if(S.chunkMode==='parent'){ const out=[]; src.forEach((s,pi)=>{ for(let i=0;i<s.t.length;i+=step) out.push({t:s.t.slice(i,i+n),p:pi}); }); return out; }
+  return src.flatMap(s=>{const out=[];for(let i=0;i<s.t.length;i+=step) out.push({t:s.t.slice(i,i+n)}); return out;}); };
+// 父块（父子分段模式）：每个原始语义段为一个父块，超长时截断到父块最大长度
+const parentSegs=(f)=>f.segs.map(s=>({t:s.t.slice(0,S.parentLen)}));
 const segCount=(f)=>f.kind==='image'?1:(f.kind==='text'?textSegs(f).length:f.segs.length);
 // 候选知识点数（mock）：按分段数估算，无分段则不提取
 const kpCount=(f)=>{const n=segCount(f);return extractOn()&&n?Math.ceil(n*1.5):0;};
@@ -421,6 +449,56 @@ function uploadBody(){
 /* ======================================================================
    STEP 2 解析与分段（按类型设置 + 预览）
    ====================================================================== */
+/* 分段设置（文本类文件）：语义分段 / 通用 / 父子分段；选中卡内嵌子设置；图文、音视频各自有独立的分段方式 */
+const CHUNK_MODES=[
+  ['semantic','✨','语义分段','基于语义理解自动切分文本，确保每个分段语义完整'],
+  ['general','⚙️','通用','通用文本分块模式，检索和召回的块是相同的'],
+  ['parent','👥','父子分段','使用父子模式时，子块用于检索，父块用作上下文']
+];
+const qmark=(tip)=>`<span class="q" title="${esc(tip)}">?</span>`;
+const numField=(id,label,tip,val,min,max)=>`<label class="col g6" style="gap:6px"><span class="row g6" style="font-size:13px;font-weight:600;color:var(--t2)">${label} ${qmark(tip)}</span>
+  <span class="numwrap"><input class="field" id="${id}" type="number" min="${min}" max="${max}" step="1" value="${val}"><span class="unit">字符</span></span></label>`;
+const sepField=(id,label,tip,val)=>`<label class="col g6" style="gap:6px"><span class="row g6" style="font-size:13px;font-weight:600;color:var(--t2)">${label} ${qmark(tip)}</span>
+  <input class="field" id="${id}" value="${esc(val)}" spellcheck="false"></label>`;
+/* 文本预处理规则：三种分段模式共用 */
+const preRules=()=>`<div class="col g10">
+    <span style="font-size:14px;font-weight:600;color:var(--t1)">文本预处理规则</span>
+    <label class="ckb"><input type="checkbox" id="preClean" ${S.preClean?'checked':''}>替换掉连续的空格、换行符和制表符</label>
+    <label class="ckb"><input type="checkbox" id="stripUrl" ${S.stripUrl?'checked':''}>删除所有 URL 和电子邮件地址</label>
+    <div style="padding-left:26px">${tg('autoSummary','摘要自动生成','为每个分段生成一句话摘要并入库，提升检索召回；开启后解析耗时与 token 消耗增加')}</div>
+    <label class="ckb"><input type="checkbox" id="qaCk" ${S.qaSeg?'checked':''}>使用 Q&amp;A 分段，语言
+      <select class="field" id="qaLang" style="width:150px;padding:6px 10px" ${S.qaSeg?'':'disabled'}>
+        <option value="zh" ${S.qaLang==='zh'?'selected':''}>简体中文</option>
+        <option value="en" ${S.qaLang==='en'?'selected':''}>English</option></select> ${qmark('开启后 AI 将每个分段改写为「问题 + 答案」形式，适合FAQ类素材')}</label>
+  </div>`;
+const chunkActions=()=>`<div class="row g16" style="padding-top:2px">
+    <button class="btn" data-act="previewChunk">预览块</button>
+    <button class="link" data-act="resetChunk" style="font-size:14px">重置</button></div>`;
+function chunkSettings(){
+  const generalBody=()=>`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px">
+      ${sepField('sepInput','分段标识符','按该标识切分文本，如 \\n\\n 表示空行；输入 \\n 表示换行',S.sep)}
+      ${numField('maxLen','分段最大长度','分段的最大长度，默认 1024 字符',S.maxLen,50,4000)}
+      ${numField('overlap','分段重叠长度','相邻分段之间重复的长度，避免语义被切断；建议为最大长度的 10%-25%',S.overlap,0,500)}</div>`;
+  const parentBody=()=>`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px">
+      ${sepField('parentSep','父块分隔符','按该标识切出父块，作为检索命中后的上下文',S.parentSep)}
+      ${numField('parentLen','父块最大长度','父块的最大长度；命中子块时返回其所在父块',S.parentLen,100,4000)}
+      ${sepField('childSep','子块分隔符','父块内按该标识切出子块，子块用于检索',S.childSep)}
+      ${numField('childLen','子块最大长度','子块的最大长度；建议远小于父块，保证检索精度',S.childLen,50,1000)}</div>`;
+  /* 语义分段无展开设置（参考 Dify）；通用、父子分段展开子设置 + 文本预处理规则 + 预览块/重置 */
+  const bodies={general:generalBody,parent:parentBody};
+  /* 适用范围：仅语义分段支持图文与音视频；通用、父子分段仅支持文本 */
+  const SCOPE={semantic:'全类型',general:'仅文本',parent:'仅文本'};
+  const nonText=ofKind('image').length+ofKind('av').length;
+  return `<div class="col g12"><h3 class="h3">分段设置 <span class="muted" style="font-weight:400;font-size:13px">通用、父子分段仅支持文本类文件；图文、音视频只能按语义分段</span></h3>
+    <div class="col g12">
+      ${CHUNK_MODES.map(([k,ic,t,d])=>`<div class="seg-opt ${S.chunkMode===k?'on':''}">
+        <button class="seg-head" data-act="chunkMode" data-v="${k}" aria-pressed="${S.chunkMode===k}">
+          <span class="ic">${ic}</span>
+          <span class="col" style="flex:1;gap:3px;min-width:0"><span class="row g8" style="font-size:14px;font-weight:600;color:var(--t1)">${t}<span class="chip ${k==='semantic'?'act':''}">${SCOPE[k]}</span></span>
+          <span class="muted" style="line-height:1.5">${d}</span></span></button>
+        ${S.chunkMode===k&&bodies[k]?`<div class="seg-body">${bodies[k]()}${preRules()}${chunkActions()}</div>`:''}</div>`).join('')}</div>
+    ${S.chunkMode!=='semantic'&&nonText?`<div class="fixed">${I.info}<span>本批含图文 ${ofKind('image').length} 个、音视频 ${ofKind('av').length} 个文件，不适用当前分段模式，仍按语义分段处理。</span></div>`:''}</div>`;
+}
 /* 向量模型（mock）：可选范围由管理员配置 */
 const EMBED_MODELS={default:'系统默认向量模型', multi:'多语言向量模型'};
 function indexSettings(){
@@ -451,20 +529,16 @@ function hl(t){
 
 function settingsText(){
   const scanned=ofKind('text').some(f=>f.scanned);
-  return `<div class="col g12"><h3 class="h3">分段规则</h3>
-      <div class="card">
-        <div class="set"><div class="col" style="flex:1;gap:2px"><b>分段标识符</b><span class="muted">按该标识切分文本</span></div>
-          <select class="field" id="sepSel" style="width:160px">${[['\\n\\n','空行（\\n\\n）'],['\\n','换行（\\n）'],['。','句号（。）']].map(([v,l])=>`<option value="${esc(v)}" ${S.sep===v?'selected':''}>${l}</option>`).join('')}</select></div>
-        <div class="set"><div class="col" style="flex:1;gap:2px"><b>分段最大长度</b><span class="muted">单位 tokens，50–2000；超过即切分</span></div>
-          <input class="field" id="maxLen" type="number" min="50" max="2000" step="10" style="width:120px" value="${S.maxLen}"></div>
-      </div></div>
-    <div class="col g12"><h3 class="h3">扫描件处理</h3>
+  return `<div class="col g12"><h3 class="h3">扫描件处理</h3>
       <div class="card">${tg('ocrScan','无文字层页面自动识别文字（OCR）','扫描版 PDF、拍照转成的 PDF 没有可复制的文字，开启后自动识别；关闭则跳过这些页面')}</div>
       ${scanned?`<p class="muted" style="margin:0">本批有 ${ofKind('text').filter(f=>f.scanned).length} 个扫描件。</p>`:''}</div>`;
 }
 function previewText(){
   const f=ofKind('text').find(x=>x.scanned)||ofKind('text')[0], g=ofKind('text')[0];
-  const a=textSegs(g).slice(0,2).map((s,i)=>pvCard(g.name,i+1,s.t,'')).join('');
+  const a=textSegs(g).slice(0,2).map((s,i)=>{
+    const extra=S.chunkMode==='parent'?`<span class="chip act">父块 #${(s.p??i)+1}</span>`:'';
+    return pvCard(g.name,i+1,s.t,extra);
+  }).join('');
   let b='';
   if(f&&f.scanned){
     b=S.ocrScan?pvCard(f.name,1,textSegs(f)[0].t,'<span class="chip act">OCR 识别</span>')
@@ -474,6 +548,17 @@ function previewText(){
 }
 function pvCard(name,no,text,extra){
   return `<div class="pv"><div class="row g8 wrapflex"><span class="lbl">${esc(name)} · #${no}</span>${extra}<span class="muted" style="margin-left:auto;font-size:12px">${text.length} 字</span></div><p>${esc(text)}</p></div>`;
+}
+/* 分段预览弹窗（分段设置卡内的「预览块」按钮） */
+function previewModal(){
+  const has=ofKind('text').length>0;
+  return `<div class="ovl" data-act="closePreview">
+    <div class="mdl" role="dialog" aria-modal="true" aria-label="分段预览" onclick="event.stopPropagation()">
+      <div class="row g12" style="justify-content:space-between;margin-bottom:14px"><h3 class="h3" style="margin:0">分段预览</h3>
+        <button class="x" data-act="closePreview" aria-label="关闭">${I.x}</button></div>
+      ${has?previewText():'<p class="muted">本批没有文本类文件，分段预览仅针对文本类文件。</p>'}
+      <p class="muted" style="margin:10px 0 0">预览为模拟分段，仅展示前几个分段；实际分段以处理结果为准。</p>
+    </div></div>`;
 }
 
 function settingsImage(){
@@ -531,7 +616,8 @@ function viewStep2(){
   const kinds=['text','image','av'].filter(k=>ofKind(k).length);
   if(!SHOW_TYPE_SETTINGS) return `<section class="col g24">
     <div class="col g6"><h2 class="h2">解析与分段</h2>
-      <span class="muted">本批共 ${valid().length} 个文件（${kinds.map(x=>KIND_LABEL[x]+' '+ofKind(x).length).join(' · ')}），按文件类型使用系统默认规则解析与分段。</span></div>
+      <span class="muted">本批共 ${valid().length} 个文件（${kinds.map(x=>KIND_LABEL[x]+' '+ofKind(x).length).join(' · ')}）。通用、父子分段仅对文本类文件生效；图文、音视频只能按语义分段。</span></div>
+    ${chunkSettings()}
     ${indexSettings()}
     ${kpSettings()}
     <div class="row g12">
@@ -546,6 +632,7 @@ function viewStep2(){
   return `<section class="col g24">
     <div class="col g6"><h2 class="h2">按文件类型设置解析与分段</h2>
       <span class="muted">本批共 ${valid().length} 个文件，已按类型自动分组。每组设置只对该组文件生效。</span></div>
+    ${chunkSettings()}
     ${indexSettings()}
     <div class="tabs" role="tablist">${kinds.map(x=>`<button class="tab ${x===k?'on':''}" role="tab" aria-selected="${x===k}" data-act="tab" data-v="${x}">${x==='text'?I.doc('currentColor',16):x==='image'?I.image('currentColor',16):I.video('currentColor',16)}${KIND_LABEL[x]}<span class="cnt">${ofKind(x).length}</span></button>`).join('')}</div>
     <div class="row g24 wrapflex" style="align-items:flex-start;gap:32px">
@@ -597,8 +684,13 @@ function viewStep3(){
           <input class="field" id="kbName" value="${esc(S.name)}" maxlength="40" autocomplete="off"></label></div>`;
   const status = `<div class="col g6"><h3 class="h3 row g8">${all?`${I.check.replace(/width="34" height="34"/,'width="18" height="18"')}处理完成`:'<span class="spin"></span>处理中…'}</h3>
       <span class="muted">${all?`共 ${v.length} 个文件，生成 ${segTotal} 个分段，已完成${idxStage()}，可开始检索。${kpLine}`:'处理在后台进行，可以先前往文档，完成后在文档列表查看结果。'}</span></div>`;
+  const nonTextN=ofKind('image').length+ofKind('av').length;
+  const nonTextNote=nonTextN&&S.chunkMode!=='semantic'?' · 图文/音视频按语义分段':'';
+  const chunkLabel={semantic:'语义分段（全类型）',general:'通用',parent:'父子分段'}[S.chunkMode]
+    +(S.chunkMode==='general'?`（最大长度 ${S.maxLen} 字符${S.overlap?` · 重叠 ${S.overlap}`:''}${S.qaSeg?' · Q&A 分段':''}${nonTextNote}）`:'')
+    +(S.chunkMode==='parent'?`（父块 ${S.parentLen} / 子块 ${S.childLen} 字符${nonTextNote}）`:'');
   const summary = `<div class="sum">
-      <span>解析与分段</span><b>系统默认规则（按文件类型）</b>
+      <span>解析与分段</span><b>${chunkLabel}</b>
       <span>索引方式</span><b>${S.indexMode==='high'||MODE==='add'?'高质量':'经济'}</b>
       ${S.indexMode==='high'||MODE==='add'?`<span>向量模型</span><b>${MODE==='add'?EMBED_MODELS.default:EMBED_MODELS[S.embed]}</b>`:''}
       <span>知识体</span><b>${esc(MODE==='add'?ADD_KB_BODY:(S.kbBody||'未选择'))}</b>
@@ -623,7 +715,7 @@ function viewStep3(){
    ====================================================================== */
 function render(){
   const y=window.scrollY, act=document.activeElement, keepId=act&&act.id, pos=act&&act.selectionStart;
-  $('#app').innerHTML=stepper()+[null,viewStep1,viewStep2,viewStep3][S.step]();
+  $('#app').innerHTML=stepper()+[null,viewStep1,viewStep2,viewStep3][S.step]()+(S.showPreview?previewModal():'');
   window.scrollTo(0,y);
   if(keepId){ const el=document.getElementById(keepId); if(el){ el.focus(); try{ if(pos!=null) el.setSelectionRange(pos,pos); }catch(e){} } }
   bindExtras();
@@ -702,6 +794,12 @@ document.addEventListener('click',e=>{
     case 'tab': S.tab=v; break;
     case 'lang': S.lang=v; break;
     case 'indexMode': if(MODE==='create') S.indexMode=v; break;
+    case 'chunkMode': S.chunkMode=v; break;
+    case 'previewChunk': S.showPreview=true; break;
+    case 'closePreview': S.showPreview=false; break;
+    case 'resetChunk':
+      Object.assign(S,{sep:'\\n\\n',maxLen:1024,overlap:50,parentSep:'\\n\\n',parentLen:1024,childSep:'\\n',childLen:512,preClean:true,stripUrl:false,autoSummary:false,qaSeg:false,qaLang:'zh'});
+      toast('分段设置已重置'); break;
     case 'toggle': S[v]=!S[v]; break;
     case 'segMode': S.segMode=v; break;
     case 'imgMode': S.imgMode=v; break;
@@ -717,8 +815,17 @@ function bindExtras(){
   const desc=$('#kbDesc'); if(desc) desc.oninput=()=>{S.desc=desc.value;};
   const hot=$('#hot'); if(hot) hot.oninput=()=>{S.hotwords=hot.value; const pos=hot.selectionStart; render(); const h=$('#hot'); h.focus(); h.setSelectionRange(pos,pos);};
   const em=$('#embedSel'); if(em) em.onchange=()=>{ S.embed=em.value; };
-  const sep=$('#sepSel'); if(sep) sep.onchange=()=>{ S.sep=sep.value; render(); };
-  const ml=$('#maxLen'); if(ml) ml.onchange=()=>{ S.maxLen=Math.min(2000,Math.max(50,parseInt(ml.value,10)||500)); render(); };
+  const si=$('#sepInput'); if(si) si.onchange=()=>{ S.sep=si.value; };
+  const ml=$('#maxLen'); if(ml) ml.onchange=()=>{ S.maxLen=Math.min(4000,Math.max(50,parseInt(ml.value,10)||1024)); render(); };
+  const ov=$('#overlap'); if(ov) ov.onchange=()=>{ S.overlap=Math.min(500,Math.max(0,parseInt(ov.value,10)||50)); render(); };
+  const pc=$('#preClean'); if(pc) pc.onchange=()=>{ S.preClean=pc.checked; };
+  const su=$('#stripUrl'); if(su) su.onchange=()=>{ S.stripUrl=su.checked; };
+  const qa=$('#qaCk'); if(qa) qa.onchange=()=>{ S.qaSeg=qa.checked; render(); };
+  const ql=$('#qaLang'); if(ql) ql.onchange=()=>{ S.qaLang=ql.value; };
+  const psep=$('#parentSep'); if(psep) psep.onchange=()=>{ S.parentSep=psep.value; render(); };
+  const csep=$('#childSep'); if(csep) csep.onchange=()=>{ S.childSep=csep.value; render(); };
+  const pl=$('#parentLen'); if(pl) pl.onchange=()=>{ S.parentLen=Math.min(4000,Math.max(100,parseInt(pl.value,10)||1024)); render(); };
+  const cl=$('#childLen'); if(cl) cl.onchange=()=>{ S.childLen=Math.min(1000,Math.max(50,parseInt(cl.value,10)||512)); render(); };
   const pk=$('#picker'); if(pk) pk.onchange=()=>addFiles([...pk.files].map(fromRealFile));
   const drop=$('#drop');
   if(drop){
