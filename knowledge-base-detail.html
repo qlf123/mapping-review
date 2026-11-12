@@ -236,9 +236,6 @@
 .doc-toc-btn{display:block;width:100%;text-align:left;border:0;background:none;padding:8px 10px;border-radius:8px;font-size:13px;color:#41536f;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:inherit;}
 .doc-toc-btn:hover{background:#f5f7fa;}
 .doc-toc-dot{width:6px;height:6px;border-radius:50%;background:#F79009;flex:none;}
-.ch-head.on{background:#eef0ff;}
-.ch-head{margin:6px 0 10px;padding:10px 14px;border-left:3px solid #5149e9;background:#f7f6ff;border-radius:8px;}
-.row-ch{display:flex;align-items:center;gap:10px;font-size:14px;color:#2f405d;}
 .muted-ch{font-size:12px;color:#8b99ac;}
 .doc-toc-ch{font-weight:600;color:#2f405d;display:flex;align-items:center;gap:6px;margin-top:4px;}
 .doc-toc-n{margin-left:auto;font-size:11px;font-weight:500;color:#8b99ac;background:#f0f2f5;border-radius:8px;padding:0 6px;}
@@ -246,6 +243,7 @@
 .doc-toc-btn.on{background:#eef0ff;color:#5149e9;font-weight:600;}
 @media (max-width:1300px){.doc-grid{grid-template-columns:minmax(0,1fr) 300px;}.doc-toc{display:none;}}
 .seg-card{display:flex;flex-direction:column;gap:9px;padding:12px 14px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;}
+.seg-card[data-act="segEdit"]{cursor:pointer;}
 .seg-card.on{border:1.5px solid #5149e9;background:#fafaff;}
 .seg-card:hover{border-color:#c9c2ef;}
 .seg-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:#8b99ac;}
@@ -298,8 +296,6 @@
 .sugg-type.B{color:#0e9384;background:#e6f6f3;}
 .sugg-type.D{color:#7a5af8;background:#f4f3ff;}
 .sugg-type.U{color:#c72c2a;background:#fff1f0;}
-a.kp-link{text-decoration:none;cursor:pointer;}
-a.kp-link:hover{border-color:#5149e9;}
 .sugg-name{font-size:13px;font-weight:600;color:#31425e;}
 .sugg-conf{font-size:11px;color:#16a34a;margin-left:auto;font-variant-numeric:tabular-nums;}
 .sugg-quote{font-size:12px;color:#8b99ac;line-height:1.6;border-left:2px solid #e2e8f0;padding-left:8px;}
@@ -525,7 +521,7 @@ a.kp-link:hover{border-color:#5149e9;}
 
 
 <!-- 编辑分段抽屉 -->
-<div class="seg-drawer" id="segDrawer">
+<div class="seg-drawer no-mask" id="segDrawer">
   <div class="seg-drawer-mask" onclick="closeDrawer()"></div>
   <div class="seg-drawer-panel" id="segDrawerPanel"></div>
 </div>
@@ -810,7 +806,6 @@ function renderTable(){
 function kpStat(d){
   const src={}; let pend=0;
   segKeys(d).forEach(k=>{ const st=segState(d,k); st.kps.forEach(id=>{ if(!(id in src)) src[id]=linkSrc(st,id).by; }); pend+=st.sugg.filter(g=>g.status==='pending').length; });
-  chaptersOf(d).forEach(g=>{ const st=chState(d,g.items[0].i); st.kps.forEach(id=>{ if(!(id in src)) src[id]=linkSrc(st,id).by; }); pend+=st.sugg.filter(x=>x.status==='pending').length; });
   const ids=Object.keys(src);
   return {total:ids.length, manual:ids.filter(id=>src[id]==='manual').length, ai:ids.filter(id=>src[id]==='ai').length, pend};
 }
@@ -1017,10 +1012,10 @@ function extractSeg(d,k,opts){
   const text=segTextOf(d,k), st=SEG_STATE[d.id]&&SEG_STATE[d.id][k];
   const linked=st?st.kps:[], old=st?st.sugg:[];
   // 6.1 短分段：无信息段不识别；短信息段（< 30 字，音视频 < 10 秒）只保留置信度 ≥ 0.90 的关联已有
-  const isCh=String(k).startsWith('ch'), body=text.replace(CH_RE,'').replace(/\s/g,'');
-  const avSeg=d.cat==='av'&&!isCh?d.segs[+k]:null;
-  if(!isCh&&(body.length<6||NO_INFO_RE.test(body))) return [];
-  const short=!isCh&&(body.length<30||(avSeg&&avSeg[1]-avSeg[0]<10));
+  const body=text.replace(CH_RE,'').replace(/\s/g,'');
+  const avSeg=d.cat==='av'?d.segs[+k]:null;
+  if(body.length<6||NO_INFO_RE.test(body)) return [];
+  const short=body.length<30||(avSeg&&avSeg[1]-avSeg[0]<10);
   const sentences=text.split(/(?<=[。！？?\n])/);
   const out=[];
   KP.forEach(x=>{
@@ -1074,7 +1069,6 @@ const SEG_STATE={};
 function segKeys(d){ return d.cat==='image' ? ['0'] : d.segs.map((_,i)=>String(i)); }
 /* 图文每张图一个分段：图中文字 + 画面描述合在同一分段 */
 function segTextOf(d,key){
-  if(typeof key==='string'&&key.startsWith('ch')){ const i=+key.slice(2), g=textChapters(d).find(x=>x.items[0].i===i); return g?g.items.map(x=>d.segs[x.i]).join('\n'):''; }
   if(d.cat==='image') return [d.ocr,d.desc].filter(Boolean).join('\n'); const s=d.segs[+key]; return d.cat==='av'?s[3]:s; }
 function segState(d,key){ if(!SEG_STATE[d.id]) seedState(d); return SEG_STATE[d.id][key] || (SEG_STATE[d.id][key]={kps:[],sugg:[],enabled:true}); }
 function deleteSeg(d,key){
@@ -1085,7 +1079,6 @@ function deleteSeg(d,key){
   const old=SEG_STATE[d.id]||{};
   const next={};
   Object.keys(old).forEach(k=>{
-    if(k.startsWith('ch')) return; // 章节状态（chX）随分段删除而失效，丢弃
     const idx=+k;
     if(idx===i) return;
     next[String(idx>i?idx-1:idx)]=old[k];
@@ -1104,12 +1097,6 @@ function seedState(d){
   const sugg=(k,list)=> SEG_STATE[d.id][k].sugg=list.slice();
   if(d.id==='d1'){
     link('2',['kp8'],'ai'); link('3',['kp2']); link('4',['kp3']); link('5',['kp10']);
-    // 章节：第二章手动关联；第一章、第三章有章节级 AI 建议
-    addLink(chState(d,2),'kp2','manual');
-    chState(d,0).sugg=[{id:'sc1',type:'B',name:'前厅服务礼仪规范',def:'着装、工牌、站立服务与主动问候等前厅服务基本要求。',conf:.83,quote:'员工须统一着装、佩戴工牌，站立服务，主动问候',status:'pending',
-      why:'本章整体讲前厅员工的服务礼仪要求，图谱中没有对应知识点，判定为新知识点',mounts:[{path:['酒店管理','前厅服务','前厅服务礼仪'],reason:'本章讲前厅员工礼仪要求，对应前厅服务礼仪任务',conf:.83}]}];
-    chState(d,4).sugg=[{id:'sc2',type:'A',kp:'kp3',conf:.95,quote:'提前入住视当日可售房态安排',status:'pending',
-      why:'本章整体讲提前入住与延迟退房的处理规则，与「提前入住与延迟退房政策」指同一内容'}];
     sugg('2',[{id:'s1',type:'A',kp:'kp2',why:'原文描述入住时核验证件、确认预订信息的步骤，与「散客入住登记流程」指同一内容',conf:.96,quote:'核验有效证件，确认预订信息与房型、房价、离店日期',status:'pending'}]);
     sugg('4',[{id:'s2',type:'B',why:'图谱中没有讲延迟退房计费的知识点；「提前入住与延迟退房政策」只讲政策、不含计费标准，判定为新知识点',name:'延迟退房计费标准',def:'14:00–18:00 加收半日房费，18:00 后按全日房费计。',conf:.88,quote:'14:00–18:00 加收半日房费',status:'pending',
       mounts:[{path:['酒店管理','前厅服务','退房办理','退房结算流程'],reason:'原文讲延迟退房的计费，属退房结算',conf:.88},{path:['酒店管理','前厅服务','退房办理','提前入住与延迟退房标准'],reason:'计费标准是延迟退房政策的组成部分',conf:.66}]}]);
@@ -1136,9 +1123,6 @@ function seedState(d){
     // 其他文件（如新添加的文件）：上传批次开启了 AI 自动关联知识点才提取
     if(d.autoKp!==false){
       segKeys(d).forEach(k=> SEG_STATE[d.id][k].sugg=extractSeg(d,k));
-      // 章节级建议：只保留分段建议中没有的知识点
-      chaptersOf(d).forEach(g=>{ const st=chState(d,g.items[0].i), seg=new Set(g.items.flatMap(x=>SEG_STATE[d.id][String(x.i)].sugg.map(v=>v.kp)));
-        st.sugg=extractSeg(d,'ch'+g.items[0].i).filter(v=>!seg.has(v.kp)); });
     }
   }
   else if(d.id==='d15'){
@@ -1172,25 +1156,6 @@ function openDoc(id){
   refreshDoc();
 }
 function closeDoc(){ stopPlay(); activeDoc=null; closeDrawer(); hideDocDetail(); renderTable(); }
-function chapterAside(d){
-  const g=chaptersOf(d).find(x=>x.items[0].i===selCh), st=chState(d,selCh), pend=st.sugg.filter(x=>x.status==='pending').length;
-  return `<div class="doc-aside">
-    <div class="aicard">
-      <div class="ai-head"><svg width="16" height="16" viewBox="0 0 24 24" fill="#F79009"><path d="M12 2l2.2 6.3L20.5 10l-6.3 2.2L12 18.5l-2.2-6.3L3.5 10l6.3-1.7z"/></svg>章节 · ${esc(g.title)}</div>
-      <div class="muted-ch">本章 ${g.items.length} 个分段（#${g.items[0].i+1}–#${g.items[g.items.length-1].i+1}）。章节关联表示整章内容对应该知识点，与分段关联相互独立。</div>
-      <div><div class="drawer-sec-title">关联知识点 <span style="font-weight:400;color:#8b99ac;font-size:12px"><span class="kp-ai">✦</span> AI 识别后确认</span></div>
-        <div class="seg-foot" style="margin-top:8px">${st.kps.length?st.kps.map(id=>`<span class="kp" title="${esc(linkTitle(st,id))}">${linkSrc(st,id).by==='ai'?'<span class="kp-ai">✦</span>':''}${esc(kpById(id)?.name||id)}<span class="x" data-act="unlink" data-kp="${id}">✕</span></span>`).join(''):'<span class="kp-none">无知识点</span>'}<button class="kp-add" data-act="pkToggle">＋ 添加知识点</button></div>
-        ${pickerOpen?renderPicker():''}</div>
-      <div><div class="drawer-sec-title">AI 建议${pend?`<span class="sugg-badge">${pend} 待确认</span>`:''}</div>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">${st.sugg.map(x=>suggCard(x)).join('')||'<span class="kp-none">暂无 AI 建议</span>'}</div></div>
-      <button class="ai-btn" data-act="chClear">返回全部分段</button>
-    </div>
-    <div class="aside-card">
-      <div class="aside-head">文档信息</div>
-      <div class="aside-body" style="font-size:12px;color:#8b99ac;line-height:2">${docInfoRows(d)}</div>
-    </div>
-  </div>`;
-}
 function selectChapter(k){ selCh=k; pickerOpen=false; pickerQ=''; suggEditing=null; suggRejecting=null; nodePickerOpen=false; nodeQ=''; refreshDoc(); const c=document.querySelector('.doc-col'); if(c) c.scrollIntoView({block:'start'}); }
 function refreshDoc(){
   if(!activeDoc) return;
@@ -1198,7 +1163,6 @@ function refreshDoc(){
   if(activeDoc.status!=='available'){ body.innerHTML=processingNote(activeDoc); return; }
   const act=document.activeElement, keepId=act&&act.id&&body.contains(act)?act.id:null, pos=keepId?act.selectionStart:null;
   body.innerHTML=`<div class="doc-grid">${docToc(activeDoc)}<div class="doc-col">${activeDoc.cat==='text'?docText(activeDoc):activeDoc.cat==='image'?docImage(activeDoc):docAV(activeDoc)}</div>${docAside(activeDoc)}</div>`;
-  if(selCh!=null) bindDrawerInputs();
   if(keepId){ const el=document.getElementById(keepId); if(el){ el.focus(); try{ if(pos!=null) el.setSelectionRange(pos,pos); }catch(e){} } }
 }
 /* 文本按章节分组：以「第X章 / 第X节 标题：」开头的分段开启新章节，之后的分段归入该章节 */
@@ -1210,13 +1174,12 @@ function textChapters(d){
     cur.items.push({i,label:(m?s.slice(m[0].length):s)}); });
   return groups;
 }
-/* 章节：与分段一样可关联知识点、有 AI 建议，与分段关联相互独立；状态存于 SEG_STATE，key = 'ch' + 章节第一个分段的序号 */
+/* 章节仅作目录分组与筛选导航，不关联知识点；知识点关联只发生在分段维度 */
 let selCh=null;
-function chState(d,key){ return segState(d,'ch'+key); }
 function chaptersOf(d){ return d.cat==='text'&&d.segs.length?textChapters(d).filter(g=>g.title):[]; }
-function allKeys(d){ return segKeys(d).concat(chaptersOf(d).map(g=>'ch'+g.items[0].i)); }
-/* 当前审核上下文：分段抽屉优先，否则为选中的章节 */
-function ctx(){ if(drawerDoc) return {d:drawerDoc,k:drawerKey}; if(activeDoc&&selCh!=null) return {d:activeDoc,k:'ch'+selCh}; return null; }
+function allKeys(d){ return segKeys(d); }
+/* 当前审核上下文：分段抽屉 */
+function ctx(){ return drawerDoc?{d:drawerDoc,k:drawerKey}:null; }
 function ctxState(){ const c=ctx(); return c?segState(c.d,c.k):null; }
 function docToc(d){
   if(d.cat==='text'&&d.segs.length){
@@ -1224,7 +1187,7 @@ function docToc(d){
     if(groups.some(g=>g.title)) return `<nav class="doc-toc" aria-label="目录">
       <div class="doc-toc-title">目录</div>
       <button type="button" class="doc-toc-btn ${selCh==null?'on':''}" data-act="chClear">全部分段<span class="doc-toc-n">${d.segs.length}</span></button>
-      ${groups.map(g=>`${g.title?`<button type="button" class="doc-toc-btn doc-toc-ch ${selCh===g.items[0].i?'on':''}" data-act="tocCh" data-k="${g.items[0].i}">${esc(g.title)}${chState(d,g.items[0].i).sugg.some(x=>x.status==='pending')?'<span class="doc-toc-dot" title="有待确认的章节建议"></span>':''}<span class="doc-toc-n">${g.items.length}</span></button>`:''}
+      ${groups.map(g=>`${g.title?`<button type="button" class="doc-toc-btn doc-toc-ch ${selCh===g.items[0].i?'on':''}" data-act="tocCh" data-k="${g.items[0].i}">${esc(g.title)}<span class="doc-toc-n">${g.items.length}</span></button>`:''}
         ${g.items.map(x=>`<button type="button" class="doc-toc-btn ${g.title?'sub':''}" data-act="tocJump" data-k="${x.i}" style="display:flex;align-items:center;gap:6px"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">#${x.i+1} · ${esc(x.label.slice(0,14))}${x.label.length>14?'…':''}</span><span class="doc-toc-pg">P${pageOf(d,x.i)}</span></button>`).join('')}`).join('')}
     </nav>`;
   }
@@ -1294,7 +1257,7 @@ function closeSrcPreview(){ document.getElementById('srcDrawer').classList.remov
 function statRow(items){ return `<div class="dd-stats">${items.map(([b,s])=>`<div class="dd-stat"><b>${b}</b><span>${s}</span></div>`).join('')}</div>`; }
 function segChips(d,key){
   const st=segState(d,key);
-  const kps=st.kps.map(id=>`<a class="kp kp-link" href="knowledge-system-detail.html" target="_blank" rel="noopener" title="${esc(linkTitle(st,id))}；点击在图谱平台查看">${linkSrc(st,id).by==='ai'?'<span class="kp-ai" aria-label="AI 识别">✦</span>':''}${esc(kpById(id)?.name||id)}</a>`).join('');
+  const kps=st.kps.map(id=>`<span class="kp" title="${esc(linkTitle(st,id))}">${linkSrc(st,id).by==='ai'?'<span class="kp-ai" aria-label="AI 识别">✦</span>':''}${esc(kpById(id)?.name||id)}</span>`).join('');
   const pend=st.sugg.filter(g=>g.status==='pending').length;
   const ops=(d.cat==='text'?`<button class="seg-icon seg-act" data-act="segLocate" data-k="${key}" title="定位原文" aria-label="定位原文">${IC.locate}</button>`:'')
     +`<button class="seg-icon seg-act" data-act="segToggle" data-k="${key}" title="${st.enabled?'停用':'启用'}" aria-label="${st.enabled?'停用':'启用'}">${st.enabled?IC.eyeOff:IC.eye}</button>`
@@ -1332,23 +1295,13 @@ function docText(f){
   if(f.segs.length){
     const inCh=selCh!=null?new Set((chaptersOf(f).find(g=>g.items[0].i===selCh)||{items:[]}).items.map(x=>x.i)):null;
     const items=f.segs.map((s,i)=>[i,s]).filter(([i,s])=>(!inCh||inCh.has(i))&&segMatch(f,String(i)));
-    const chOf={}; chaptersOf(f).forEach(g=>g.items.forEach(x=>chOf[x.i]=g)); let shown=null;
     segs=segToolbar(f)
-      +(items.length?items.map(([i,s])=>{const key=String(i), g=chOf[i]; let head='';
-      if(g&&g!==shown){ shown=g; head=chapterHead(f,g); }
-      return head+`<div class="seg-card ${segState(f,key).enabled?'':'seg-off'}" id="seg-${key}">
+      +(items.length?items.map(([i,s])=>{const key=String(i);
+      return `<div class="seg-card ${segState(f,key).enabled?'':'seg-off'}" id="seg-${key}" data-act="segEdit" data-k="${key}" title="查看分段详情">
       <div class="seg-head"><span style="font-weight:600">#${i+1}</span>${f.scanned?'<span class="dd-tag" style="color:#5149e9;background:#eef0ff">OCR</span>':''}${segState(f,key).enabled?'':'<span class="seg-off-tag">已禁用</span>'}<span style="margin-left:auto">${s.length} 字</span></div>
       <div class="seg-body">${esc(s)}</div>${segChips(f,key)}</div>`;}).join(''):'<div class="kbd-hit-empty">没有匹配的分段。</div>');
   } else segs=`<div class="kbd-hit-empty">${f.scanned&&f.ocrOff?'无分段：该文件没有文字层且处理时未开启 OCR，不参与检索。可开启 OCR 后重新解析。':'无分段，不参与检索。'}</div>`;
   return statRow([[f.ext+(f.scanned?' · 扫描件':''),'类型'],[f.segs.length,'分段数'],[charCount(f),'字数']])+segs;
-}
-function chapterHead(f,g){
-  const k=g.items[0].i, st=chState(f,k);
-  const kps=st.kps.map(id=>`<a class="kp kp-link" href="knowledge-system-detail.html" target="_blank" rel="noopener" title="${esc(linkTitle(st,id))}；点击在图谱平台查看">${linkSrc(st,id).by==='ai'?'<span class="kp-ai">✦</span>':''}${esc(kpById(id)?.name||id)}</a>`).join('');
-  return `<div class="ch-head ${selCh===k?'on':''}" id="ch-${k}">
-    <div class="row-ch"><b>${esc(g.title)}</b><span class="muted-ch">${g.items.length} 个分段</span>
-      ${selCh===k?'<button class="dd-mini" style="margin-left:auto" data-act="chClear">查看全部分段</button>':`<button class="dd-mini" style="margin-left:auto" data-act="tocCh" data-k="${k}">章节知识点</button>`}</div>
-    ${kps||st.sugg.some(x=>x.status==='pending')?`<div class="seg-foot" style="margin-top:6px"><span class="muted-ch">章节知识点</span>${kps}${st.sugg.some(x=>x.status==='pending')?`<span class="sugg-badge" data-act="tocCh" data-k="${k}">✦ ${st.sugg.filter(x=>x.status==='pending').length} 条建议待确认</span>`:''}</div>`:''}</div>`;
 }
 function docImage(f){
   if(f.status!=='available') return processingNote(f);
@@ -1416,7 +1369,6 @@ function docInfoRows(d){
   return rows.map(([k,v])=>`<div style="display:flex;justify-content:space-between;gap:12px"><span>${k}</span><span style="color:#41536f">${esc(v)}</span></div>`).join('');
 }
 function docAside(d){
-  if(selCh!=null) return chapterAside(d);
   const pend=allKeys(d).flatMap(k=>segState(d,k).sugg.map(g=>({g,k}))).filter(x=>x.g.status==='pending').sort((a,b)=>(b.g.conf||0)-(a.g.conf||0));
   const high=pend.filter(x=>x.g.type==='A'&&x.g.conf>=.9).length;
   const linked=allKeys(d).reduce((a,k)=>a+segState(d,k).kps.length,0);
@@ -1474,17 +1426,16 @@ function renderPicker(){
 const shallowTag=`<span class="mount-shallow" title="课程、任务一级仅作兜底，建议确认下级是否有更合适的节点">挂载层级偏浅</span>`;
 const typeTag=p=>`<span class="mount-type">${NODE_TYPE_LABEL[nodeType(p)]||''}</span>`;
 function suggMounts(g){
-  const ms=g.mounts||[], ch=String((ctx()||{}).k).startsWith('ch');
+  const ms=g.mounts||[];
   if(!ms.length) return `<div class="mount-box"><div class="mount-title">建议挂载</div><div class="mount-none">未找到合适节点，需手动指定至少一个节点</div></div>`;
-  return `<div class="mount-box"><div class="mount-title">建议挂载</div>${ms.map(m=>`<div class="mount-item"><div class="mount-path">${typeTag(m.path)}${esc(mountPath(m.path))}${isShallow(m.path)&&!(ch&&nodeType(m.path)==='task')?shallowTag:''}<span class="sugg-conf">${Math.round(m.conf*100)}%</span></div><div class="mount-reason">${esc(m.reason)}</div></div>`).join('')}</div>`;
+  return `<div class="mount-box"><div class="mount-title">建议挂载</div>${ms.map(m=>`<div class="mount-item"><div class="mount-path">${typeTag(m.path)}${esc(mountPath(m.path))}${isShallow(m.path)?shallowTag:''}<span class="sugg-conf">${Math.round(m.conf*100)}%</span></div><div class="mount-reason">${esc(m.reason)}</div></div>`).join('')}</div>`;
 }
 function mountEditor(g){
   const sel=g.edit.mounts, on=p=>sel.some(x=>x.join('/')===p.join('/'));
   const q=nodeQ.trim().toLowerCase();
   const list=kbNodes().filter(p=>!q||p.join('/').toLowerCase().includes(q));
-  const ch=String((ctx()||{}).k).startsWith('ch');
   const hints=[];
-  if(sel.some(p=>isShallow(p)&&!(ch&&nodeType(p)==='task'))) hints.push('已选课程或任务一级节点，挂载层级偏浅，建议确认下级是否有更合适的节点');
+  if(sel.some(p=>isShallow(p))) hints.push('已选课程或任务一级节点，挂载层级偏浅，建议确认下级是否有更合适的节点');
   if(sel.some((p,i)=>sel.some((q,j)=>j>i&&onSamePath(p,q)))) hints.push('已选节点中包含同一路径的上级 / 下级节点，同一路径建议只挂一个');
   return `<div class="mount-box"><div class="mount-title">挂载节点 <span style="font-weight:400;color:#8b99ac">至少 1 个</span></div>
     <div class="seg-foot">${sel.map((p,i)=>`<span class="kp">${esc(mountPath(p))}<span class="x" data-act="mountRemove" data-i="${i}">✕</span></span>`).join('')||'<span class="mount-none">未选择挂载节点</span>'}<button class="kp-add" data-act="nodePkToggle">＋ 添加挂载节点</button></div>
@@ -1553,10 +1504,10 @@ function renderDrawer(){
         <div class="seg-foot" style="margin-top:8px">${st.kps.length?st.kps.map(id=>`<span class="kp" title="${esc(linkTitle(st,id))}">${linkSrc(st,id).by==='ai'?'<span class="kp-ai" aria-label="AI 识别">✦</span>':''}${esc(kpById(id)?.name||id)}<span class="x" data-act="unlink" data-kp="${id}">✕</span></span>`).join(''):'<span class="kp-none">无知识点</span>'}<button class="kp-add" data-act="pkToggle">＋ 添加知识点</button></div>
         ${pickerOpen?renderPicker():''}
       </div>
-      <div>
+      ${st.sugg.length?`<div>
         <div class="drawer-sec-title">AI 建议${pend?`<span class="sugg-badge">${pend} 待确认</span>`:''}</div>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">${st.sugg.map(g=>suggCard(g)).join('')||'<span class="kp-none">暂无 AI 建议</span>'}</div>
-      </div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">${st.sugg.map(g=>suggCard(g)).join('')}</div>
+      </div>`:''}
     </div>
     <div class="drawer-foot"><button class="kbd-ghost" data-act="drClose">取消</button><button class="kbd-primary" data-act="drSave">保存</button></div>`;
   bindDrawerInputs();
