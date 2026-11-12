@@ -1454,7 +1454,7 @@ function suggCard(g){
       <input class="field" id="suggName" value="${esc(g.edit?.name||g.name)}" placeholder="知识点名称">
       <textarea class="edtx" id="suggDef" style="min-height:60px" placeholder="定义 / 说明">${esc(g.edit?.def||g.def||'')}</textarea>
       ${mountEditor(g)}
-      <div class="sugg-row"><button class="sugg-mini" data-act="suggCancelEdit">取消</button><button class="sugg-mini pri" data-act="suggSaveEdit" data-g="${g.id}">保存为新知识点</button></div></div>`;
+      <div class="sugg-row"><button class="sugg-mini" data-act="suggCancelEdit">取消</button><button class="sugg-mini pri" data-act="suggSaveEdit" data-g="${g.id}">确定</button></div></div>`;
   }
   if(suggRejecting===g.id){
     return `<div class="sugg-card"><div class="sugg-top"><span class="sugg-name" style="color:#c72c2a">填写驳回原因</span></div>
@@ -1471,7 +1471,7 @@ function suggCard(g){
     <div class="sugg-row">
       ${g.type==='D'?`<button class="sugg-mini pri" data-act="mountApprove" data-g="${g.id}">通过</button>`:''}
       ${g.type==='A'?`<button class="sugg-mini pri" data-act="suggApprove" data-g="${g.id}">通过</button>`:''}
-      ${g.type==='B'?`<button class="sugg-mini pri" data-act="suggEdit" data-g="${g.id}">作为新知识点</button>`:''}
+      ${g.type==='B'?`<button class="sugg-mini pri" data-act="suggApprove" data-g="${g.id}">通过</button><button class="sugg-mini" data-act="suggEdit" data-g="${g.id}">编辑</button>`:''}
       ${g.type==='U'?`<button class="sugg-mini danger" data-act="unlinkOk" data-g="${g.id}">解除关联</button><button class="sugg-mini" data-act="unlinkKeep" data-g="${g.id}">保留</button>`:`<button class="sugg-mini danger" data-act="suggReject" data-g="${g.id}">驳回</button>`}
     </div></div>`;
 }
@@ -1543,7 +1543,20 @@ function approveSugg(gid, mode){
   const g=st.sugg.find(x=>x.id===gid); if(!g) return;
   let kpId;
   if(g.type==='A') kpId=g.kp;
-  else return; // 新建知识点须确认挂载节点，统一由 saveNewSugg 保存
+  else if(g.type==='B'){
+    /* 一键通过：按 AI 预填信息直接创建；无挂载节点时转入编辑确认 */
+    const paths=(g.mounts||[]).map(m=>m.path.slice());
+    if(!paths.length){ startSuggEdit(g); toast('该建议未找到合适挂载节点，请指定后创建'); return; }
+    const id='kp'+(kpUid++);
+    KP.push({id,name:g.name,def:g.def||'',path:paths[0],mounts:paths});
+    addLink(st,id,'ai');
+    g.status='done';
+    suggEditing=null; suggRejecting=null;
+    renderDrawer(); refreshDoc();
+    toast('已通过，新知识点已写入知识图谱，挂载到 '+paths.length+' 个节点');
+    return;
+  }
+  else return; // 其他类型不在此处理
   addLink(st,kpId,'ai');
   g.status='done';
   suggEditing=null; suggRejecting=null;
