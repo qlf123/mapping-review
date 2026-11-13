@@ -1393,16 +1393,35 @@ function docAside(d){
 
 /* ---------- 编辑分段抽屉 ---------- */
 let drawerDoc=null, drawerKey=null, pickerOpen=false, pickerQ='', suggEditing=null, suggRejecting=null, draft={}, nodePickerOpen=false, nodeQ='';
+/* 手动关联暂存：抽屉内的添加/移除先记录在 linkDraft，点底部「保存」才写入；AI 建议操作仍即时生效 */
+let linkDraft=null;
+function effKps(st){
+  if(!linkDraft) linkDraft={added:[],removed:[]};
+  const base=st.kps.filter(id=>!linkDraft.removed.includes(id));
+  linkDraft.added.forEach(id=>{ if(!base.includes(id)&&!st.kps.includes(id)) base.push(id); });
+  return base;
+}
+function linkSrcEff(st,id){ return st.kps.includes(id)?linkSrc(st,id):{by:'manual',who:'平台管理员',time:nowStr()}; }
+function draftPurge(id){ if(!linkDraft) return; linkDraft.added=linkDraft.added.filter(x=>x!==id); linkDraft.removed=linkDraft.removed.filter(x=>x!==id); }
+function stageToggle(st,id){
+  if(!linkDraft) linkDraft={added:[],removed:[]};
+  if(st.kps.includes(id)){ /* 已有关联：✕ = 暂存移除，再点选择器 = 撤销移除 */
+    if(linkDraft.removed.includes(id)) draftPurge(id); else { draftPurge(id); linkDraft.removed.push(id); }
+  }else{ /* 未关联：点选择器 = 暂存添加，再点 = 撤销添加 */
+    if(linkDraft.added.includes(id)) draftPurge(id); else { draftPurge(id); linkDraft.added.push(id); }
+  }
+}
 function segLabel(d,k){ return '#'+(+k+1); }
 function openDrawer(key){
   drawerDoc=activeDoc; drawerKey=key; pickerOpen=false; pickerQ=''; suggEditing=null; suggRejecting=null; nodePickerOpen=false; nodeQ='';
+  linkDraft={added:[],removed:[]};
   const d=drawerDoc, k=key;
   draft={ text: d.cat==='av'?d.segs[+k][3]:(d.cat==='text'?d.segs[+k]:''), ocr:d.ocr||'', desc:d.desc||'', reason:'', origText: segTextOf(d,k),
     t0: d.cat==='av'?fmt(d.segs[+k][0]):'', t1: d.cat==='av'?fmt(d.segs[+k][1]):'' };
   renderDrawer();
   document.getElementById('segDrawer').classList.add('show');
 }
-function closeDrawer(){ const el=document.getElementById('segDrawer'); if(el) el.classList.remove('show'); drawerDoc=null; drawerKey=null; }
+function closeDrawer(){ const el=document.getElementById('segDrawer'); if(el) el.classList.remove('show'); drawerDoc=null; drawerKey=null; linkDraft=null; }
 function findSugg(id){ const st=ctxState(); return st?st.sugg.find(x=>x.id===id):null; }
 function bindDrawerInputs(){
   const panel=document.getElementById('segDrawerPanel');
@@ -1420,8 +1439,8 @@ function renderPicker(){
   const list=KP.filter(x=>!q||x.name.toLowerCase().includes(q)||x.path.join('/').toLowerCase().includes(q));
   return `<div class="pk" style="margin-top:10px">
     <input class="field" id="pkQ" placeholder="搜索知识点" value="${esc(pickerQ)}">
-    <div class="pk-list">${list.map(x=>`<button type="button" class="pk-item ${st.kps.includes(x.id)?'on':''}" data-act="pkToggleItem" data-kp="${x.id}">
-      <span class="pk-check">${st.kps.includes(x.id)?'✓':''}</span><span style="flex:1;text-align:left">${esc(x.name)}</span><span class="pk-path">${esc(mountPath(x.path))}</span></button>`).join('')||'<span class="kp-none">未找到知识点</span>'}</div></div>`;
+    <div class="pk-list">${list.map(x=>`<button type="button" class="pk-item ${effKps(st).includes(x.id)?'on':''}" data-act="pkToggleItem" data-kp="${x.id}">
+      <span class="pk-check">${effKps(st).includes(x.id)?'✓':''}</span><span style="flex:1;text-align:left">${esc(x.name)}</span><span class="pk-path">${esc(mountPath(x.path))}</span></button>`).join('')||'<span class="kp-none">未找到知识点</span>'}</div></div>`;
 }
 const shallowTag=`<span class="mount-shallow" title="课程、任务一级仅作兜底，建议确认下级是否有更合适的节点">挂载层级偏浅</span>`;
 const typeTag=p=>`<span class="mount-type">${NODE_TYPE_LABEL[nodeType(p)]||''}</span>`;
@@ -1500,8 +1519,8 @@ function renderDrawer(){
     <div class="drawer-body">
       ${editor}
       <div>
-        <div class="drawer-sec-title">关联知识点 <span style="font-weight:400;color:#8b99ac;font-size:12px"><span class="kp-ai">✦</span> AI 识别后确认，无标记为手动关联</span></div>
-        <div class="seg-foot" style="margin-top:8px">${st.kps.length?st.kps.map(id=>`<span class="kp" title="${esc(linkTitle(st,id))}">${linkSrc(st,id).by==='ai'?'<span class="kp-ai" aria-label="AI 识别">✦</span>':''}${esc(kpById(id)?.name||id)}<span class="x" data-act="unlink" data-kp="${id}">✕</span></span>`).join(''):'<span class="kp-none">无知识点</span>'}<button class="kp-add" data-act="pkToggle">＋ 添加知识点</button></div>
+        <div class="drawer-sec-title">关联知识点 <span style="font-weight:400;color:#8b99ac;font-size:12px"><span class="kp-ai">✦</span> AI 识别后确认，无标记为手动关联；添加/移除点底部「保存」后生效</span></div>
+        <div class="seg-foot" style="margin-top:8px">${effKps(st).length?effKps(st).map(id=>`<span class="kp" title="${esc(linkTitle(st,id))}">${linkSrcEff(st,id).by==='ai'?'<span class="kp-ai" aria-label="AI 识别">✦</span>':''}${esc(kpById(id)?.name||id)}<span class="x" data-act="unlink" data-kp="${id}">✕</span></span>`).join(''):'<span class="kp-none">无知识点</span>'}<button class="kp-add" data-act="pkToggle">＋ 添加知识点</button></div>
         ${pickerOpen?renderPicker():''}
       </div>
       ${st.sugg.length?`<div>
@@ -1519,6 +1538,13 @@ function parseTime(t){ const m=String(t).trim().match(/^(?:(\d+):)?(\d{1,2}):(\d
 function saveDrawer(){
   if(!drawerDoc) return;
   const d=drawerDoc, k=drawerKey;
+  /* 关联改动：应用暂存的添加/移除（点「保存」才生效） */
+  let linkChanged=false;
+  if(linkDraft){ const st=ctxState();
+    if(st){ linkDraft.added.forEach(id=>{ if(!st.kps.includes(id)){ addLink(st,id,'manual'); linkChanged=true; } });
+            linkDraft.removed.forEach(id=>{ if(st.kps.includes(id)){ dropLink(st,id); linkChanged=true; } }); }
+    linkDraft=null;
+  }
   let changed=false, newText='', timeChanged=false;
   if(d.cat==='av'){
     const a=parseTime(draft.t0), b=parseTime(draft.t1), lim=avTimeLimits(d,+k), panel=document.getElementById('segDrawerPanel'), hint=document.getElementById('tHint');
@@ -1536,7 +1562,7 @@ function saveDrawer(){
   let r=null;
   if(changed) r=reextract(d,k,'分段内容已修改',true);
   closeDrawer(); refreshDoc(); renderTable();
-  toast(r?`已保存并重新提取：作废 ${r.voided} 条旧建议，新增 ${r.fresh} 条建议${r.unlink?`，${r.unlink} 条关联待解除`:''}`:(timeChanged?'已保存，分段时间已更新':'已保存'));
+  toast(r?`已保存并重新提取：作废 ${r.voided} 条旧建议，新增 ${r.fresh} 条建议${r.unlink?`，${r.unlink} 条关联待解除`:''}`:(timeChanged?'已保存，分段时间已更新':'已保存'+(linkChanged?'，关联已更新':'')));
 }
 function approveSugg(gid, mode){
   const st=ctxState(); if(!st) return;
@@ -1549,7 +1575,7 @@ function approveSugg(gid, mode){
     if(!paths.length){ startSuggEdit(g); toast('该建议未找到合适挂载节点，请指定后创建'); return; }
     const id='kp'+(kpUid++);
     KP.push({id,name:g.name,def:g.def||'',path:paths[0],mounts:paths});
-    addLink(st,id,'ai');
+    addLink(st,id,'ai'); draftPurge(id);
     g.status='done';
     suggEditing=null; suggRejecting=null;
     renderDrawer(); refreshDoc();
@@ -1557,7 +1583,7 @@ function approveSugg(gid, mode){
     return;
   }
   else return; // 其他类型不在此处理
-  addLink(st,kpId,'ai');
+  addLink(st,kpId,'ai'); draftPurge(kpId);
   g.status='done';
   suggEditing=null; suggRejecting=null;
   renderDrawer(); refreshDoc();
@@ -1570,7 +1596,7 @@ function saveNewSugg(gid){
   if(!g.edit.mounts.length){ nodePickerOpen=true; renderDrawer(); toast('请至少指定一个挂载节点'); return; }
   const kpId='kp'+(kpUid++);
   KP.push({id:kpId,name:g.edit.name.trim(),def:g.edit.def||'',path:g.edit.mounts[0].slice(),mounts:g.edit.mounts.map(p=>p.slice())});
-  addLink(st,kpId,'ai');
+  addLink(st,kpId,'ai'); draftPurge(kpId);
   g.status='done';
   suggEditing=null;
   renderDrawer(); refreshDoc();
@@ -1639,15 +1665,15 @@ document.addEventListener('click',e=>{
   else if(a==='ocrRetry'){ const d=activeDoc; toast('已重新提交文字识别'); setTimeout(()=>{ d.ocrFailed=false; d.ocr=d.ocrRetryText||''; refreshDoc(); renderTable(); toast('图中文字识别完成'); },1600); }
   else if(a==='openSugg') openDrawer(el.dataset.k);
   else if(a==='oneclick') askOneClick();
-  else if(a==='unlinkOk'){ const g=findSugg(el.dataset.g); if(g){ const st=ctxState(); dropLink(st,g.kp); g.status='done'; g.reason='已解除关联'; renderDrawer(); refreshDoc(); toast('已解除关联'); } }
+  else if(a==='unlinkOk'){ const g=findSugg(el.dataset.g); if(g){ const st=ctxState(); dropLink(st,g.kp); draftPurge(g.kp); g.status='done'; g.reason='已解除关联'; renderDrawer(); refreshDoc(); toast('已解除关联'); } }
   else if(a==='unlinkKeep'){ const g=findSugg(el.dataset.g); if(g){ g.status='kept'; g.reason='审核人确认保留关联'; renderDrawer(); refreshDoc(); toast('已保留关联'); } }
   else if(a==='onlypending'){ kpFilter='pending'; refreshDoc(); }
   else if(a==='drClose'){ closeDrawer(); refreshDoc(); renderTable(); }
   else if(a==='drSave') saveDrawer();
   else if(a==='srcClose'){ closeSrcPreview(); }
-  else if(a==='unlink'){ const st=ctxState(); if(st){ dropLink(st,el.dataset.kp); renderDrawer(); refreshDoc(); renderTable(); } }
+  else if(a==='unlink'){ const st=ctxState(); if(st){ stageToggle(st,el.dataset.kp); renderDrawer(); } }
   else if(a==='pkToggle'){ pickerOpen=!pickerOpen; renderDrawer(); if(!drawerDoc) refreshDoc(); }
-  else if(a==='pkToggleItem'){ const st=ctxState(), id=el.dataset.kp; if(st){ st.kps.includes(id)?dropLink(st,id):addLink(st,id,'manual'); renderDrawer(); refreshDoc(); renderTable(); } }
+  else if(a==='pkToggleItem'){ const st=ctxState(), id=el.dataset.kp; if(st){ stageToggle(st,id); renderDrawer(); } }
   else if(a==='suggApprove'){ approveSugg(el.dataset.g); }
   else if(a==='suggEdit'){ const g=findSugg(el.dataset.g); if(g) startSuggEdit(g); }
   else if(a==='nodePkToggle'){ nodePickerOpen=!nodePickerOpen; renderDrawer(); }
