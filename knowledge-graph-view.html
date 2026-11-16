@@ -22,7 +22,6 @@
   .graph-legend-dot.off{background:#fff!important;border:1.5px dashed #98a2b3;box-sizing:border-box;}
   .graph-node.off circle{fill:#fff;stroke:#98a2b3;stroke-dasharray:3 2;}
   .graph-node.off .graph-node-label{fill:#98a2b3;}
-  .graph-detail-panel{max-height:calc(100% - 24px);overflow:auto;box-sizing:border-box;}
   .graph-node text.res-badge{font-size:8px;fill:#fff;font-weight:600;}
   .res-link{stroke:#b9b4f5;stroke-width:1;stroke-dasharray:2 2;fill:none;}
   .res-sq{cursor:pointer;}
@@ -78,9 +77,15 @@
 .graph-quick-tag:hover,.graph-quick-tag.active{background:#5149e9;color:#fff;border-color:#5149e9;}
 .graph-search-panel.collapsed{padding:8px 14px;}
 .graph-search-panel.collapsed .graph-search-body{display:none;}
-  .graph-detail-panel{position:absolute;top:12px;right:12px;z-index:12;width:260px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08);padding:14px 16px;display:none;}
-  .graph-detail-panel.show{display:block;}
-  .graph-detail-panel h4{font-size:14px;font-weight:600;margin:0 0 10px 0;color:#31425e;}
+  /* 节点详情：右侧抽屉，通栏全高，从画布右缘滑入 */
+  .graph-detail-panel{position:absolute;top:0;right:0;bottom:0;z-index:12;width:340px;background:#fff;border-left:1px solid #e2e8f0;box-shadow:-6px 0 20px rgba(31,45,70,.10);padding:18px 20px;transform:translateX(105%);transition:transform .25s ease;overflow:auto;box-sizing:border-box;}
+  .graph-detail-panel.show{transform:translateX(0);}
+  .graph-detail-panel h4{font-size:15px;font-weight:600;margin:0 0 12px 0;color:#31425e;line-height:1.4;padding-right:20px;}
+  .gd-cat{display:block;font-size:12px;font-weight:400;color:#8b99ac;margin-bottom:4px;}
+  .gd-sec{font-size:13px;font-weight:600;color:#31425e;margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid #f0f2f5;}
+  .gd-desc{font-size:12px;color:#555;line-height:1.8;margin:0;}
+  .gd-mount{background:#f7f6ff;border:1px solid #e6e2fb;border-radius:8px;padding:7px 10px;margin-bottom:6px;font-size:12px;line-height:1.7;}
+  .gd-mount .gd-mount-path{color:#8b99ac;}
   .graph-detail-row{display:flex;gap:6px;font-size:12px;margin-bottom:6px;line-height:1.5;}
   .graph-detail-row span:first-child{color:#8b99ac;min-width:56px;}
   .graph-detail-row span:last-child{color:#31425e;}
@@ -577,6 +582,8 @@
     if(viewMode==='layer'){x0-=150;x1+=200;y0-=50;y1+=10}
     // 搜索面板占据画布顶部、图例占据底部，按 svg 可见区域计算
     var r=svg.getBoundingClientRect(),wr=wrap.getBoundingClientRect(),vw=r.width,vh=Math.min(r.height,Math.min(wr.bottom,window.innerHeight)-r.top);
+    // 右侧详情抽屉打开时，可视宽度扣除抽屉占位，避免选中节点被遮挡
+    if(detailPanel&&detailPanel.classList.contains('show'))vw-=350;
     var lg=document.getElementById('graphLegend');if(lg)vh-=lg.offsetHeight+12;
     // 分层视图按宽度适配、保证字号可读，超出高度的部分滚轮上下滚动
     if(viewMode==='layer'){
@@ -817,19 +824,68 @@
     clearFilters();
   });
 
-  // 节点详情：所属来源与来源版本（版本信息由 pano-version.js 提供）
+  // 节点详情：右侧抽屉。知识点 / 细化知识点按截图补充「基本信息 + 描述」
   var detailPanel=document.getElementById('detailPanel');
+  var KP_BY={'旅游管理':'李老师','酒店管理':'秦老师'};
+  var KP_DESC={
+    '讲解基本要求':'讲解词撰写与讲解技巧运用均须遵循的基本要求，包括内容准确、条理清晰、语言生动，并根据游客类型调整讲解的深度与节奏。',
+    '景点文化背景':'景点所承载的历史沿革、民俗传说与文化内涵，是讲解内容组织的主要素材来源。',
+    '旅游团队管理':'旅游团队从集合、行程执行到返程全程的组织与管理要点，重点处理人数清点、时间控制与特殊游客照顾。',
+    '旅游安全常识':'带团过程中的交通安全、饮食安全与游览安全常识，以及常见风险的预防措施。',
+    '应急处理流程':'游客走失、突发疾病、交通事故等突发事件的标准化处置流程与上报机制。',
+    '投诉处理原则':'处理游客投诉时遵循的基本原则：先安抚情绪、再核实事实、限时反馈、闭环跟踪。',
+    '证件查验规范':'入住登记时对身份证、护照等证件真实性与有效性的查验要求，包括外宾证件的登记规范。',
+    '房态管理':'客房状态（在住、空净、维修等）的识别与流转规则，是排房与入住办理的基础。',
+    '投诉处理流程':'酒店前厅受理宾客投诉的标准流程：受理登记、分级处理、赔偿权限与回访确认。',
+    '客房清洁标准':'客房清扫的操作标准与卫生指标，包括布草更换、消毒规范与查房验收要求。',
+    '摆台规范':'中餐宴会摆台的餐具定位、间距与顺序标准，以及台面美观性要求。',
+    '酒水知识':'常见酒水的类别、产地、适饮温度与配餐原则，为点选与斟酒服务提供支撑。',
+    '收益管理指标':'RevPAR、ADR、入住率等收益管理核心指标的定义与计算口径。',
+    'OTA 渠道规则':'主流 OTA 平台的佣金、房价一致性、库存同步规则与渠道价格管理要点。',
+    '报价构成':'旅游线路报价的构成要素：交通、住宿、餐饮、门票、导游服务与利润空间。',
+    '讲解语速与节奏控制':'讲解时的语速区间、停顿位置与节奏变化技巧，针对不同游客群体给出参考标准。',
+    '讲解中的互动设计':'在讲解过程中插入提问、故事、体验环节的互动设计方法，提升游客参与感。',
+    '游客走失处置步骤':'发现游客走失后的处置步骤：原地等待、上报、分区寻找、报警与善后记录。',
+    '外籍护照识别要点':'外籍护照的版式、签证页与有效期的识别要点，以及外宾登记的特殊要求。',
+    '十人位中餐摆台尺寸':'十人位中餐宴会摆台的桌面尺寸、餐具间距与定位基准。'
+  };
+  function kpTime(id){var d=(id%7)+6,h=(id*3)%9+8,m=(id*17)%60,s=(id*23)%60;return '2026-11-'+(d<10?'0':'')+d+' '+(h<10?'0':'')+h+':'+(m<10?'0':'')+m+':'+(s<10?'0':'')+s}
+  // 知识点的挂载路径：沿 contain 层级向上回溯到课程（细化知识点则到知识点再向上），返回 [{parent, path}]，多父级返回多条
+  function kpMountPaths(n){
+    var seen={},ps=[];
+    actLinks.forEach(function(l){if(l.kind==='contain'&&l.target===n.id&&!seen[l.source]){seen[l.source]=1;ps.push(nodes[l.source])}});
+    return ps.map(function(p){
+      var chain=[n.name],cur=p,guard=0;
+      while(cur&&guard++<12){
+        chain.unshift(cur.name);
+        var up=null;
+        for(var i=0;i<actLinks.length;i++){var l=actLinks[i];if(l.kind==='contain'&&l.target===cur.id){up=nodes[l.source];break}}
+        cur=up;
+      }
+      if(n.major)chain.unshift(n.major);
+      return {parent:p,path:chain};
+    });
+  }
   document.getElementById('detailClose').addEventListener('click',function(){detailPanel.classList.remove('show');selectedId=null;render()});
   function showDetail(n){
     var conn=[];actLinks.forEach(function(l){if(l.source===n.id)conn.push({n:nodes[l.target],k:l.kind});if(l.target===n.id)conn.push({n:nodes[l.source],k:l.kind})});
     var info=window.PanoVersion?PanoVersion.nodeSource(n):null;
     var row=function(k,v){return '<div class="graph-detail-row"><span>'+k+'</span><span>'+v+'</span></div>'};
-    document.getElementById('detailTitle').textContent=n.name;
+    document.getElementById('detailTitle').innerHTML='<span class="gd-cat">'+n.type+'</span>'+n.name;
+    var isKp=n.type==='知识点'||n.type==='细化知识点';
+    var mounts=isKp?kpMountPaths(n):[];
     var maps=conn.filter(function(c){return c.k!=='contain'}).length;
-    document.getElementById('detailBody').innerHTML=row('类型',n.type+' <span class="graph-detail-tag">'+GROUP_OF[n.type]+'</span>')
+    document.getElementById('detailBody').innerHTML=(isKp
+      ?'<div class="gd-sec">基本信息</div>'
+        +row('创建时间',kpTime(n.id))
+        +row('创建人',n.creator||KP_BY[n.major]||'系统')
+        +'<div class="gd-sec">描述</div>'
+        +'<p class="gd-desc">'+(KP_DESC[n.name]||'「'+n.name+'」由课程内容智能分段提取、教师确认后并入知识体系，并随全景版本发布共享。')+'</p>'
+        +(mounts.length?'<div class="gd-sec">路径</div>'+mounts.map(function(m){return '<div class="gd-mount"><span class="gd-mount-path">'+m.path.join(' › ')+'</span></div>'}).join(''):'')
+      :'')
       +row(n.src==='ag'?'服务专业':'所属专业',(n.majors||[]).join('、')||'—')
       +(info?row('所属来源',info.source)+row('来源版本',info.sourceVer)+row('全景版本',info.panoVer):'')
-      +(n.creator?row('创建人',n.creator+' · 课程负责人已审核，已共享'):'')
+      +(n.creator&&!isKp?row('创建人',n.creator+' · 课程负责人已审核，已共享'):'')
       +row('关联节点',conn.length+' 个'+(maps?'（其中跨来源关系 '+maps+' 条）':''))
       +(n.off?'<div class="graph-detail-warn">'+n.off+'</div>':'')
       +(n.type==='能力项'&&!conn.some(function(c){return c.k==='map'})?'<div class="graph-detail-warn">该能力项还没有映射到知识体系，计入覆盖率缺口</div>':'')
@@ -847,7 +903,7 @@
     detailPanel.querySelectorAll('[data-open]').forEach(function(el){el.onclick=function(){hint('演示：在资源平台打开「'+resources[+el.getAttribute('data-open')].name+'」')}});
     detailPanel.querySelectorAll('.graph-detail-connected-item').forEach(function(el){el.onclick=function(){showDetail(nodes[+el.getAttribute('data-id')])}});
     detailPanel.classList.add('show');
-    selectedId=n.id;focusRes=null;render();
+    selectedId=n.id;focusRes=null;fitView();render();
   }
   // 按资源反查：高亮它挂载的全部节点，并列出节点清单
   var resResult=document.getElementById('resResult'),resInput=document.getElementById('resSearchInput');

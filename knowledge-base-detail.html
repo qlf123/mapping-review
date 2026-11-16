@@ -130,6 +130,33 @@
 .kbd-dialog-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid #eef0f2;}
 
 
+/* ---------- 关联知识体系弹窗 ---------- */
+.sys-tip{font-size:13px;color:#41536f;line-height:1.7;margin-bottom:12px;}
+.sys-tip b{color:#2f405d;}
+.sys-kb{font-size:12px;color:#8b99ac;margin-bottom:10px;}
+.sys-tree-scroll{overflow:auto;border:1px solid #eef0f2;border-radius:10px;background:#fff;max-height:60vh;}
+.sys-tree-svg{display:block;}
+.sys-node-rect{fill:#fff;stroke:#dfe6ef;stroke-width:1.5;cursor:pointer;transition:all .15s;}
+.sys-node-rect:hover{stroke:#5149e9;}
+.sys-node-rect.expanded{stroke:#5149e9;}
+.sys-node-rect.sel{fill:#eef0ff;stroke:#5149e9;}
+.sys-node-rect.selroot{fill:#5149e9;stroke:#5149e9;}
+.sys-node-rect.major{fill:#f2f4f7;stroke:#dfe6ef;stroke-dasharray:4 3;cursor:not-allowed;}
+.sys-node-rect.major:hover{stroke:#b4bdcb;}
+.sys-node-text{font-size:12px;pointer-events:none;user-select:none;fill:#31425e;}
+.sys-node-text.sel{fill:#5149e9;font-weight:600;}
+.sys-node-text.selroot{fill:#fff;font-weight:600;}
+.sys-node-text.major{fill:#60718a;font-weight:600;}
+.sys-link{fill:none;stroke:#c4b5fd;stroke-width:1.5;opacity:.6;pointer-events:none;}
+.sys-expand-icon{font-size:14px;fill:#5149e9;cursor:pointer;}
+.sys-dot{stroke:#fff;stroke-width:1.5;pointer-events:none;}
+.sys-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11px;color:#60718a;margin:2px 0 8px;}
+.sys-legend-i{display:inline-flex;align-items:center;gap:4px;}
+.sys-legend-i i{display:inline-block;width:8px;height:8px;border-radius:50%;}
+.sys-legend-i em{font-style:normal;color:#b4bdcb;}
+.sys-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:600;color:#5149e9;background:#eef0ff;border-radius:4px;padding:1px 6px;margin-left:6px;white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis;}
+
+
 /* ---------- 文档详情 ---------- */
 .dd-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:18px;}
 .dd-stat{display:flex;flex-direction:column;gap:2px;padding:11px 13px;border-radius:10px;background:#f7f9fc;}
@@ -248,11 +275,21 @@
 .seg-card:hover{border-color:#c9c2ef;}
 .seg-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:#8b99ac;}
 .seg-body{font-size:13px;color:#41536f;line-height:1.8;white-space:pre-line;}
-.seg-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.seg-foot{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;}
+.seg-foot>.kp-list{flex:1 1 auto;padding-top:1px;}
+.seg-foot>.sugg-badge,.seg-foot>.kp-none{align-self:center;}
 .seg-edit{margin-left:auto;}
 .kp{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#5149e9;background:#eef0ff;border:1px solid #dcd6f5;border-radius:10px;padding:2px 8px;}
 .kp .x{cursor:pointer;opacity:.6;font-style:normal;}
 .kp .x:hover{opacity:1;}
+/* 知识点完整路径提示（hover） */
+/* 知识点：一行一个整体卡片，名称下方小字标注知识体系完整路径 */
+.kp-list{display:flex;flex-direction:column;gap:8px;align-items:flex-start;min-width:0;max-width:100%;}
+.kp-item{display:flex;flex-direction:column;gap:2px;align-items:flex-start;background:#f7f6ff;border:1px solid #e6e2fb;border-radius:8px;padding:6px 10px 7px;width:fit-content;max-width:100%;transition:border-color .12s,background .12s;}
+.kp-item:hover{border-color:#c9c2ef;background:#f2f0ff;}
+.kp-item .kp{background:none;border:0;padding:0;border-radius:0;}
+.kp-path{font-size:11px;color:#8b95ad;line-height:1.5;padding-left:1px;word-break:break-word;}
+.kp-block{display:flex;flex-direction:column;gap:8px;align-items:flex-start;margin-top:8px;}
 .dd-vhint{font-size:12px;color:#8b99ac;background:#f7f9fc;border-radius:6px;padding:6px 10px;margin:-6px 0 14px;}
 .seg-part{padding:6px 0;}
 .seg-part+.seg-part{border-top:1px dashed #e2e8f0;}
@@ -393,6 +430,7 @@
         <option value="all">全部状态</option>
         <option value="available">可用</option>
         <option value="indexing">索引中</option>
+        <option value="extracting">知识点提取中</option>
         <option value="queuing">排队中</option>
         <option value="waiting">待处理</option>
         <option value="unavailable">不可用</option>
@@ -513,6 +551,7 @@
   <div class="kbd-menu-item" data-act="reparse">⟳ 重新解析</div>
   <div class="kbd-menu-item" data-act="rename">✎ 重命名</div>
   <div class="kbd-menu-item" data-act="download">↓ 下载</div>
+  <div class="kbd-menu-item" data-act="linkSys">🔗 关联知识体系</div>
   <div class="kbd-menu-item" data-act="toggle">⏸ 停用 / 启用</div>
   <div class="kbd-menu-divider"></div>
   <div class="kbd-menu-item danger" data-act="delete">🗑 删除</div>
@@ -534,6 +573,19 @@
     <div class="kbd-dialog-foot"><button class="kbd-ghost" onclick="closeConfirm()">取消</button><button class="kbd-primary" onclick="doOneClick()">确认通过</button></div>
   </div>
 </div>
+<!-- 关联知识体系弹窗 -->
+<div class="kbd-modal" id="sysLinkModal">
+  <div class="kbd-dialog" style="width:960px">
+    <div class="kbd-dialog-head"><h2>🔗 关联知识体系</h2><button class="kbd-close" onclick="closeSysLink()">×</button></div>
+    <div class="kbd-dialog-body" id="sysLinkBody"></div>
+    <div class="kbd-dialog-foot">
+      <button class="kbd-ghost danger" id="sysLinkClear" data-act="sysClear" style="color:#c72c2a">清除关联</button>
+      <div style="flex:1"></div>
+      <button class="kbd-ghost" onclick="closeSysLink()">取消</button>
+      <button class="kbd-primary" onclick="saveSysLink()">确定</button>
+    </div>
+  </div>
+</div>
 <!-- 源文预览（右侧抽屉） -->
 <div class="seg-drawer no-mask" id="srcDrawer">
   <div class="seg-drawer-panel" id="srcDrawerPanel" style="width:560px"></div>
@@ -553,6 +605,7 @@ const KB_META = {
 const STATUS = {
   available:{label:'可用',color:'#16a34a',bg:'#eaf6ec'},
   indexing:{label:'索引中',color:'#5149e9',bg:'#eef0ff',pulse:true},
+  extracting:{label:'知识点提取中',color:'#175cd3',bg:'#eaf2ff',pulse:true},
   queuing:{label:'排队中',color:'#8b99ac',bg:'#f0f2f5'},
   waiting:{label:'待处理',color:'#f59e0b',bg:'#fff7e6'},
   unavailable:{label:'不可用',color:'#8b99ac',bg:'#f0f2f5'},
@@ -595,7 +648,7 @@ const IMG_MENU = `<svg viewBox="0 0 480 320" xmlns="http://www.w3.org/2000/svg" 
 
 let DOCS = [
   /* ---- 文本 ---- */
-  {id:'d1', cat:'text', name:'前厅服务规范.docx', ext:'DOCX', size:'1.2 MB', status:'available', source:'local', time:'2026-09-18 14:22', hits:12, pageCount:6, pages:[1,1,2,2,3,3,4,4,5,5,6,6],
+  {id:'d1', cat:'text', name:'前厅服务规范.docx', ext:'DOCX', size:'1.2 MB', status:'available', source:'local', time:'2026-09-18 14:22', hits:12, sysPath:['酒店管理','前厅服务'], pageCount:6, pages:[1,1,2,2,3,3,4,4,5,5,6,6],
     segs:[
       '第一章 总则：前厅部是酒店对客服务的第一窗口，员工须统一着装、佩戴工牌，站立服务，主动问候，做到「来有迎声、问有答声、走有送声」。',
       '前厅员工应熟悉酒店各营业场所的位置与营业时间，能准确回答客人问询，遇有不清楚的问题不得随意答复，须及时请示领班或经理。',
@@ -610,14 +663,14 @@ let DOCS = [
       '第八章 安全防范：严格执行访客登记制度，核对客人身份后方可办理续卡、换卡，严禁向无关人员透露客人房号与隐私信息。',
       '每班按规定检查消防通道与设备状态，发现异常立即上报安保部并做好记录。'
     ]},
-  {id:'d2', cat:'text', name:'夜审操作手册（扫描件）.pdf', ext:'PDF', size:'8.6 MB', status:'available', source:'local', time:'2026-09-17 09:05', hits:5, scanned:true, pageCount:2, pages:[1,1,2,2],
+  {id:'d2', cat:'text', name:'夜审操作手册（扫描件）.pdf', ext:'PDF', size:'8.6 MB', status:'available', source:'local', time:'2026-09-17 09:05', hits:5, sysPath:['酒店管理','酒店财务管理'], scanned:true, pageCount:2, pages:[1,1,2,2],
     segs:[
       '夜审时间一般为每日 0:00 至 3:00，夜审员需核对当日所有入住、退房及在住房间的房价与账务，逐笔比对客房状态与实际占用情况。',
       '核对中若发现房价不符、押金不足或账务异常，应立即登记并上报值班经理，未经批准不得自行冲账或调整。',
       '完成核对后执行日结，生成营业日报，并将系统营业日期滚动至次日；日结前须确认所有账务已入账、无未结挂账。',
       '日结完成后打印营业日报与在住宾客名单，交次日早班复核，同时做好夜审记录本与备用金交接。'
     ]},
-  {id:'d3', cat:'text', name:'客房部服务标准.docx', ext:'DOCX', size:'3.4 MB', status:'available', source:'local', time:'2026-09-16 16:40', hits:9, pageCount:3, pages:[1,1,2,2,3,3],
+  {id:'d3', cat:'text', name:'客房部服务标准.docx', ext:'DOCX', size:'3.4 MB', status:'available', source:'local', time:'2026-09-16 16:40', hits:9, sysPath:['酒店管理','客房服务','客房清洁'], pageCount:3, pages:[1,1,2,2,3,3],
     segs:[
       '客房清洁按「先住客房、后空房」顺序进行，退房房需在 15 分钟内完成查房并通知前台。',
       '清洁流程：敲门确认无人后进入，先收垃圾、撤布草，再铺床、除尘、清洁卫生间，最后补充客用品并检查。',
@@ -654,6 +707,16 @@ let DOCS = [
       '第三节 微笑与问候：做到「三米微笑、一米问候」，主动使用「您好、欢迎光临」等规范用语。',
       '第四节 手势与递物：指引方向五指并拢、掌心向上，递物时双手奉上，房卡正面朝向客人。',
       '第五节 电话礼仪：铃响三声内接听，先报部门与姓名，记录要点并复述确认，挂机前道谢。'
+    ]},
+  {id:'d19', cat:'text', name:'旅游市场营销学讲义.pdf', ext:'PDF', size:'4.7 MB', status:'extracting', source:'local', time:'2026-11-13 10:26', hits:0, pageCount:4, pages:[1,1,2,2,3,3,4],
+    segs:[
+      '第一章 市场营销概述：旅游市场营销是以旅游企业为中心，通过市场调研、产品设计、定价、渠道与促销等手段，满足旅游者需求并实现企业目标的管理过程。',
+      '市场细分的基本依据包括地理、人口、心理与行为四类变量，旅游企业通常按出游目的将市场划分为观光、度假、商务与探亲等细分市场。',
+      '第二章 目标市场选择：在评估细分市场的规模、增长性与竞争强度后，选择与企业资源相匹配的目标市场，并制定差异化的营销组合。',
+      '市场定位强调在目标顾客心中建立差异化形象，例如经济型酒店以「高性价比、干净卫生」为核心定位诉求。',
+      '第三章 产品策略：旅游产品是食、住、行、游、购、娱的组合，产品设计应围绕核心利益、实际产品与附加产品三个层次展开。',
+      '第四章 价格策略：常见的定价方法有成本导向、需求导向与竞争导向三类，淡旺季差别定价是旅游行业常用的需求导向策略。',
+      '第五章 渠道与促销：分销渠道包括直接销售与通过 OTA、旅行社等中间商的间接销售；促销组合涵盖广告、公关、销售促进与人员推销。'
     ]},
   {id:'d6', cat:'text', name:'旅游管理专业人才培养方案.docx', ext:'DOCX', size:'2.8 MB', status:'indexing', source:'local', time:'2026-09-20 10:02', hits:0, segs:[]},
   {id:'d7', cat:'text', name:'导游资格考试大纲.pdf', ext:'PDF', size:'6.2 MB', status:'error', source:'local', time:'2026-09-13 08:45', hits:0, segs:[], errReason:'文件已加密，无法解析'},
@@ -789,7 +852,7 @@ function renderTable(){
       <span class="kbd-doc-icon">${docIcon(d)}</span>
       <div style="min-width:0">
         <div class="kbd-doc-name" onclick="openDoc('${d.id}')" title="${esc(d.name)}">${esc(d.name)}</div>
-        <div class="kbd-doc-sub">${typeBadge(d)}</div>
+        <div class="kbd-doc-sub">${typeBadge(d)}${sysBadge(d)}</div>
       </div>
     </div>
     <div style="white-space:nowrap">${segModeLabel(d)}</div>
@@ -810,6 +873,7 @@ function kpStat(d){
   return {total:ids.length, manual:ids.filter(id=>src[id]==='manual').length, ai:ids.filter(id=>src[id]==='ai').length, pend};
 }
 function kpCell(d){
+  if(d.status==='extracting') return '<span class="kbd-pulse" style="color:#175cd3">提取中…</span>';
   if(d.status!=='available') return '<span style="color:#b4bdcb">—</span>';
   const x=kpStat(d);
   if(!x.total&&!x.pend) return '<span style="color:#b4bdcb">无知识点</span>';
@@ -882,9 +946,158 @@ document.getElementById('rowMenu').addEventListener('click',e=>{
   else if(act==='reparse') reparse(d);
   else if(act==='rename'){const n=prompt('重命名文档',d.name);if(n&&n.trim()){d.name=n.trim();renderTable();toast('已重命名');}}
   else if(act==='download') toast('下载「'+d.name+'」');
+  else if(act==='linkSys') openSysLink(d.id);
   else if(act==='toggle'){ if(d.status==='unavailable'){d.status='available';toast('已启用「'+d.name+'」');} else {d.status='unavailable';toast('已停用「'+d.name+'」');} renderTable(); }
   else if(act==='delete'){const extra=removeDocs([d.id]);renderTable();toast('已删除「'+d.name+'」'+extra);}
 });
+
+/* ================= 关联知识体系 ================= */
+/* 知识库关联的知识体系（mock）：知识库绑定的知识体，文档关联范围限定在该知识体内的专业 / 课程 */
+const KB_SYS = {
+  KB004:{label:'旅游类-酒店管理与数字化运营',majors:['酒店管理']},
+  KB005:{label:'旅游类-导游',majors:['旅游管理']},
+};
+function kbSys(){
+  const id=new URLSearchParams(location.search).get('id')||'KB004';
+  const cfg=KB_SYS[id]||KB_SYS.KB004;
+  return {label:cfg.label, majors:NODE_TREE.filter(m=>cfg.majors.includes(m[0]))};
+}
+let sysLinkDocId=null, sysLinkSel=null;
+function openSysLink(id){
+  const d=DOCS.find(x=>x.id===id); if(!d) return;
+  sysLinkDocId=id;
+  sysLinkSel=(d.sysPath||[]).slice();
+  sysCollapsed=new Set();
+  renderSysLink();
+  document.getElementById('sysLinkModal').classList.add('show');
+}
+function closeSysLink(){ document.getElementById('sysLinkModal').classList.remove('show'); sysLinkDocId=null; sysLinkSel=null; }
+function sysNodeSel(path){ return !!sysLinkSel && !!sysLinkSel.length && path.length>=sysLinkSel.length && sysLinkSel.every((s,i)=>s===path[i]); }
+/* 选中父级节点时，其下所有子节点一并选中；返回当前选中子树节点数 */
+function sysSelInfo(roots){
+  if(!sysLinkSel||!sysLinkSel.length) return {count:0};
+  let count=0;
+  function walk(n){ if(sysNodeSel(n.path)) count++; n.kids.forEach(walk); }
+  roots.forEach(walk);
+  return {count};
+}
+/* 横版树状图（与「知识体系」页保持一致）：专业（不可选）→ 课程 → 任务 → 技能规范/操作流程/标准/案例（可选）
+   白色圆角节点 + 紫色/灰色描边 + 贝塞尔曲线连线 + 展开/收起图标 */
+const SYS_TYPE_COLOR={major:'#f59e0b',course:'#3b82f6',task:'#8b5cf6',skill:'#14b8a6',process:'#06b6d4',standard:'#8b5cf6',case:'#8b5cf6'};
+const SYS_NODE_W=160, SYS_NODE_H=28, SYS_X0=20, SYS_HGAP=200;
+const SYS_LEGEND=[
+  {label:'专业',color:'#f59e0b',note:'不可选'},
+  {label:'课程',color:'#3b82f6'},
+  {label:'任务',color:'#8b5cf6'},
+  {label:'技能规范',color:'#14b8a6'},
+  {label:'操作流程',color:'#06b6d4'},
+  {label:'标准',color:'#8b5cf6'},
+  {label:'案例',color:'#8b5cf6'},
+];
+let sysCollapsed=new Set();
+function sysKey(path){ return path.join('/'); }
+function sysBuildNodes(t){
+  function kids(list,parent){ return list.map(([name,type,sub])=>{ const path=parent.concat(name); return {name,type,path,kids:sub?kids(sub,path):[]}; }); }
+  return t.majors.map(m=>{ const path=[m[0]]; return {name:m[0],type:'major',path,kids:kids(m[2]||[],path)}; });
+}
+function sysApplyExpand(roots){
+  function walk(n){ n.expanded=!sysCollapsed.has(sysKey(n.path)); n.kids.forEach(walk); }
+  roots.forEach(walk);
+}
+function sysLayout(roots){
+  let maxDepth=0, maxY=0;
+  function calc(n,d){ n.depth=d; n._x=SYS_X0+d*SYS_HGAP; maxDepth=Math.max(maxDepth,d); if(!n.kids.length||!n.expanded){ n._h=30; return 1; } let c=0; n.kids.forEach(k=>c+=calc(k,d+1)); n._h=c*32; return c; }
+  function layout(n,startY){ n._y=startY+n._h/2; if(n.kids.length&&n.expanded){ let y=startY; n.kids.forEach(k=>{ layout(k,y); y+=k._h; }); } }
+  roots.forEach(r=>calc(r,0));
+  let y=16;
+  roots.forEach(r=>{ layout(r,y); y+=r._h+18; });
+  function maxy(n){ maxY=Math.max(maxY,n._y); if(n.kids.length&&n.expanded) n.kids.forEach(maxy); }
+  roots.forEach(maxy);
+  const totalW=SYS_X0+maxDepth*SYS_HGAP+SYS_NODE_W+46;
+  const totalH=maxY+SYS_NODE_H+24;
+  return {roots,totalW,totalH};
+}
+function sysLinks(roots){
+  const parts=[];
+  function draw(n){
+    if(!n.kids.length||!n.expanded) return;
+    n.kids.forEach(k=>{
+      const x1=n._x+SYS_NODE_W, y1=n._y, x2=k._x, y2=k._y, cx=(x1+x2)/2;
+      parts.push(`M ${x1} ${y1} C ${cx} ${y1} ${cx} ${y2} ${x2} ${y2}`);
+      draw(k);
+    });
+  }
+  roots.forEach(draw);
+  return parts.join(' ');
+}
+function sysNodeSVG(n){
+  const x=n._x, y=n._y-SYS_NODE_H/2;
+  const isMajor=n.type==='major';
+  const isSelRoot=!!(sysLinkSel&&sysLinkSel.length)&&sysKey(n.path)===sysKey(sysLinkSel);
+  const isSel=!isSelRoot&&sysNodeSel(n.path);
+  const hasKids=n.kids.length>0;
+  let cls='sys-node-rect';
+  if(isMajor) cls+=' major';
+  else if(isSelRoot) cls+=' selroot';
+  else if(isSel) cls+=' sel';
+  else if(hasKids&&n.expanded) cls+=' expanded';
+  let name=n.name;
+  if(!isMajor&&name.length>10) name=name.substring(0,9)+'…';
+  const p=esc(n.path.join('/'));
+  const tip=isMajor?'专业 · 范围过大不可选':`${esc(n.name)}（${esc(NODE_TYPE_LABEL[n.type]||n.type)}）`;
+  const parts=[];
+  parts.push(`<rect class="${cls}" x="${x}" y="${y}" width="${SYS_NODE_W}" height="${SYS_NODE_H}" rx="6" ry="6" data-act="${isMajor?'sysMajor':'sysPick'}" data-p="${p}"><title>${tip}</title></rect>`);
+  if(!isMajor){
+    parts.push(`<circle class="sys-dot" cx="${x+12}" cy="${n._y}" r="4" fill="${SYS_TYPE_COLOR[n.type]||'#9aa7ba'}"></circle>`);
+    parts.push(`<text class="sys-node-text${isSelRoot?' selroot':(isSel?' sel':'')}" x="${x+22}" y="${n._y+4}">${esc(name)}</text>`);
+  }else{
+    parts.push(`<text class="sys-node-text major" x="${x+SYS_NODE_W/2}" y="${n._y+4}" text-anchor="middle">${esc(name)}</text>`);
+  }
+  if(hasKids) parts.push(`<text class="sys-expand-icon" x="${x+SYS_NODE_W+6}" y="${n._y+4}" data-act="sysToggle" data-p="${p}">${n.expanded?'−':'+'}</text>`);
+  return parts.join('');
+}
+function sysLegendHTML(){
+  return `<div class="sys-legend">${SYS_LEGEND.map(x=>`<span class="sys-legend-i"><i style="background:${x.color}"></i>${x.label}${x.note?`<em>${x.note}</em>`:''}</span>`).join('')}</div>`;
+}
+function renderSysLink(){
+  const d=DOCS.find(x=>x.id===sysLinkDocId); if(!d) return;
+  const t=kbSys();
+  const roots=sysBuildNodes(t);
+  sysApplyExpand(roots);
+  const layout=sysLayout(roots);
+  const nodes=[];
+  function walk(node){ nodes.push(sysNodeSVG(node)); if(node.expanded) node.kids.forEach(walk); }
+  roots.forEach(walk);
+  const tree=roots.length
+    ? `<div class="sys-tree-scroll"><svg class="sys-tree-svg" width="${layout.totalW}" height="${layout.totalH}" viewBox="0 0 ${layout.totalW} ${layout.totalH}"><path class="sys-link" d="${sysLinks(roots)}"></path>${nodes.join('')}</svg></div>`
+    : '<span class="kp-none">该知识库未关联知识体系</span>';
+  const sel=sysSelInfo(roots);
+  document.getElementById('sysLinkBody').innerHTML=`
+    <div class="sys-tip">为文档 <b>「${esc(d.name)}」</b> 选择关联范围，可选<b>课程</b>及其下级节点（任务、技能规范/操作流程/标准/案例）；专业范围过大、易超出 AI 模型输入上限，不可选择。选中某节点即同时选中其下全部子节点。</div>
+    <div class="sys-kb">本知识库关联的知识体：${esc(t.label)}</div>
+    ${sysLegendHTML()}
+    ${tree}
+    ${sysLinkSel&&sysLinkSel.length?`<div style="font-size:12px;color:#5149e9;background:#eef0ff;border-radius:8px;padding:6px 10px;margin-top:10px">当前：${esc(sysLinkSel.join(' / '))}${sel.count>1?`（含下级，共 ${sel.count} 个节点）`:''}</div>`:''}
+  `;
+  const clear=document.getElementById('sysLinkClear');
+  if(clear) clear.style.display=(d.sysPath&&d.sysPath.length)?'':'none';
+}
+function saveSysLink(){
+  const d=DOCS.find(x=>x.id===sysLinkDocId); if(!d) return;
+  d.sysPath=sysLinkSel&&sysLinkSel.length?sysLinkSel.slice():undefined;
+  closeSysLink(); renderTable(); if(activeDoc&&activeDoc.id===d.id) refreshDoc();
+  toast(d.sysPath?`已关联知识体系：${d.sysPath.join(' / ')}`:'已清除关联知识体系');
+}
+function clearSysLink(){
+  const d=DOCS.find(x=>x.id===sysLinkDocId); if(!d) return;
+  d.sysPath=undefined;
+  closeSysLink(); renderTable(); if(activeDoc&&activeDoc.id===d.id) refreshDoc();
+  toast('已清除关联知识体系');
+}
+function sysBadge(d){
+  if(!d.sysPath||!d.sysPath.length) return '';
+  return `<span class="sys-badge" title="关联知识体系：${esc(d.sysPath.join(' / '))}">系 · ${esc(d.sysPath.join(' / '))}</span>`;
+}
 
 /* ================= Tab ================= */
 function switchTab(t){
@@ -1004,6 +1217,17 @@ function addLink(st,id,by){ if(!st.kps.includes(id)) st.kps.push(id); (st.src||(
 function dropLink(st,id){ st.kps=st.kps.filter(x=>x!==id); if(st.src) delete st.src[id]; }
 function linkSrc(st,id){ return (st.src&&st.src[id])||{by:'manual',who:'平台管理员',time:'2026-09-20 10:00'}; }
 function linkTitle(st,id){ const x=linkSrc(st,id); return (x.by==='ai'?'AI 识别 · '+x.who+'确认':'手动关联 · '+x.who)+' · '+x.time; }
+/* 知识点行：一行一个，名称下方小字标注知识体系完整路径 */
+const kpPathText=p=>p.join(' › ');
+function kpChip(st,id,opts){
+  opts=opts||{};
+  const x=kpById(id), name=x?x.name:id, path=x?x.path:[];
+  const src=opts.eff?linkSrcEff(st,id):linkSrc(st,id);
+  const ai=src.by==='ai';
+  const rm=opts.removable?`<span class="x" data-act="unlink" data-kp="${id}">✕</span>`:'';
+  return `<div class="kp-item"><span class="kp">${ai?'<span class="kp-ai" aria-label="AI 识别">✦</span>':''}${esc(name)}${rm}</span>`
+    +(opts.showPath&&path.length?`<span class="kp-path">${esc(kpPathText(path))}</span>`:'')+`</div>`;
+}
 /* 知识点提取（mock）：分段原文命中知识点关键词即生成「关联已有」建议，原文依据取命中句 */
 let suggUid=1000;
 const NO_INFO_RE=/^(第?\d+页|目录|谢谢(大家|观看)?|好的?|我们继续|下面[我们]*[开始讲]*|同学们好)[。！!，,]*$/;
@@ -1119,7 +1343,7 @@ function seedState(d){
       mounts:[{path:['酒店管理','前厅服务','入住接待','前台收银与押金'],reason:'原文讨论前台入住时 OTA 订单的押金收取',conf:.86}]}]);
     sugg('3',[{id:'s5',type:'A',kp:'kp3',why:'原文讲客人要求提前入住时的处理方式，与「提前入住与延迟退房政策」指同一内容',t:610,conf:.93,quote:'常遇到客人要求提前入住',status:'pending'}]);
   } else if(d.id==='d14'){ link('2',['kp9']); }
-  else if(!['d1','d2','d3','d4','d5','d10','d11','d15'].includes(d.id)){
+  else if(!['d1','d2','d3','d4','d5','d10','d11','d15','d19'].includes(d.id)){
     // 其他文件（如新添加的文件）：上传批次开启了 AI 自动关联知识点才提取
     if(d.autoKp!==false){
       segKeys(d).forEach(k=> SEG_STATE[d.id][k].sugg=extractSeg(d,k));
@@ -1151,7 +1375,7 @@ function openDoc(id){
   curTime=0;
   document.getElementById('docTitle').innerHTML=docIcon(activeDoc,22)+'<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(activeDoc.name)+'</span>';
   document.getElementById('docMeta').textContent=activeDoc.size+' · 上传于 '+activeDoc.time;
-  document.getElementById('docPreviewBtn').style.display = activeDoc.status==='available' ? '' : 'none';
+  document.getElementById('docPreviewBtn').style.display = (activeDoc.status==='available'||activeDoc.status==='extracting') ? '' : 'none';
   showDocDetail();
   refreshDoc();
 }
@@ -1160,7 +1384,7 @@ function selectChapter(k){ selCh=k; pickerOpen=false; pickerQ=''; suggEditing=nu
 function refreshDoc(){
   if(!activeDoc) return;
   const body=document.getElementById('docDetailBody');
-  if(activeDoc.status!=='available'){ body.innerHTML=processingNote(activeDoc); return; }
+  if(activeDoc.status!=='available'&&activeDoc.status!=='extracting'){ body.innerHTML=processingNote(activeDoc); return; }
   const act=document.activeElement, keepId=act&&act.id&&body.contains(act)?act.id:null, pos=keepId?act.selectionStart:null;
   body.innerHTML=`<div class="doc-grid">${docToc(activeDoc)}<div class="doc-col">${activeDoc.cat==='text'?docText(activeDoc):activeDoc.cat==='image'?docImage(activeDoc):docAV(activeDoc)}</div>${docAside(activeDoc)}</div>`;
   if(keepId){ const el=document.getElementById(keepId); if(el){ el.focus(); try{ if(pos!=null) el.setSelectionRange(pos,pos); }catch(e){} } }
@@ -1257,8 +1481,10 @@ function closeSrcPreview(){ document.getElementById('srcDrawer').classList.remov
 function statRow(items){ return `<div class="dd-stats">${items.map(([b,s])=>`<div class="dd-stat"><b>${b}</b><span>${s}</span></div>`).join('')}</div>`; }
 function segChips(d,key){
   const st=segState(d,key);
-  const kps=st.kps.map(id=>`<span class="kp" title="${esc(linkTitle(st,id))}">${linkSrc(st,id).by==='ai'?'<span class="kp-ai" aria-label="AI 识别">✦</span>':''}${esc(kpById(id)?.name||id)}</span>`).join('');
   const pend=st.sugg.filter(g=>g.status==='pending').length;
+  const kps=st.kps.length
+    ? `<div class="kp-list">${st.kps.map(id=>kpChip(st,id)).join('')}</div>`
+    : (pend?'':'<span class="kp-none">无知识点</span>');
   const ops=(d.cat==='text'?`<button class="seg-icon seg-act" data-act="segLocate" data-k="${key}" title="定位原文" aria-label="定位原文">${IC.locate}</button>`:'')
     +`<button class="seg-icon seg-act" data-act="segToggle" data-k="${key}" title="${st.enabled?'停用':'启用'}" aria-label="${st.enabled?'停用':'启用'}">${st.enabled?IC.eyeOff:IC.eye}</button>`
     +`<button class="seg-icon seg-act" data-act="segEdit" data-k="${key}" title="编辑分段" aria-label="编辑分段">${IC.edit}</button>`
@@ -1290,7 +1516,7 @@ function segToolbar(f){
   </div>`;
 }
 function docText(f){
-  if(f.status!=='available') return processingNote(f);
+  if(f.status!=='available'&&f.status!=='extracting') return processingNote(f);
   let segs='';
   if(f.segs.length){
     const inCh=selCh!=null?new Set((chaptersOf(f).find(g=>g.items[0].i===selCh)||{items:[]}).items.map(x=>x.i)):null;
@@ -1304,7 +1530,7 @@ function docText(f){
   return statRow([[f.ext+(f.scanned?' · 扫描件':''),'类型'],[f.segs.length,'分段数'],[charCount(f),'字数']])+segs;
 }
 function docImage(f){
-  if(f.status!=='available') return processingNote(f);
+  if(f.status!=='available'&&f.status!=='extracting') return processingNote(f);
   return `<div class="dd-img">${f.svg||placeholder('图片处理中')}</div>
     ${statRow([[f.ext,'类型'],[1,'分段数'],[charCount(f),'识别字数']])}
     <div class="seg-card ${segState(f,'0').enabled?'':'seg-off'}" id="seg-0">
@@ -1316,7 +1542,7 @@ function docImage(f){
       ${segChips(f,'0')}</div>`;
 }
 function docAV(f){
-  if(f.status!=='available') return processingNote(f);
+  if(f.status!=='available'&&f.status!=='extracting') return processingNote(f);
   const ratio=Math.min(1,curTime/f.sec), N=72, seed=f.id.charCodeAt(f.id.length-1);
   const bars=Array.from({length:N},(_,i)=>`<span class="bar ${i/N<ratio?'p':''}" style="height:${Math.round(12+Math.abs(Math.sin(i*1.7+seed)*Math.cos(i*.37+seed))*68)}px"></span>`).join('');
   let ai=f.segs.findIndex(s=>curTime>=s[0]&&curTime<s[1]); if(ai<0) ai=f.segs.length-1;
@@ -1366,9 +1592,28 @@ function suggCardMini(k,g){
 function docInfoRows(d){
   const rows=[['类型',d.ext+' · '+(d.cat==='av'?MEDIA_LABEL[d.media]:TYPE[d.cat].label)],['大小',d.size],['来源',SOURCE[d.source]],['上传时间',d.time]];
   if(d.cat==='av') rows.push(['时长',fmt(d.sec)]);
+  rows.push(['关联知识体系',(d.sysPath&&d.sysPath.length)?d.sysPath.join(' / '):'未关联']);
   return rows.map(([k,v])=>`<div style="display:flex;justify-content:space-between;gap:12px"><span>${k}</span><span style="color:#41536f">${esc(v)}</span></div>`).join('');
 }
 function docAside(d){
+  /* 知识点提取中：分段已完成，AI 建议尚未产出，右侧展示提取进度卡 */
+  if(d.status==='extracting'){
+    return `<div class="doc-aside">
+      <div class="aicard">
+        <div class="ai-head"><svg width="16" height="16" viewBox="0 0 24 24" fill="#F79009"><path d="M12 2l2.2 6.3L20.5 10l-6.3 2.2L12 18.5l-2.2-6.3L3.5 10l6.3-1.7z"/></svg>知识点提取中<span class="kbd-badge kbd-pulse" style="color:#175cd3;background:#eaf2ff;margin-left:8px"><span class="dot"></span>进行中</span></div>
+        <div class="ai-stats">
+          <div class="ai-stat"><b>${d.segs.length}</b><span>已完成分段</span></div>
+          <div class="ai-stat"><b>0</b><span>已关联知识点</span></div>
+          <div class="ai-stat"><b style="color:#175cd3" class="kbd-pulse">…</b><span>AI 提取进度</span></div>
+        </div>
+        <div class="ai-note">分段与向量索引已完成，AI 正在逐段提取知识点并匹配图谱节点。完成后文档状态将更新为「可用」，AI 建议会展示在此处，待你逐条确认后写入知识图谱。</div>
+      </div>
+      <div class="aside-card">
+        <div class="aside-head">文档信息</div>
+        <div class="aside-body" style="font-size:12px;color:#8b99ac;line-height:2">${docInfoRows(d)}</div>
+      </div>
+    </div>`;
+  }
   const pend=allKeys(d).flatMap(k=>segState(d,k).sugg.map(g=>({g,k}))).filter(x=>x.g.status==='pending').sort((a,b)=>(b.g.conf||0)-(a.g.conf||0));
   const high=pend.filter(x=>x.g.type==='A'&&x.g.conf>=.9).length;
   const linked=allKeys(d).reduce((a,k)=>a+segState(d,k).kps.length,0);
@@ -1520,7 +1765,7 @@ function renderDrawer(){
       ${editor}
       <div>
         <div class="drawer-sec-title">关联知识点 <span style="font-weight:400;color:#8b99ac;font-size:12px"><span class="kp-ai">✦</span> AI 识别后确认，无标记为手动关联；添加/移除点底部「保存」后生效</span></div>
-        <div class="seg-foot" style="margin-top:8px">${effKps(st).length?effKps(st).map(id=>`<span class="kp" title="${esc(linkTitle(st,id))}">${linkSrcEff(st,id).by==='ai'?'<span class="kp-ai" aria-label="AI 识别">✦</span>':''}${esc(kpById(id)?.name||id)}<span class="x" data-act="unlink" data-kp="${id}">✕</span></span>`).join(''):'<span class="kp-none">无知识点</span>'}<button class="kp-add" data-act="pkToggle">＋ 添加知识点</button></div>
+        <div class="kp-block">${effKps(st).length?`<div class="kp-list">${effKps(st).map(id=>kpChip(st,id,{eff:true,removable:true,showPath:true})).join('')}</div>`:'<span class="kp-none">无知识点</span>'}<button class="kp-add" data-act="pkToggle">＋ 添加知识点</button></div>
         ${pickerOpen?renderPicker():''}
       </div>
       ${st.sugg.length?`<div>
@@ -1685,12 +1930,17 @@ document.addEventListener('click',e=>{
   else if(a==='suggReject'){ suggRejecting=el.dataset.g; suggEditing=null; renderDrawer(); }
   else if(a==='suggConfirmReject'){ rejectSugg(el.dataset.g); }
   else if(a==='suggCancelReject'){ suggRejecting=null; renderDrawer(); }
+  else if(a==='sysPick'){ sysLinkSel=(el.dataset.p||'').split('/').filter(Boolean); for(let i=1;i<=sysLinkSel.length;i++) sysCollapsed.delete(sysLinkSel.slice(0,i).join('/')); renderSysLink(); }
+  else if(a==='sysToggle'){ const k=(el.dataset.p||'').split('/').filter(Boolean).join('/'); sysCollapsed.has(k)?sysCollapsed.delete(k):sysCollapsed.add(k); renderSysLink(); }
+  else if(a==='sysMajor'){ toast('专业范围过大，AI 模型输入易超限，不可选择'); }
+  else if(a==='sysClear') clearSysLink();
   // 章节上下文没有抽屉，这些只改面板状态的操作需要刷新右侧章节面板
   if(!drawerDoc&&selCh!=null&&['suggEdit','suggCancelEdit','suggReject','suggCancelReject','nodePkToggle','mountToggle','mountRemove'].includes(a)) refreshDoc();
 });
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
     if(document.getElementById('srcDrawer').classList.contains('show')) closeSrcPreview();
+    else if(document.getElementById('sysLinkModal').classList.contains('show')) closeSysLink();
     else if(pickerOpen){ pickerOpen=false; renderDrawer(); }
     else if(drawerDoc){ closeDrawer(); refreshDoc(); renderTable(); }
   }

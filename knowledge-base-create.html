@@ -122,6 +122,20 @@ mark.hw{background:#FEF0C7;color:inherit;border-radius:3px;padding:0 2px}
 .thumb{border-radius:8px;overflow:hidden;border:1px solid var(--bd);line-height:0}
 .thumb svg{width:100%;height:auto;display:block}
 .fixed{display:flex;gap:8px;align-items:flex-start;padding:12px 14px;border-radius:10px;background:var(--bg2);font-size:13px;color:var(--t3);line-height:1.6}
+/* 表单校验红字提示 */
+.card.attr-err{border-color:#FDA29B}
+.set-err{display:flex;gap:6px;align-items:flex-start;padding:0 16px 14px;margin-top:-6px;font-size:12.5px;line-height:1.6;color:#B42318}
+.set-err svg{flex:none;margin-top:2px}
+/* 范围过大提醒（非错误，提示 AI 准确度） */
+.set-tip{display:flex;gap:6px;align-items:flex-start;margin:0 16px 14px;padding:8px 10px;border:1px solid #FEDF89;border-radius:8px;background:#FFFAEB;font-size:12.5px;line-height:1.6;color:#B54708}
+.set-tip svg{flex:none;margin-top:2px}
+/* 已关联范围（多选）chip 列表 */
+.chip-del{padding-right:4px;gap:4px}
+.chip-del button{border:0;background:none;cursor:pointer;color:inherit;font-size:14px;line-height:1;padding:0 2px;opacity:.6;font-family:inherit}
+.chip-del button:hover{opacity:1}
+.set-sub{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 14px;margin-top:-8px}
+.sys-tip{display:flex;gap:6px;align-items:flex-start;margin-top:8px;padding:8px 10px;border:1px solid #FEDF89;border-radius:8px;background:#FFFAEB;font-size:12.5px;line-height:1.6;color:#B54708}
+.sys-tip svg{flex:none;margin-top:2px}
 /* step4 处理 */
 .proc{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--bd);border-radius:12px}
 .track{height:6px;border-radius:3px;background:#F2F4F7;overflow:hidden}
@@ -140,6 +154,31 @@ mark.hw{background:#FEF0C7;color:inherit;border-radius:3px;padding:0 2px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#101828;color:#fff;font-size:14px;padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:99}
 .toast.show{opacity:1}
+/* 关联知识体系树（与「知识体系」页一致） */
+.sys-tree-scroll{overflow:auto;border:1px solid var(--bd);border-radius:10px;background:#fff;max-height:56vh;}
+.sys-tree-svg{display:block;}
+.sys-node-rect{fill:#fff;stroke:#dfe6ef;stroke-width:1.5;cursor:pointer;transition:all .15s;}
+.sys-node-rect:hover{stroke:var(--pri);}
+.sys-node-rect.expanded{stroke:var(--pri);}
+.sys-node-rect.sel{fill:#eef0ff;stroke:var(--pri);stroke-width:1.5;cursor:default;}
+.sys-node-rect.excl{fill:#fff;stroke:#d5dce7;stroke-width:1.5;stroke-dasharray:3 2;cursor:pointer;}
+.sys-node-rect.excl:hover{stroke:#98a2b3;}
+.sys-node-rect.selroot{fill:var(--pri);stroke:var(--pri);}
+.sys-node-rect.major{fill:#f2f4f7;stroke:#dfe6ef;stroke-dasharray:4 3;cursor:not-allowed;}
+.sys-node-rect.major:hover{stroke:#b4bdcb;}
+.sys-pick-dot{pointer-events:none;}
+.sys-node-text{font-size:12px;pointer-events:none;user-select:none;fill:#31425e;}
+.sys-node-text.sel{fill:var(--pri);font-weight:600;}
+.sys-node-text.excl{fill:#98a2b3;}
+.sys-node-text.selroot{fill:#fff;font-weight:600;}
+.sys-node-text.major{fill:#60718a;font-weight:600;}
+.sys-link{fill:none;stroke:#c4b5fd;stroke-width:1.5;opacity:.6;pointer-events:none;}
+.sys-expand-icon{font-size:14px;fill:var(--pri);cursor:pointer;}
+.sys-dot{stroke:#fff;stroke-width:1.5;pointer-events:none;}
+.sys-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11px;color:var(--t4);}
+.sys-legend-i{display:inline-flex;align-items:center;gap:4px;}
+.sys-legend-i i{display:inline-block;width:8px;height:8px;border-radius:50%;}
+.sys-legend-i em{font-style:normal;color:#b4bdcb;}
 </style>
   <link rel="stylesheet" href="design-tokens.css" />
 </head>
@@ -293,6 +332,8 @@ const S = {
   kbBody:'旅游类-酒店管理与数字化运营',
   // AI 自动关联知识点：只作用于本批上传的文件，默认关闭
   autoKp:false,
+  // 关联知识体系：本批文件在知识体系中的关联范围（可多选，元素为节点路径）；sysExcl 为已选范围中单独排除的子节点
+  sysPaths:null, sysExcl:null, linkErr:false,
   // 通用
   // 索引设置：整个知识库统一，创建后向量模型不可更改
   indexMode:'high', embed:'default',
@@ -515,9 +556,29 @@ function indexSettings(){
 const pill=(act,k,label,cur)=>`<button class="pill ${String(cur)===String(k)?'on':''}" data-act="${act}" data-v="${k}">${label}</button>`;
 function kpSettings(){
   const label='AI 自动关联知识点', body=MODE==='add'?ADD_KB_BODY:(S.kbBody||'未选择');
+  const paths=sysPaths(), excl=sysExclList(); const linked=paths.length>0;
+  /* 所选范围节点数（并集去重，扣掉排除项）过多 → 提示 AI 准确度可能下降（不拦截） */
+  const subN=linked?sysSelCount(paths, excl):0;
+  const many=subN>SYS_BIG_COUNT;
+  const linkSel=linked
+    ? `<span class="chip act" title="${esc(paths.map(p=>p.join(' / ')).join('；'))}">${esc(body)} · 共 ${subN} 个节点</span>`
+    : `<span class="muted">未关联</span>`;
+  /* 开启 AI 自动关联但未关联知识体系 → 保存时红字拦截 */
+  const err=!!S.linkErr&&S.autoKp&&!linked;
+  const pathList='';
   return `<div class="col g12"><h3 class="h3">知识点 <span class="muted" style="font-weight:400;font-size:13px">只对本批上传的文件生效</span></h3>
-    <div class="card">${tg('autoKp',label,`开启后，本批文件分段完成时，AI 在知识体「${esc(body)}」内自动识别知识点，结果需在文档详情中确认。`)}</div></div>`;
+    <div class="card ${err?'attr-err':''}" id="kpLinkBox">${tg('autoKp',label,`开启后，本批文件分段完成时，AI 在知识体「${esc(body)}」内自动识别知识点，结果需在文档详情中确认。`)}
+      <div class="set" style="padding-bottom:${err||pathList?'6px':'14px'}"><div class="col" style="flex:1;gap:2px"><b>关联知识体系</b><span class="muted">为本批文件选择在知识体系中的关联范围，可多选（如多个课程）。</span></div>
+        ${linkSel}
+        <button class="btn mini" data-act="sysOpen"${err?' style="border-color:#FDA29B;color:#B42318"':''}>${linked?'修改关联':'关联知识体系'}</button></div>
+      ${pathList}
+      ${err?`<div class="set-err" id="linkErr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="2" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><span>请选择关联知识体系，AI 才能自动关联知识点</span></div>`:''}
+      ${many?`<div class="set-tip" id="sysMany">${tipIcon}<span>${sysBigNote(subN)}</span></div>`:''}
+    </div></div>`;
 }
+const sysPaths=()=>Array.isArray(S.sysPaths)?S.sysPaths:[];
+const sysExclList=()=>Array.isArray(S.sysExcl)?S.sysExcl:[];
+const sysLabel=()=>{ const ps=sysPaths(), ex=sysExclList(); if(!ps.length) return '未关联'; return ps.map(p=>p[p.length-1]).join('、')+(ps.length>1?`（${ps.length} 个范围`:'')+(ex.length?`${ps.length>1?'，':'（'}排除 ${ex.length} 项`:'')+((ps.length>1||ex.length)?'）':''); };
 const tg=(k,label,desc)=>`<div class="set"><div class="col" style="flex:1;gap:2px"><b>${label}</b><span class="muted">${desc}</span></div>
    <button class="tg ${S[k]?'on':''}" data-act="toggle" data-v="${k}" aria-label="${label}" aria-pressed="${S[k]}"></button></div>`;
 function hl(t){
@@ -694,7 +755,8 @@ function viewStep3(){
       <span>索引方式</span><b>${S.indexMode==='high'||MODE==='add'?'高质量':'经济'}</b>
       ${S.indexMode==='high'||MODE==='add'?`<span>向量模型</span><b>${MODE==='add'?EMBED_MODELS.default:EMBED_MODELS[S.embed]}</b>`:''}
       <span>知识体</span><b>${esc(MODE==='add'?ADD_KB_BODY:(S.kbBody||'未选择'))}</b>
-      <span>AI 自动关联知识点</span><b>${S.autoKp?'已开启（本批文件）':'未开启'}</b></div>`;
+      <span>AI 自动关联知识点</span><b>${S.autoKp?'已开启（本批文件）':'未开启'}</b>
+      <span>关联知识体系</span><b>${esc(sysLabel())}</b></div>`;
   const actions = `<div class="row g12">
       <button class="btn pri" data-act="finish">前往文档 ${I.arrow}</button>
       ${MODE==='add'?'<button class="btn" data-act="restart">继续添加</button>':''}</div>`;
@@ -711,14 +773,267 @@ function viewStep3(){
 }
 
 /* ======================================================================
+   关联知识体系（第 2 步「知识点」配置后的树状选择，与「知识体系」页一致）
+   ====================================================================== */
+/* 大课程示例数据：8 个任务，每个任务下 15 个技能/流程/标准节点（共 128 个下级节点） */
+const BIG_COURSE_TASKS=Array.from({length:8},(_,i)=>[
+  `运营任务 ${i+1}`,'task',
+  Array.from({length:15},(_,j)=>[`技能点 ${i+1}.${j+1}`,['skill','process','standard'][j%3]])
+]);
+/* 节点数超过该值时，提示 AI 分析准确度可能下降 */
+const SYS_BIG_COUNT=100;
+const NODE_TREE=[
+  ['酒店管理','major',[
+    ['前厅服务','course',[
+      ['房态管理','task',[['房态变更流程','process']]],
+      ['入住接待','task',[['散客入住登记','process'],['前台收银与押金','skill']]],
+      ['退房办理','task',[['退房结算流程','process'],['提前入住与延迟退房标准','standard']]],
+      ['交接班','task',[['交接班流程','process']]],
+      ['前厅服务礼仪','task',[['仪容仪表规范','skill']]]
+    ]],
+    ['酒店财务管理','course',[['夜审','task',[['夜审日结流程','process']]]]],
+    ['客房服务','course',[['客房清洁','task',[['客房清洁标准','standard']]]]],
+    ['餐饮服务','course',[['席间服务','task',[['席间服务规范','skill']]]]],
+    ['服务质量管理','course',[['投诉处理','task',[['投诉处理流程','process'],['典型投诉案例','case']]]]],
+    ['酒店收益管理','course',[['OTA 渠道管理','task',[['OTA 订单处理','process']]]]],
+    /* 大课程示例：8 个任务 × 15 个下级节点，用于演示「节点数过多」提示 */
+    ['酒店数字化运营','course',BIG_COURSE_TASKS]
+  ]],
+  ['旅游管理','major',[['导游实务','course',[['景点讲解','task',[['故宫讲解','skill']]]]]]]
+];
+const NODE_TYPE_LABEL={major:'专业',course:'课程',task:'任务',skill:'技能规范',process:'操作流程',standard:'标准',case:'案例'};
+const SYS_TYPE_COLOR={major:'#f59e0b',course:'#3b82f6',task:'#8b5cf6',skill:'#14b8a6',process:'#06b6d4',standard:'#8b5cf6',case:'#8b5cf6'};
+const SYS_NODE_W=160, SYS_NODE_H=28, SYS_X0=20, SYS_HGAP=200;
+const SYS_LEGEND=[
+  {label:'专业',color:'#f59e0b',note:'不可选'},
+  {label:'课程',color:'#3b82f6'},
+  {label:'任务',color:'#8b5cf6'},
+  {label:'技能规范',color:'#14b8a6'},
+  {label:'操作流程',color:'#06b6d4'},
+  {label:'标准',color:'#8b5cf6'},
+  {label:'案例',color:'#8b5cf6'},
+];
+let sysLinkSel=null, sysExcl=[], sysCollapsed=new Set(), showSysLink=false;
+const kbBodyLabel=()=>MODE==='add'?ADD_KB_BODY:(S.kbBody||'未选择');
+function kbSysRoots(){
+  const majors=kbBodyLabel().includes('导游')?['旅游管理']:['酒店管理'];
+  return NODE_TREE.filter(m=>majors.includes(m[0]));
+}
+function sysKey(path){ return path.join('/'); }
+function sysBuildNodes(majors){
+  function kids(list,parent){ return list.map(([name,type,sub])=>{ const path=parent.concat(name); return {name,type,path,kids:sub?kids(sub,path):[]}; }); }
+  return majors.map(m=>{ const path=[m[0]]; return {name:m[0],type:'major',path,kids:kids(m[2]||[],path)}; });
+}
+function sysApplyExpand(roots){
+  function walk(n){ n.expanded=!sysCollapsed.has(sysKey(n.path)); n.kids.forEach(walk); }
+  roots.forEach(walk);
+}
+function sysLayout(roots){
+  let maxDepth=0, maxY=0;
+  function calc(n,d){ n.depth=d; n._x=SYS_X0+d*SYS_HGAP; maxDepth=Math.max(maxDepth,d); if(!n.kids.length||!n.expanded){ n._h=30; return 1; } let c=0; n.kids.forEach(k=>c+=calc(k,d+1)); n._h=c*32; return c; }
+  function layout(n,startY){ n._y=startY+n._h/2; if(n.kids.length&&n.expanded){ let y=startY; n.kids.forEach(k=>{ layout(k,y); y+=k._h; }); } }
+  roots.forEach(r=>calc(r,0));
+  let y=16;
+  roots.forEach(r=>{ layout(r,y); y+=r._h+18; });
+  function maxy(n){ maxY=Math.max(maxY,n._y); if(n.kids.length&&n.expanded) n.kids.forEach(maxy); }
+  roots.forEach(maxy);
+  const totalW=SYS_X0+maxDepth*SYS_HGAP+SYS_NODE_W+46;
+  const totalH=maxY+SYS_NODE_H+24;
+  return {roots,totalW,totalH};
+}
+function sysLinks(roots){
+  const parts=[];
+  function draw(n){
+    if(!n.kids.length||!n.expanded) return;
+    n.kids.forEach(k=>{
+      const x1=n._x+SYS_NODE_W, y1=n._y, x2=k._x, y2=k._y, cx=(x1+x2)/2;
+      parts.push(`M ${x1} ${y1} C ${cx} ${y1} ${cx} ${y2} ${x2} ${y2}`);
+      draw(k);
+    });
+  }
+  roots.forEach(draw);
+  return parts.join(' ');
+}
+/* ---- 多选范围：路径比较 / 规整 / 计数 ---- */
+const sysPathEq=(a,b)=>a.length===b.length&&a.every((s,i)=>s===b[i]);
+const sysIsPrefix=(a,p)=>a.length<=p.length&&a.every((s,i)=>s===p[i]);
+/* 规整：去重；被上级覆盖的下级自动丢弃；新选的上级吞掉已选的下级 */
+function sysNorm(list){
+  const out=[];
+  (list||[]).forEach(p=>{
+    if(!p||!p.length) return;
+    if(out.some(q=>sysPathEq(q,p))) return;
+    if(out.some(q=>sysIsPrefix(q,p))) return;
+    for(let i=out.length-1;i>=0;i--) if(sysIsPrefix(p,out[i])) out.splice(i,1);
+    out.push(p.slice());
+  });
+  return out;
+}
+/* 节点相对当前多选的状态：root=直接选中，covered=被已选上级包含，excluded=被排除（含其子树） */
+function sysNodeState(path){
+  if(sysExcl.some(p=>sysIsPrefix(p,path))) return 'excluded';
+  if(!sysLinkSel||!sysLinkSel.length) return '';
+  if(sysLinkSel.some(p=>sysPathEq(p,path))) return 'root';
+  if(sysLinkSel.some(p=>sysIsPrefix(p,path))) return 'covered';
+  return '';
+}
+/* 多选范围的节点数（并集去重：被上级覆盖的子树不重复计数；排除项及其子树不计） */
+function sysSelCount(paths, excl){
+  if(!paths||!paths.length) return 0;
+  const ex=excl||[];
+  let n=0;
+  function walk(node){
+    if(!ex.some(e=>sysIsPrefix(e,node.path))&&paths.some(p=>sysIsPrefix(p,node.path))) n++;
+    node.kids.forEach(walk);
+  }
+  sysBuildNodes(kbSysRoots()).forEach(walk);
+  return n;
+}
+/* 节点过多时的 AI 准确度提示文案 */
+const sysBigNote=n=>`所选范围共 ${n} 个节点，超过 ${SYS_BIG_COUNT} 个时 AI 匹配知识点的准确度可能下降，建议改选更具体的课程或任务节点。`;
+const tipIcon='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B54708" stroke-width="2" style="flex:none;margin-top:2px"><path d="M12 3.5 21 19H3z"/><path d="M12 9.5v4M12 16.5v.5"/></svg>';
+function sysSelInfo(){
+  const paths=sysNorm(sysLinkSel||[]);
+  const excl=sysNormExcl(sysExcl, paths);
+  return {paths, excl, count:sysSelCount(paths, excl)};
+}
+/* 规整排除项：只保留落在已选范围内的；同级重复去掉；父级排除吞掉其下更细的排除 */
+function sysNormExcl(list, paths){
+  const out=[];
+  (list||[]).forEach(p=>{
+    if(!p||!p.length) return;
+    if(!(paths||[]).some(s=>sysIsPrefix(s,p))) return;      // 不在已选范围内 → 丢弃
+    if(paths.some(s=>sysPathEq(s,p))) return;               // 与已选根节点相同 → 无意义
+    if(out.some(q=>sysPathEq(q,p))) return;
+    if(out.some(q=>sysIsPrefix(q,p))) return;
+    for(let i=out.length-1;i>=0;i--) if(sysIsPrefix(p,out[i])) out.splice(i,1);
+    out.push(p.slice());
+  });
+  return out;
+}
+function sysNodeSVG(n){
+  const x=n._x, y=n._y-SYS_NODE_H/2;
+  const isMajor=n.type==='major';
+  const st=isMajor?'':sysNodeState(n.path);
+  const isSelRoot=st==='root';
+  const isCovered=st==='covered';
+  const isExcl=st==='excluded';
+  const exclRoot=isExcl?sysExcl.find(e=>sysIsPrefix(e,n.path)):null;
+  const isExclSelf=!!exclRoot&&sysPathEq(exclRoot,n.path);
+  const hasKids=n.kids.length>0;
+  let cls='sys-node-rect';
+  if(isMajor) cls+=' major';
+  else if(isSelRoot) cls+=' selroot';
+  else if(isExcl) cls+=' excl';
+  else if(isCovered) cls+=' sel';
+  else if(hasKids&&n.expanded) cls+=' expanded';
+  let name=n.name;
+  if(!isMajor&&name.length>9) name=name.substring(0,8)+'…';
+  const p=esc(n.path.join('/'));
+  const tip=isMajor?'专业 · 范围过大不可选'
+    :isSelRoot?'已选（含其下全部子节点），再次点击取消'
+    :isExcl&&isExclSelf?'已排除，点击恢复'
+    :isExcl?'随上级节点一并排除'
+    :isCovered?'已包含在上级已选范围中，点击可取消该节点'
+    :`${esc(n.name)}（${esc(NODE_TYPE_LABEL[n.type]||n.type)}）· 点击选中`;
+  const parts=[];
+  parts.push(`<rect class="${cls}" x="${x}" y="${y}" width="${SYS_NODE_W}" height="${SYS_NODE_H}" rx="6" ry="6" data-act="${isMajor?'sysMajor':'sysPick'}" data-p="${p}"><title>${tip}</title></rect>`);
+  if(!isMajor){
+    parts.push(`<circle class="sys-dot" cx="${x+12}" cy="${n._y}" r="4" fill="${SYS_TYPE_COLOR[n.type]||'#9aa7ba'}"></circle>`);
+    parts.push(`<text class="sys-node-text${isSelRoot?' selroot':(isExcl?' excl':(isCovered?' sel':''))}" x="${x+22}" y="${n._y+4}">${esc(name)}</text>`);
+    /* 多选状态指示：选中=实心对勾，被上级包含=短横线，已排除=空心圆+斜杠，未选=空心圆 */
+    const cx=x+SYS_NODE_W-13, cy=n._y;
+    if(isSelRoot){
+      parts.push(`<circle cx="${cx}" cy="${cy}" r="6.5" fill="#fff" class="sys-pick-dot"></circle>
+        <path d="M ${cx-3.2} ${cy+0.2} L ${cx-1} ${cy+2.6} L ${cx+3.4} ${cy-2.6}" fill="none" stroke="var(--pri)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="sys-pick-dot"></path>`);
+    }else if(isCovered){
+      parts.push(`<circle cx="${cx}" cy="${cy}" r="6.5" fill="#eef0ff" stroke="var(--pri)" stroke-width="1.4" class="sys-pick-dot"></circle>
+        <path d="M ${cx-3.2} ${cy} L ${cx+3.2} ${cy}" stroke="var(--pri)" stroke-width="1.8" stroke-linecap="round" class="sys-pick-dot"></path>`);
+    }else if(isExcl){
+      parts.push(`<circle cx="${cx}" cy="${cy}" r="6.5" fill="#fff" stroke="#c3cbd8" stroke-width="1.4" class="sys-pick-dot"></circle>
+        <path d="M ${cx-3.6} ${cy+3.6} L ${cx+3.6} ${cy-3.6}" stroke="#98a2b3" stroke-width="1.6" stroke-linecap="round" class="sys-pick-dot"></path>`);
+    }else if(hasKids){
+      parts.push(`<circle cx="${cx}" cy="${cy}" r="6.5" fill="#fff" stroke="#d5dce7" stroke-width="1.4" class="sys-pick-dot"></circle>`);
+    }
+  }else{
+    parts.push(`<text class="sys-node-text major" x="${x+SYS_NODE_W/2}" y="${n._y+4}" text-anchor="middle">${esc(name)}</text>`);
+  }
+  if(hasKids) parts.push(`<text class="sys-expand-icon" x="${x+SYS_NODE_W+6}" y="${n._y+4}" data-act="sysToggle" data-p="${p}">${n.expanded?'−':'+'}</text>`);
+  return parts.join('');
+}
+function sysLegendHTML(){
+  return `<span class="sys-legend">${SYS_LEGEND.map(x=>`<span class="sys-legend-i"><i style="background:${x.color}"></i>${x.label}${x.note?`<em>${x.note}</em>`:''}</span>`).join('')}</span>`;
+}
+function renderSysLink(){
+  const body=document.getElementById('sysLinkBody'); if(!body) return;
+  const roots=sysBuildNodes(kbSysRoots());
+  sysApplyExpand(roots);
+  const layout=sysLayout(roots);
+  const nodes=[];
+  function walk(node){ nodes.push(sysNodeSVG(node)); if(node.expanded) node.kids.forEach(walk); }
+  roots.forEach(walk);
+  const tree=roots.length
+    ? `<div class="sys-tree-scroll"><svg class="sys-tree-svg" width="${layout.totalW}" height="${layout.totalH}" viewBox="0 0 ${layout.totalW} ${layout.totalH}"><path class="sys-link" d="${sysLinks(roots)}"></path>${nodes.join('')}</svg></div>`
+    : '<p class="muted">该知识体暂无节点。</p>';
+  const sel=sysSelInfo();
+  const selRow=sel.paths.length
+    ? `<p class="muted" style="margin:10px 0 0;font-size:12.5px">已选范围：共 <b style="color:#31425e">${sel.count}</b> 个节点（含下级${sel.excl.length?`，已排除 ${sel.excl.length} 个子节点`:''}）</p>`
+    : `<p class="muted" style="margin:10px 0 0;font-size:12.5px">尚未选择范围，点击上方节点即可选中，支持多选。</p>`;
+  body.innerHTML=`
+    <p class="muted" style="margin:0 0 10px">为本批文件选择关联范围，为提高 AI 识别准确率仅支持选<b>课程</b>及其下级节点。</p>
+    <div class="row g8 wrapflex" style="margin-bottom:8px"><span class="chip">知识体：${esc(kbBodyLabel())}</span>${sysLegendHTML()}</div>
+    ${tree}
+    ${selRow}
+    ${sel.paths.length&&sel.count>SYS_BIG_COUNT?`<div class="sys-tip">${tipIcon}<span>${sysBigNote(sel.count)}</span></div>`:''}`;
+}
+function sysLinkModal(){
+  return `<div class="ovl" data-act="sysOverlay">
+    <div class="mdl" role="dialog" aria-modal="true" aria-label="关联知识体系" style="width:min(980px,94vw)">
+      <div class="row g12" style="justify-content:space-between;margin-bottom:10px"><h3 class="h3" style="margin:0">🔗 关联知识体系</h3><button class="x" data-act="sysClose" aria-label="关闭">${I.x}</button></div>
+      <div id="sysLinkBody"></div>
+      <div class="row g12" style="justify-content:flex-end;margin-top:16px">
+        <button class="btn" data-act="sysClose">取消</button>
+        <button class="btn pri" data-act="sysSave">确定</button>
+      </div>
+    </div></div>`;
+}
+function openSysLink(){
+  sysLinkSel=sysPaths().map(p=>p.slice());
+  sysExcl=(Array.isArray(S.sysExcl)?S.sysExcl:[]).map(p=>p.slice());
+  sysCollapsed=new Set();
+  /* 默认全部收起（只显示专业层级）；已选范围、已排除项的祖先链保持展开，便于回看当前关联 */
+  const roots=sysBuildNodes(kbSysRoots());
+  const keep=new Set();
+  [...sysLinkSel, ...sysExcl].forEach(p=>{ for(let i=1;i<=p.length;i++) keep.add(p.slice(0,i).join('/')); });
+  function walk(n){ if(n.kids.length&&!keep.has(sysKey(n.path))) sysCollapsed.add(sysKey(n.path)); n.kids.forEach(walk); }
+  roots.forEach(walk);
+  showSysLink=true;
+  render();
+}
+function closeSysLink(){ showSysLink=false; sysLinkSel=null; sysExcl=[]; render(); }
+function saveSysLink(){
+  const paths=sysNorm(sysLinkSel||[]);
+  const excl=sysNormExcl(sysExcl, paths);
+  S.sysPaths=paths.length?paths:null;
+  S.sysExcl=paths.length&&excl.length?excl:null;
+  S.linkErr=false;
+  closeSysLink();
+  toast(S.sysPaths
+    ?`已关联 ${paths.length} 个范围：${paths.map(p=>p[p.length-1]).join('、')}${excl.length?`（已排除 ${excl.length} 项）`:''}`
+    :'已清除关联知识体系');
+}
+function clearSysLink(){ sysLinkSel=[]; sysExcl=[]; renderSysLink(); }
+
+/* ======================================================================
    渲染 & 交互
    ====================================================================== */
 function render(){
   const y=window.scrollY, act=document.activeElement, keepId=act&&act.id, pos=act&&act.selectionStart;
-  $('#app').innerHTML=stepper()+[null,viewStep1,viewStep2,viewStep3][S.step]()+(S.showPreview?previewModal():'');
+  $('#app').innerHTML=stepper()+[null,viewStep1,viewStep2,viewStep3][S.step]()+(S.showPreview?previewModal():'')+(showSysLink?sysLinkModal():'');
   window.scrollTo(0,y);
   if(keepId){ const el=document.getElementById(keepId); if(el){ el.focus(); try{ if(pos!=null) el.setSelectionRange(pos,pos); }catch(e){} } }
   bindExtras();
+  if(showSysLink) renderSysLink();
 }
 
 function addFiles(list){
@@ -751,7 +1066,10 @@ function probeDuration(file,r){
 function toDoc(f,status){
   const now=new Date(), p=n=>(n<10?'0':'')+n;
   const d={id:f.docId, autoKp:extractOn(), cat:f.kind, name:f.name, ext:f.ext.toUpperCase(), size:f.size, status, source:'local',
-    time:now.getFullYear()+'-'+p(now.getMonth()+1)+'-'+p(now.getDate())+' '+p(now.getHours())+':'+p(now.getMinutes()), hits:0};
+    time:now.getFullYear()+'-'+p(now.getMonth()+1)+'-'+p(now.getDate())+' '+p(now.getHours())+':'+p(now.getMinutes()), hits:0,
+    sysPaths:sysPaths().length?sysPaths().map(p=>p.slice()):undefined,
+    sysExcl:sysExclList().length?sysExclList().map(p=>p.slice()):undefined,
+    sysPath:sysPaths().length?sysPaths()[0].slice():undefined};
   if(f.kind==='text') Object.assign(d,{scanned:!!f.scanned, ocrOff:!!f.scanned&&!S.ocrScan, segs:textSegs(f).map(s=>s.t)});
   else if(f.kind==='image') Object.assign(d,{svg:f.svg, imgMode:S.imgMode}, imgParts(f));
   else Object.assign(d,{media:f.media, sec:f.sec, segMode:S.segMode, speakers:f.speakers, segs:f.segs.map(s=>[s[0],s[1],s[2],avText(s)])});
@@ -781,7 +1099,7 @@ function startProcessing(){
 
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]'); if(!el) return;
-  const a=el.dataset.act, v=el.dataset.v;
+  const a=el.dataset.act, v=el.dataset.v, p=el.dataset.p;
   switch(a){
     case 'source': S.source=v; break;
     case 'emptyKb': toast('创建空知识库功能开发中'); return;
@@ -800,12 +1118,54 @@ document.addEventListener('click',e=>{
     case 'resetChunk':
       Object.assign(S,{sep:'\\n\\n',maxLen:1024,overlap:50,parentSep:'\\n\\n',parentLen:1024,childSep:'\\n',childLen:512,preClean:true,stripUrl:false,autoSummary:false,qaSeg:false,qaLang:'zh'});
       toast('分段设置已重置'); break;
-    case 'toggle': S[v]=!S[v]; break;
+    case 'toggle': S[v]=!S[v]; if(v==='autoKp'&&!S[v]) S.linkErr=false; break;
     case 'segMode': S.segMode=v; break;
     case 'imgMode': S.imgMode=v; break;
-    case 'process': startProcessing(); return;
+    case 'process':
+      /* 开启 AI 自动关联知识点时，必须先关联知识体系（AI 需要体系范围才能匹配节点） */
+      if(S.autoKp&&!sysPaths().length){
+        S.linkErr=true; render();
+        const box=$('#kpLinkBox'); if(box) box.scrollIntoView({block:'center',behavior:'smooth'});
+        toast('请选择关联知识体系，AI 才能自动关联知识点'); return;
+      }
+      S.linkErr=false; startProcessing(); return;
     case 'finish': location.href=DETAIL_URL; return;
-    case 'restart': clearInterval(procTimer); Object.assign(S,{step:1,name:'',nameEdited:false,desc:'',files:[],progress:{},done:false,tab:null,autoKp:false}); break;
+    case 'restart': clearInterval(procTimer); Object.assign(S,{step:1,name:'',nameEdited:false,desc:'',files:[],progress:{},done:false,tab:null,autoKp:false,sysPaths:null,sysExcl:null,linkErr:false}); break;
+    case 'sysOpen': openSysLink(); return;
+    case 'sysClose': closeSysLink(); return;
+    case 'sysOverlay': if(!e.target.closest('.mdl')) closeSysLink(); return;
+    case 'sysSave': saveSysLink(); return;
+    case 'sysClear': clearSysLink(); return;
+    case 'sysPick': {
+      const path=(p||'').split('/').filter(Boolean);
+      if(!sysLinkSel) sysLinkSel=[];
+      const st=sysNodeState(path);
+      if(st==='root'){
+        /* 取消整个范围：同时清掉其下的排除项 */
+        sysLinkSel=sysLinkSel.filter(q=>!sysPathEq(q,path));
+        sysExcl=sysExcl.filter(e=>!sysIsPrefix(path,e));
+      }else if(st==='covered'){
+        /* 已选父级下的子节点 → 单独排除该节点（含其子树） */
+        sysExcl=sysExcl.filter(e=>!sysIsPrefix(path,e)).concat([path.slice()]);
+      }else if(st==='excluded'){
+        const root=sysExcl.find(e=>sysIsPrefix(e,path));
+        if(root&&sysPathEq(root,path)) sysExcl=sysExcl.filter(e=>!sysPathEq(e,root));
+        else { toast('该节点已随上级一并排除，点击被排除的上级节点可恢复'); return; }
+      }else{
+        sysLinkSel=sysNorm(sysLinkSel.concat([path]));
+        sysExcl=sysExcl.filter(e=>!sysIsPrefix(path,e));
+      }
+      for(let i=1;i<=path.length;i++) sysCollapsed.delete(path.slice(0,i).join('/'));
+      renderSysLink(); return;
+    }
+    case 'sysUnpick': {
+      const path=(p||'').split('/').filter(Boolean);
+      sysLinkSel=(sysLinkSel||[]).filter(q=>!sysPathEq(q,path));
+      sysExcl=(sysExcl||[]).filter(e=>!sysPathEq(e,path));
+      renderSysLink(); return;
+    }
+    case 'sysToggle': { const k=(p||'').split('/').filter(Boolean).join('/'); sysCollapsed.has(k)?sysCollapsed.delete(k):sysCollapsed.add(k); renderSysLink(); return; }
+    case 'sysMajor': toast('专业范围过大，AI 模型输入易超限，不可选择'); return;
   }
   render();
 });
