@@ -93,10 +93,13 @@
       .kg-corner-btn{height:24px;padding:0 10px;border:1px solid #dfe6ef;border-radius:6px;background:#fff;color:#60718a;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.12s;box-shadow:0 1px 4px rgba(30,49,82,.06);}
       .kg-corner-btn:hover{background:#f5f7fa;border-color:#5149e9;color:#5149e9;}
       .kg-corner-btn.kg-corner-more{font-size:14px;letter-spacing:0;line-height:1;}
+      .kgx-meta-line{font-size:12.5px;color:#8b99ac;line-height:1.6;}
       .kg-action-menu{position:fixed;z-index:80;min-width:112px;background:#fff;border:1px solid #dfe6ef;border-radius:8px;box-shadow:0 10px 30px rgba(30,49,82,.18);padding:4px 0;}
       .kg-action-item{padding:7px 14px;font-size:12px;color:#60718a;cursor:pointer;white-space:nowrap;}
       .kg-action-item:hover{background:#f5f7fa;color:#5149e9;}
       .kg-action-item.danger:hover{background:#fff1f0;color:#c72c2a;}
+      /* 知识库图谱 / 知识体系 tab：卡片样式参考知识体系、知识库卡片 */
+      /* 知识库图谱 / 知识体系卡片：复用全景图谱卡片样式（panorama-industry-card） */
     </style>
     <link rel="stylesheet" href="design-tokens.css" />
 </head>
@@ -122,9 +125,9 @@
         <div><h1>知识图谱</h1></div>
       </section>
       <div class="kg-tabs">
-        <span class="kg-tab disabled">知识库图谱</span>
-        <span class="kg-tab disabled">知识体系</span>
-        <span class="kg-tab active" id="kgTabPanorama">全景图谱</span>
+        <span class="kg-tab" data-tab="kbgraph">知识库图谱</span>
+        <span class="kg-tab" data-tab="ksys">知识体系</span>
+        <span class="kg-tab active" data-tab="panorama" id="kgTabPanorama">全景图谱</span>
       </div>
       <section class="tab-panorama">
         <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:16px;">
@@ -135,6 +138,12 @@
         <div class="task-card-grid" id="industryCardGrid"></div>
         <div id="taskListEmpty" class="task-list-empty">暂无已映射完成的行业，点击右上角新建映射任务</div>
       </section>
+      </section>
+      <section class="tab-kbgraph" hidden>
+        <div class="task-card-grid" id="kbGraphGrid"></div>
+      </section>
+      <section class="tab-ksys" hidden>
+        <div class="task-card-grid" id="ksGraphGrid"></div>
       </section>
       <div class="task-modal" id="taskModal" aria-hidden="true">
         <div class="task-dialog" role="dialog" aria-modal="true" aria-labelledby="taskDialogTitle">
@@ -489,6 +498,69 @@
       document.getElementById('viewAllTasksButton').onclick=openAllTasksModal;
       document.getElementById('closeAllTasksBtn').onclick=closeAllTasksModal;
       allTasksModal.onclick=function(e){if(e.target===allTasksModal)closeAllTasksModal()};
+
+      // ===== Tab 切换：知识库图谱 / 知识体系 / 全景图谱 =====
+      function switchKgTab(tab){
+        document.querySelectorAll('.kg-tab').forEach(function(t){t.classList.toggle('active',t.getAttribute('data-tab')===tab)});
+        document.querySelectorAll('.tab-panorama,.tab-kbgraph,.tab-ksys').forEach(function(s){s.hidden=s.className!==('tab-'+tab)});
+        if(tab==='kbgraph')renderKbGraphCards();
+        if(tab==='ksys')renderKsGraphCards();
+      }
+      document.querySelectorAll('.kg-tab').forEach(function(t){
+        t.addEventListener('click',function(){switchKgTab(t.getAttribute('data-tab'))});
+      });
+
+      // ===== 知识库图谱 / 知识体系卡片：展示方式参考全景图谱卡片 =====
+      var KB_GRAPHS=[
+        {id:'kbg1',name:'旅游管理专业教学资源库图谱',ks:'旅游类-酒店管理与数字化运营',kb:'旅游管理专业教学资源库',desc:'基于知识库「旅游管理专业教学资源库」的分段与知识点自动构建：按关联的知识体系范围汇聚课程、任务、技能与知识点节点。',creator:'平台管理员',perm:'3个组织、12个成员',nodes:128,time:'2026-11-16 17:30:15'},
+        {id:'kbg2',name:'前厅服务运营知识图谱',ks:'旅游类-酒店管理与数字化运营',kb:'前厅服务运营知识库',desc:'基于知识库「前厅服务运营」构建，覆盖入住登记、房态管理、投诉处理等知识点及其原文出处。',creator:'秦老师',perm:'2个组织、5个成员',nodes:36,time:'2026-11-12 10:05:42'},
+        {id:'kbg3',name:'导游业务案例库图谱',ks:'旅游类-旅游管理与数字化运营',kb:'导游业务案例库',desc:'基于知识库「导游业务案例库」构建，汇聚讲解词撰写、带团服务等技能相关知识点。',creator:'李老师',perm:'仅自己',nodes:24,time:'2026-11-08 15:42:31'}
+      ];
+      function kgxCardHtml(k,viewFn,rangeTag,withStatus,minimal,meta){
+        var badge=withStatus?'<span class="task-status-badge task-status-done">构建完成</span>':'';
+        return '<div class="panorama-industry-card" onclick="'+viewFn+'(\''+k.id+'\')">'
+          +'<div class="panorama-industry-card-head">'
+            +'<div class="panorama-industry-card-title">'+k.name+'</div>'+badge
+          +'</div>'
+          +'<div class="panorama-industry-card-body">'
+            +(minimal?'':('<div class="panorama-industry-card-row"><span class="task-card-label">说明</span><span class="task-card-value">'+k.desc+'</span>'+(k.kb?'':'<span class="task-scope-tag">'+rangeTag+'</span>')+'</div>'))
+            +(k.ks?'<div class="panorama-industry-card-row"><span class="task-card-label">知识体系</span><span class="task-card-value">'+k.ks+'</span></div>':'')
+            +(k.kb?'<div class="panorama-industry-card-row"><span class="task-card-label">知识库</span><span class="task-card-value">'+k.kb+'</span></div>':'')
+            +(minimal?'':('<div class="panorama-industry-card-row"><span class="task-card-label">创建人</span><span class="task-card-value">'+k.creator+'</span></div>'
+            +'<div class="panorama-industry-card-row"><span class="task-card-label">权限</span><span class="task-card-value">'+k.perm+'</span></div>'
+            +'<div class="panorama-industry-card-row"><span class="task-card-label">节点数</span><span class="task-card-value">'+k.nodes+'</span></div>'))
+            +(meta?'<div class="kgx-meta-line">创建人：'+k.creator+' · 权限：'+k.perm+' · 节点数 '+k.nodes+'</div>':'')
+          +'</div>'
+          +'<div class="panorama-industry-card-footer">'
+            +'<span class="task-card-time">更新于 '+k.time+'</span>'
+            +'<div class="task-card-actions"><button class="view-btn" onclick="event.stopPropagation();'+viewFn+'(\''+k.id+'\')">进入图谱</button></div>'
+          +'</div>'
+        +'</div>';
+      }
+      function renderKbGraphCards(){
+        document.getElementById('kbGraphGrid').innerHTML=KB_GRAPHS.map(function(k){return kgxCardHtml(k,'viewKbGraph','知识库',false,true,true)}).join('');
+      }
+      function viewKbGraph(id){
+        var k=KB_GRAPHS.find(function(x){return x.id===id});if(!k)return;
+        sessionStorage.setItem('viewTaskName',k.name);
+        sessionStorage.removeItem('viewIndustry');
+        location.href='knowledge-graph-view.html';
+      }
+
+      // ===== 知识体系图谱卡片（样式对齐知识体系卡片）=====
+      var KS_GRAPHS=[
+        {id:'ks1',name:'旅游管理知识体系图谱',ks:'旅游管理',desc:'「旅游管理」专业知识体系：课程 → 任务 → 技能 → 知识点四级结构，覆盖导游业务、旅行社计调实务等课程。',creator:'李老师',perm:'公开',nodes:47,time:'2026-11-14 09:20:08'},
+        {id:'ks2',name:'酒店管理知识体系图谱',ks:'酒店管理',desc:'「酒店管理」专业知识体系：覆盖前厅服务与管理、客房服务与管理、餐饮服务与管理、酒店收益管理等课程。',creator:'秦老师',perm:'组织内可见',nodes:39,time:'2026-11-15 16:48:22'}
+      ];
+      function renderKsGraphCards(){
+        document.getElementById('ksGraphGrid').innerHTML=KS_GRAPHS.map(function(k){return kgxCardHtml(k,'viewKsGraph','专业',false,true,true)}).join('');
+      }
+      function viewKsGraph(id){
+        var k=KS_GRAPHS.find(function(x){return x.id===id});if(!k)return;
+        sessionStorage.setItem('viewTaskName',k.name);
+        sessionStorage.removeItem('viewIndustry');
+        location.href='knowledge-graph-view.html';
+      }
 
       renderIndustryCards();
     </script>
