@@ -276,9 +276,9 @@
         {id:'KS012',name:'旅游类-茶艺与茶文化',desc:'茶艺与茶文化专业',level:'高职',category:'tourism',privacy:'仅自己',buildStatus:'built',syncStatus:'',nodes:560,createdAt:'2026-09-07',updatedAt:'2026-09-08'},
         {id:'KS013',name:'旅游类-导游',desc:'导游专业',level:'高职',category:'tourism',privacy:'仅自己',buildStatus:'built',syncStatus:'synced',nodes:1240,createdAt:'2026-09-08',updatedAt:'2026-09-07'},
         {id:'KS014',name:'军事类',desc:'军事类知识体系（构建中）',level:'',category:'military',privacy:'仅自己',buildStatus:'building',syncStatus:'',nodes:0,createdAt:'2026-09-20',updatedAt:'2026-09-20'},
-        {id:'KS015',name:'公安与司法大类',desc:'暂无描述',level:'',category:'other',privacy:'仅自己',buildStatus:'build_failed',syncStatus:'',nodes:0,createdAt:'2026-09-22',updatedAt:'2026-09-22'},
-        {id:'KS016',name:'模块化教学课程开发实施方案',desc:'暂无描述',level:'',category:'other',privacy:'仅自己',buildStatus:'building',syncStatus:'',nodes:0,createdAt:'2026-09-24',updatedAt:'2026-09-24'},
-        {id:'KS017',name:'美食制作虚拟仿真设计与实践',desc:'暂无描述',level:'',category:'other',privacy:'仅自己',buildStatus:'building',syncStatus:'',nodes:0,createdAt:'2026-09-25',updatedAt:'2026-09-25'},
+        {id:'KS015',name:'公安与司法大类',desc:'',level:'',category:'other',privacy:'仅自己',buildStatus:'build_failed',syncStatus:'',nodes:0,createdAt:'2026-09-22',updatedAt:'2026-09-22'},
+        {id:'KS016',name:'模块化教学课程开发实施方案',desc:'',level:'',category:'other',privacy:'仅自己',buildStatus:'building',syncStatus:'',nodes:0,createdAt:'2026-09-24',updatedAt:'2026-09-24'},
+        {id:'KS017',name:'美食制作虚拟仿真设计与实践',desc:'',level:'',category:'other',privacy:'仅自己',buildStatus:'building',syncStatus:'',nodes:0,createdAt:'2026-09-25',updatedAt:'2026-09-25'},
         {id:'KS018',name:'电子信息类',desc:'电子信息类知识体系（构建中）',level:'',category:'elec',privacy:'仅自己',buildStatus:'building',syncStatus:'',nodes:0,createdAt:'2026-09-26',updatedAt:'2026-09-26'},
         {id:'KS019',name:'导游业务',desc:'导游业务课程知识体系',level:'高职',range:'课程',relObject:'导游业务',relMajor:'导游专业',category:'tourism',creator:'张明',sharedTo:['平台管理员'],privacy:'仅自己',buildStatus:'built',syncStatus:'synced',nodes:120,createdAt:'2026-09-28',updatedAt:'2026-09-28'}
       ];
@@ -462,7 +462,7 @@
             +corner
             +'<div class="ks-card-name">'+s.name+'</div>'
             +ksCardTags(s)
-            +'<div class="ks-card-desc">'+(s.desc||'暂无描述')+'</div>'
+            +'<div class="ks-card-desc">'+(s.desc||'')+'</div>'
             +'<div class="ks-card-meta"><span>创建人：'+(s.creator||'—')+' · '+ksPermText(s)+' · 节点数 '+s.nodes+'</span><span>'+ksTimeText(s)+'</span></div>'
             +'<div class="ks-card-actions" onclick="event.stopPropagation()">'+bottom+'</div>'
           +'</div>';

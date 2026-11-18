@@ -274,7 +274,7 @@
               +'</div>'
             +'</div>'
             +(tagsHtml?'<div class="kb-card-tags">'+tagsHtml+'</div>':'')
-            +'<div class="kb-card-desc">'+(k.desc||'暂无描述')+'</div>'
+            +'<div class="kb-card-desc">'+(k.desc||'')+'</div>'
             +'<div class="kb-card-meta"><span>创建人：'+(k.creator||KB_CURRENT_USER)+' · '+kbPermText(k)+' · 文档 '+k.docs+'</span><span>'+kbTimeText(k)+'</span></div>'
           +'</div>';
         }).join('');
